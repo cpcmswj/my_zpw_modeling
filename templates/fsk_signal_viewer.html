@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FSK信号可视化工具</title>
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h2 {
+            color: #3498db;
+            margin: 20px 0 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #2980b9;
+            margin: 15px 0 10px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn.secondary {
+            background-color: #95a5a6;
+        }
+        .btn.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .form-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .chart-container {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #signalChart {
+            max-height: 500px;
+        }
+        .result-section {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .data-display {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .tabs {
+            margin: 20px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-button {
+            background-color: #f4f7fa;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: white;
+            border-bottom-color: #3498db;
+            color: #3498db;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .loading { color: #7f8c8d; font-style: italic; }
+        .code-dic {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .code-dic h3 {
+            margin-bottom: 15px;
+        }
+        .code-dic table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .code-dic th, .code-dic td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .code-dic th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .code-dic tr:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FSK信号可视化工具</h1>
+        <div style="margin-bottom: 20px; text-align: center;">
+            <a href="/" class="btn">返回首页</a>
+        </div>
+        
+        <!-- 标签页 -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'manual')">手动输入参数</button>
+            <button class="tab-button" onclick="openTab(event, 'info-based')">基于信息类型</button>
+        </div>
+        
+        <!-- 手动输入参数标签页 -->
+        <div id="manual" class="tab-content active">
+            <h2>手动输入参数</h2>
+            <form id="manualForm" onsubmit="event.preventDefault(); generateFSK();">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="dataInput">二进制数据 (0和1):</label>
+                        <input type="text" id="dataInput" placeholder="例如: 01010101" value="01010101">
+                    </div>
+                    <div class="form-col">
+                        <label for="f0">表示0的频率 (Hz):</label>
+                        <input type="number" id="f0" placeholder="例如: 1700" value="1700" step="1">
+                    </div>
+                    <div class="form-col">
+                        <label for="f1">表示1的频率 (Hz):</label>
+                        <input type="number" id="f1" placeholder="例如: 1913" value="1913" step="1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="fs">采样频率 (Hz):</label>
+                        <input type="number" id="fs" placeholder="例如: 19130" value="19130" step="10">
+                    </div>
+                    <div class="form-col">
+                        <label for="numPoints">信号长度 (点):</label>
+                        <select id="numPoints">
+                            <option value="16">16</option>
+                            <option value="32">32</option>
+                            <option value="64">64</option>
+                            <option value="128" selected>128</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <button type="submit" class="btn">生成FSK信号</button>
+                        <button type="button" class="btn secondary" onclick="generateRandomData();">生成随机数据</button>
+                        <button type="button" class="btn secondary" onclick="clearManualForm();">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 基于信息类型标签页 -->
+        <div id="info-based" class="tab-content">
+            <h2>基于信息类型</h2>
+            <form id="infoForm" onsubmit="event.preventDefault(); generateFSKByInfo();">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="infoType">信息类型:</label>
+                        <select id="infoType">
+                            <option value="L5">L5: 21.3 Hz</option>
+                            <option value="L4">L4: 23.5 Hz</option>
+                            <option value="L3">L3: 10.3 Hz</option>
+                            <option value="L2">L2: 12.5 Hz</option>
+                            <option value="HB">HB: 24.6 Hz</option>
+                            <option value="HU">HU: 26.8 Hz</option>
+                            <option value="L">L: 11.4 Hz</option>
+                            <option value="LU">LU: 13.6 Hz</option>
+                            <option value="LU2">LU2: 15.8 Hz</option>
+                            <option value="U">U: 16.9 Hz</option>
+                            <option value="H">H: 29.0 Hz</option>
+                            <option value="frequency_change">frequency_change: 25.7 Hz</option>
+                            <option value="U2S">U2S: 20.2 Hz</option>
+                            <option value="U2">U2: 14.7 Hz</option>
+                            <option value="UUS">UUS: 19.1 Hz</option>
+                            <option value="occupancy_check">occupancy_check: 27.9 Hz</option>
+                            <option value="L6">L6: 22.4 Hz</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="carrierFreq">载频频率 (Hz):</label>
+                        <input type="number" id="carrierFreq" placeholder="例如: 1700" value="1700" step="1">
+                    </div>
+                    <div class="form-col">
+                        <label for="dataLength">数据长度 (位):</label>
+                        <select id="dataLength">
+                            <option value="8" selected>8</option>
+                            <option value="16">16</option>
+                            <option value="32">32</option>
+                            <option value="64">64</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="infoNumPoints">信号长度 (点):</label>
+                        <select id="infoNumPoints">
+                            <option value="16">16</option>
+                            <option value="32">32</option>
+                            <option value="64">64</option>
+                            <option value="128" selected>128</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <button type="submit" class="btn">生成FSK信号</button>
+                        <button type="button" class="btn secondary" onclick="clearInfoForm();">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- 图表容器 -->
+        <div class="chart-container">
+            <h3>FSK信号波形</h3>
+            <canvas id="signalChart" style="height: 500px;"></canvas>
+        </div>
+        
+        <!-- 结果显示区域 -->
+        <div class="result-section">
+            <h3>结果显示</h3>
+            <div class="form-row">
+                <div class="form-col">
+                    <button class="btn" onclick="downloadCSV();">下载CSV</button>
+                </div>
+            </div>
+            
+            <h4>二进制数据</h4>
+            <div id="binaryDataDisplay" class="data-display">
+                <p class="loading">请先生成FSK信号</p>
+            </div>
+            
+            <h4>参数信息</h4>
+            <div id="paramsDisplay" class="data-display">
+                <p class="loading">请先生成FSK信号</p>
+            </div>
+            
+            <h4>信号数据</h4>
+            <div id="signalDataDisplay" class="data-display">
+                <p class="loading">请先生成FSK信号</p>
+            </div>
+        </div>
+        
+        <!-- 代码字典显示 -->
+        <div class="code-dic">
+            <h3>可用的信息类型及对应频率</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>信息类型</th>
+                        <th>频率 (Hz)</th>
+                        <th>描述</th>
+                    </tr>
+                </thead>
+                <tbody id="codeDicTable">
+                    <!-- 代码字典内容将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // 代码字典
+        const codeDic = {
+            "L5": 21.3,
+            "L4": 23.5,
+            "L3": 10.3,
+            "L2": 12.5,
+            "HB": 24.6,
+            "HU": 26.8,
+            "L": 11.4,
+            "LU": 13.6,
+            "LU2": 15.8,
+            "U": 16.9,
+            "H": 29.0,
+            "frequency_change": 25.7,
+            "U2S": 20.2,
+            "U2": 14.7,
+            "UUS": 19.1,
+            "occupancy_check": 27.9,
+            "L6": 22.4
+        };
+        
+        // 存储生成的信号数据
+        let generatedData = {
+            time: [],
+            signal: [],
+            binaryData: [],
+            params: {}
+        };
+        
+        // 图表实例
+        let signalChart = null;
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化代码字典表格
+            initCodeDicTable();
+            // 初始化图表
+            initChart();
+        });
+        
+        // 初始化代码字典表格
+        function initCodeDicTable() {
+            const tableBody = document.getElementById('codeDicTable');
+            tableBody.innerHTML = '';
+            
+            for (const [info, freq] of Object.entries(codeDic).sort()) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${info}</td>
+                    <td>${freq.toFixed(1)}</td>
+                    <td>${getDescription(info)}</td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+        
+        // 获取信息类型描述
+        function getDescription(info) {
+            const descriptions = {
+                "L5": "低频信息L5",
+                "L4": "低频信息L4",
+                "L3": "低频信息L3",
+                "L2": "低频信息L2",
+                "HB": "低频信息HB",
+                "HU": "低频信息HU",
+                "L": "低频信息L",
+                "LU": "低频信息LU",
+                "LU2": "低频信息LU2",
+                "U": "低频信息U",
+                "H": "低频信息H",
+                "frequency_change": "载频切换",
+                "U2S": "低频信息U2S",
+                "U2": "低频信息U2",
+                "UUS": "低频信息UUS",
+                "occupancy_check": "占用检查",
+                "L6": "低频信息L6"
+            };
+            return descriptions[info] || "未知信息类型";
+        }
+        
+        // 初始化图表
+        function initChart() {
+            console.log('开始初始化图表');
+            try {
+                const canvas = document.getElementById('signalChart');
+                console.log('Canvas元素:', canvas);
+                if (!canvas) {
+                    console.error('找不到signalChart元素');
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                console.log('Canvas上下文:', ctx);
+                if (!ctx) {
+                    console.error('无法获取canvas上下文');
+                    return;
+                }
+                
+                // 添加一些默认数据，让图表初始时不是空白
+                const defaultTime = [];
+                const defaultSignal = [];
+                for (let i = 0; i < 100; i++) {
+                    defaultTime.push(i / 100);
+                    defaultSignal.push(0);
+                }
+                
+                signalChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: defaultTime,
+                        datasets: [{
+                            label: 'FSK Signal',
+                            data: defaultSignal,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.1,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Time (s)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Amplitude'
+                                },
+                                min: -1.2,
+                                max: 1.2
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'FSK Signal Waveform'
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        }
+                    }
+                });
+                console.log('图表初始化成功:', signalChart);
+            } catch (error) {
+                console.error('图表初始化出错:', error);
+            }
+        }
+        
+        // 切换标签页
+        function openTab(evt, tabName) {
+            const tabButtons = document.getElementsByClassName('tab-button');
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove('active');
+            }
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+        
+        // 生成随机数据
+        function generateRandomData() {
+            const length = 8;
+            let data = '';
+            for (let i = 0; i < length; i++) {
+                data += Math.round(Math.random());
+            }
+            document.getElementById('dataInput').value = data;
+        }
+        
+        // 生成FSK信号（手动模式）
+        function generateFSK() {
+            console.log('开始生成FSK信号（手动模式）');
+            try {
+                // 获取表单数据
+                const dataInput = document.getElementById('dataInput').value;
+                const f0 = parseFloat(document.getElementById('f0').value);
+                const f1 = parseFloat(document.getElementById('f1').value);
+                const numPoints = parseInt(document.getElementById('numPoints').value);
+                
+                console.log('表单数据:', { dataInput, f0, f1, numPoints });
+                
+                // 验证输入
+                const binaryData = validateBinaryData(dataInput);
+                if (!binaryData) {
+                    alert('二进制数据只能包含0和1');
+                    return;
+                }
+                
+                console.log('二进制数据:', binaryData);
+                
+                // 生成采样频率（最高频率的10倍）
+                const fs = Math.max(f0, f1) * 10;
+                
+                // 生成FSK信号
+                const { time, signal } = generateFSKSignal(binaryData, f0, f1, fs, numPoints);
+                
+                console.log('生成的信号:', { time: time.length, signal: signal.length });
+                
+                // 存储生成的数据
+                generatedData = {
+                    time: time,
+                    signal: signal,
+                    binaryData: binaryData,
+                    params: {
+                        f0: f0,
+                        f1: f1,
+                        fs: fs,
+                        numPoints: numPoints,
+                        type: 'manual'
+                    }
+                };
+                
+                // 更新图表
+                updateChart(time, signal);
+                
+                // 更新结果显示
+                updateResultDisplay();
+                
+                console.log('FSK信号生成完成');
+            } catch (error) {
+                console.error('生成FSK信号出错:', error);
+                alert('生成FSK信号出错: ' + error.message);
+            }
+        }
+        
+        // 生成FSK信号（基于信息类型）
+        function generateFSKByInfo() {
+            console.log('开始生成FSK信号（基于信息类型）');
+            try {
+                // 获取表单数据
+                const infoType = document.getElementById('infoType').value;
+                const carrierFreq = parseFloat(document.getElementById('carrierFreq').value);
+                const dataLength = parseInt(document.getElementById('dataLength').value);
+                const numPoints = parseInt(document.getElementById('infoNumPoints').value);
+                
+                console.log('表单数据:', { infoType, carrierFreq, dataLength, numPoints });
+                
+                // 获取低频频率
+                const f_low = codeDic[infoType];
+                console.log('低频频率:', f_low);
+                
+                // 生成二进制数据
+                const binaryData = generateRandomBinaryData(dataLength);
+                console.log('生成的二进制数据:', binaryData);
+                
+                // 设置频率
+                const f0 = carrierFreq;
+                const f1 = carrierFreq + f_low;
+                const fs = Math.max(f0, f1) * 10;
+                
+                console.log('频率设置:', { f0, f1, fs });
+                
+                // 生成FSK信号
+                const { time, signal } = generateFSKSignal(binaryData, f0, f1, fs, numPoints);
+                
+                console.log('生成的信号:', { time: time.length, signal: signal.length });
+                
+                // 存储生成的数据
+                generatedData = {
+                    time: time,
+                    signal: signal,
+                    binaryData: binaryData,
+                    params: {
+                        f0: f0,
+                        f1: f1,
+                        fs: fs,
+                        numPoints: numPoints,
+                        type: 'info-based',
+                        infoType: infoType,
+                        f_low: f_low,
+                        carrierFreq: carrierFreq
+                    }
+                };
+                
+                // 更新图表
+                updateChart(time, signal);
+                
+                // 更新结果显示
+                updateResultDisplay();
+                
+                console.log('FSK信号生成完成');
+            } catch (error) {
+                console.error('生成FSK信号出错:', error);
+                alert('生成FSK信号出错: ' + error.message);
+            }
+        }
+        
+        // 验证二进制数据
+        function validateBinaryData(data) {
+            const cleanedData = data.replace(/[^01]/g, '');
+            if (cleanedData.length === 0) {
+                return null;
+            }
+            return cleanedData.split('').map(Number);
+        }
+        
+        // 生成随机二进制数据
+        function generateRandomBinaryData(length) {
+            const data = [];
+            for (let i = 0; i < length; i++) {
+                data.push(Math.round(Math.random()));
+            }
+            return data;
+        }
+        
+        // 生成FSK信号
+        function generateFSKSignal(data, f0, f1, fs, numPoints) {
+            if (data.length === 0) {
+                throw new Error('数据序列不能为空');
+            }
+            
+            // 计算每个比特的采样点数
+            const samples_per_bit = Math.floor(numPoints / data.length);
+            
+            // 生成时间序列
+            const time = [];
+            for (let i = 0; i < numPoints; i++) {
+                time.push(i / fs);
+            }
+            
+            // 生成FSK信号
+            const signal = [];
+            for (let i = 0; i < numPoints; i++) {
+                const bitIndex = Math.floor(i / samples_per_bit);
+                const bit = data[Math.min(bitIndex, data.length - 1)];
+                const freq = bit === 0 ? f0 : f1;
+                const t = time[i];
+                signal.push(Math.sin(2 * Math.PI * freq * t));
+            }
+            
+            return { time, signal };
+        }
+        
+        // 更新图表
+        function updateChart(time, signal) {
+            console.log('更新图表，时间点数量:', time.length, '信号点数量:', signal.length);
+            console.log('信号数据示例:', signal.slice(0, 5));
+            
+            // 确保signalChart已初始化
+            if (!signalChart) {
+                console.error('signalChart未初始化');
+                return;
+            }
+            
+            // 更新图表数据
+            signalChart.data.labels = time;
+            signalChart.data.datasets[0].data = signal;
+            
+            // 更新图表标题
+            signalChart.options.plugins.title.text = `FSK Signal (f0=${generatedData.params.f0}Hz, f1=${generatedData.params.f1}Hz, fs=${generatedData.params.fs}Hz, Points=${generatedData.params.numPoints})`;
+            
+            // 更新图表
+            signalChart.update();
+            console.log('图表更新完成');
+        }
+        
+        // 更新结果显示
+        function updateResultDisplay() {
+            // 更新二进制数据显示
+            const binaryDataDisplay = document.getElementById('binaryDataDisplay');
+            binaryDataDisplay.innerHTML = `二进制数据: ${generatedData.binaryData.join('')}`;
+            
+            // 更新参数信息显示
+            const paramsDisplay = document.getElementById('paramsDisplay');
+            let paramsHTML = '<strong>参数信息:</strong><br>';
+            if (generatedData.params.type === 'manual') {
+                paramsHTML += `表示0的频率: ${generatedData.params.f0} Hz<br>`;
+                paramsHTML += `表示1的频率: ${generatedData.params.f1} Hz<br>`;
+            } else {
+                paramsHTML += `信息类型: ${generatedData.params.infoType} (${generatedData.params.f_low} Hz)<br>`;
+                paramsHTML += `载频频率: ${generatedData.params.carrierFreq} Hz<br>`;
+                paramsHTML += `表示0的频率: ${generatedData.params.f0} Hz<br>`;
+                paramsHTML += `表示1的频率: ${generatedData.params.f1} Hz<br>`;
+            }
+            paramsHTML += `采样频率: ${generatedData.params.fs} Hz<br>`;
+            paramsHTML += `信号长度: ${generatedData.params.numPoints} 点<br>`;
+            paramsHTML += `数据长度: ${generatedData.binaryData.length} 位`;
+            paramsDisplay.innerHTML = paramsHTML;
+            
+            // 更新信号数据显示
+            const signalDataDisplay = document.getElementById('signalDataDisplay');
+            let signalHTML = '<strong>信号数据 (前20个点):</strong><br>';
+            signalHTML += '时间 (s), 信号幅值<br>';
+            for (let i = 0; i < Math.min(20, generatedData.time.length); i++) {
+                signalHTML += `${generatedData.time[i].toFixed(8)}, ${generatedData.signal[i].toFixed(8)}<br>`;
+            }
+            if (generatedData.time.length > 20) {
+                signalHTML += `... 共 ${generatedData.time.length} 个点`;
+            }
+            signalDataDisplay.innerHTML = signalHTML;
+        }
+        
+        // 下载CSV
+        function downloadCSV() {
+            if (generatedData.time.length === 0) {
+                alert('请先生成FSK信号');
+                return;
+            }
+            
+            // 构建CSV内容
+            let csvContent = '# FSK Signal Parameters\n';
+            csvContent += `# Data: ${generatedData.binaryData.join('')}\n`;
+            csvContent += `# f0: ${generatedData.params.f0}Hz\n`;
+            csvContent += `# f1: ${generatedData.params.f1}Hz\n`;
+            csvContent += `# Sampling Frequency: ${generatedData.params.fs}Hz\n`;
+            csvContent += `# Number of Points: ${generatedData.params.numPoints}\n`;
+            csvContent += '# Time (s), Signal Amplitude\n';
+            
+            // 添加信号数据
+            for (let i = 0; i < generatedData.time.length; i++) {
+                csvContent += `${generatedData.time[i].toFixed(8)}, ${generatedData.signal[i].toFixed(8)}\n`;
+            }
+            
+            // 创建下载链接
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            // 处理浏览器兼容性
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'fsk_signal.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+        // 清除表单
+        function clearManualForm() {
+            document.getElementById('manualForm').reset();
+        }
+        
+        function clearInfoForm() {
+            document.getElementById('infoForm').reset();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>铁路轨道电路故障模拟系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn.secondary {
+            background-color: #95a5a6;
+        }
+        .btn.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .btn.disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .main-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .step-container {
+            margin-bottom: 30px;
+        }
+        .step-header {
+            background-color: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 6px 6px 0 0;
+            margin-bottom: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .step-number {
+            background-color: white;
+            color: #3498db;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .step-content {
+            padding: 0 20px 20px;
+        }
+        .step-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        .step-description {
+            margin-bottom: 20px;
+            color: #666;
+        }
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .section-card {
+            background-color: #f9f9f9;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .section-card:hover {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .section-card.active {
+            background-color: #2196f3;
+            color: white;
+            border-color: #1976d2;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .section-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        .section-description {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .error-type-selector {
+            margin: 20px 0;
+        }
+        .error-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .error-type-item {
+            background-color: #f9f9f9;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .error-type-item:hover {
+            background-color: #e8f5e8;
+            border-color: #4caf50;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .error-type-item.active {
+            background-color: #4caf50;
+            color: white;
+            border-color: #388e3c;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .error-type-radio {
+            transform: scale(1.5);
+        }
+        .error-type-info {
+            flex: 1;
+        }
+        .error-type-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .error-type-desc {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .form-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="number"] {
+            min-width: 150px;
+        }
+        .image-preview {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .result-container {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        .result-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        .result-content {
+            background-color: white;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .result-section {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .result-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .result-section h4 {
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        .result-item {
+            background-color: #f0f7ff;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        .result-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .result-value {
+            color: #666;
+        }
+        .loading {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .step-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .validation-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .validation-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .validation-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+            .section-grid {
+                grid-template-columns: 1fr;
+            }
+            .error-type-grid {
+                grid-template-columns: 1fr;
+            }
+            .step-nav {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>铁路轨道电路故障模拟系统</h1>
+            <div style="margin-top: 15px;">
+                <a href="/" class="btn">返回首页</a>
+                <a href="/image-viewer" class="btn">图片查看器</a>
+                <a href="/section-image-viewer" class="btn">区段图片查看器</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- 步骤 1: 选择铁道区段 -->
+            <div class="step-container">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div>选择铁道区段</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-title">步骤 1: 选择铁道区段</div>
+                    <div class="step-description">请从下方选择一个铁道区段，之后选择的错误发生在该区段内。</div>
+                    
+                    <!-- 添加railway_zone图片显示 -->
+                    <div class="image-preview" style="margin-bottom: 20px;">
+                        <h4>轨道区段示意图</h4>
+                        <img src="/static/images/railway_zone.png" alt="轨道区段示意图" class="preview-image" style="max-height: 300px;">
+                    </div>
+                    
+                    <div class="section-grid" id="sectionGrid">
+                        <!-- 区段卡片将通过JavaScript动态生成 -->
+                    </div>
+                    
+                    <div id="sectionValidation" class="validation-message" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- 步骤 2: 选择错误类型 -->
+            <div class="step-container">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div>选择错误类型</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-title">步骤 2: 选择错误类型</div>
+                    <div class="step-description">请选择该铁道区段可能发生的错误类型，选择后将显示对应错误类型的示意图。</div>
+                    
+                    <div class="error-type-selector">
+                        <div class="error-type-grid" id="errorTypeGrid">
+                            <!-- 错误类型选项将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <div id="errorTypeValidation" class="validation-message" style="display: none;"></div>
+                    
+                    <!-- 错误类型图片预览 -->
+                    <div class="image-preview" id="sectionImagePreview" style="display: none;">
+                        <h4>错误类型示意图</h4>
+                        <img id="previewImage" class="preview-image" src="" alt="">
+                        <div id="previewInfo" style="margin-top: 15px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 步骤 3: 输入数据 -->
+            <div class="step-container">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div>输入模拟参数</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-title">步骤 3: 输入模拟参数</div>
+                    <div class="step-description">请输入模拟所需的各项参数，系统将根据您的输入进行故障模拟计算。</div>
+                    
+                    <form id="simulationForm">
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="trackName">轨道名称:</label>
+                                <input type="text" id="trackName" name="trackName" placeholder="输入轨道名称" value="测试轨道">
+                            </div>
+                            <div class="form-col">
+                                <label for="trackLength">轨道长度 (m):</label>
+                                <input type="number" id="trackLength" name="trackLength" placeholder="输入轨道长度" value="100" min="1" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="resistance">电阻 (Ω/m):</label>
+                                <input type="number" id="resistance" name="resistance" placeholder="输入电阻值" value="0.1" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-col">
+                                <label for="inductance">电感 (H/m):</label>
+                                <input type="number" id="inductance" name="inductance" placeholder="输入电感值" value="1.0e-3" step="0.000001" min="0" required>
+                            </div>
+                            <div class="form-col">
+                                <label for="capacitance">电容 (F/m):</label>
+                                <input type="number" id="capacitance" name="capacitance" placeholder="输入电容值" value="1.0e-9" step="0.000000001" min="0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="frequency">频率 (Hz):</label>
+                                <input type="number" id="frequency" name="frequency" placeholder="输入频率" value="1700" min="1" required>
+                            </div>
+                            <div class="form-col">
+                                <label for="errorValue">错误值:</label>
+                                <input type="number" id="errorValue" name="errorValue" placeholder="输入错误值" value="0" step="any">
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div id="formValidation" class="validation-message" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- 步骤 4: 查看结果 -->
+            <div class="step-container">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <div>查看模拟结果</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-title">步骤 4: 查看模拟结果</div>
+                    <div class="step-description">系统将根据您的输入进行故障模拟计算，并显示结果。</div>
+                    
+                    <div class="result-container" id="resultContainer">
+                        <div class="result-title">
+                            模拟结果
+                            <button id="downloadCsvBtn" class="btn" onclick="downloadCsv()" style="float: right; margin-top: -10px; display: none;">下载CSV</button>
+                        </div>
+                        <div class="result-content" id="resultContent">
+                            <p class="loading">请完成前面的步骤并点击"开始模拟"按钮。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 步骤导航 -->
+            <div class="step-nav">
+                <button id="prevBtn" class="btn secondary" onclick="prevStep()" disabled>上一步</button>
+                <div>
+                    <button id="resetBtn" class="btn secondary" onclick="resetSystem()">重置</button>
+                    <button id="nextBtn" class="btn" onclick="nextStep()">下一步</button>
+                    <button id="simulateBtn" class="btn" onclick="startSimulation()" style="display: none;">开始模拟</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 全局状态
+        let currentStep = 1;
+        let selectedSection = null;
+        let selectedErrorType = null;
+        let simulationResult = null;
+        
+        // 铁路区段数据 - 使用指定的五个轨道区段
+        const railwaySections = {
+            "69G": {
+                id: "69G",
+                name: "轨道区段 - 69G",
+                description: "69G轨道区段，标准轨道电路区段",
+                image: "/static/images/错误展示0.png",
+                image_title: "69G区段 - 无故障",
+                image_description: "69G轨道区段正常运行状态，无任何故障。"
+            },
+            "X1LQG": {
+                id: "X1LQG",
+                name: "轨道区段 - X1LQG",
+                description: "X1LQG轨道区段，标准轨道电路区段",
+                image: "/static/images/错误展示0.png",
+                image_title: "X1LQG区段 - 无故障",
+                image_description: "X1LQG轨道区段正常运行状态，无任何故障。"
+            },
+            "IG1": {
+                id: "IG1",
+                name: "轨道区段 - IG1",
+                description: "IG1轨道区段，标准轨道电路区段",
+                image: "/static/images/错误展示0.png",
+                image_title: "IG1区段 - 无故障",
+                image_description: "IG1轨道区段正常运行状态，无任何故障。"
+            },
+            "57G": {
+                id: "57G",
+                name: "轨道区段 - 57G",
+                description: "57G轨道区段，标准轨道电路区段",
+                image: "/static/images/错误展示0.png",
+                image_title: "57G区段 - 无故障",
+                image_description: "57G轨道区段正常运行状态，无任何故障。"
+            },
+            "3DG": {
+                id: "3DG",
+                name: "轨道区段 - 3DG",
+                description: "3DG轨道区段，标准轨道电路区段",
+                image: "/static/images/错误展示0.png",
+                image_title: "3DG区段 - 无故障",
+                image_description: "3DG轨道区段正常运行状态，无任何故障。"
+            }
+        };
+        
+        // 错误类型数据
+        const errorTypes = [
+            { value: 0, name: "0 - 无故障", description: "正常运行状态，无故障" },
+            { value: 1, name: "1 - 接收端调谐单元1断路", description: "接收端调谐单元1发生断路故障" },
+            { value: 2, name: "2 - 发送端调谐单元1断路", description: "发送端调谐单元1发生断路故障" },
+            { value: 3, name: "3 - 接收端空心线圈断路", description: "接收端空心线圈发生断路故障" },
+            { value: 4, name: "4 - 接收端空芯线圈短路", description: "接收端空芯线圈发生短路故障" },
+            { value: 5, name: "5 - 接收端调谐单元2断路", description: "接收端调谐单元2发生断路故障" },
+            { value: 6, name: "6 - 补偿电容3断路", description: "补偿电容3发生断路故障" },
+            { value: 7, name: "7 - 补偿电容3短路", description: "补偿电容3发生短路故障" }
+        ];
+        
+        // DOM元素
+        const sectionGrid = document.getElementById('sectionGrid');
+        const sectionImagePreview = document.getElementById('sectionImagePreview');
+        const previewImage = document.getElementById('previewImage');
+        const previewInfo = document.getElementById('previewInfo');
+        const sectionValidation = document.getElementById('sectionValidation');
+        const errorTypeGrid = document.getElementById('errorTypeGrid');
+        const errorTypeValidation = document.getElementById('errorTypeValidation');
+        const formValidation = document.getElementById('formValidation');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const simulateBtn = document.getElementById('simulateBtn');
+        
+        // 初始化
+        function init() {
+            initSectionGrid();
+            initErrorTypeGrid();
+            updateStepUI();
+        }
+        
+        // 初始化区段网格
+        function initSectionGrid() {
+            for (const [key, section] of Object.entries(railwaySections)) {
+                const card = document.createElement('div');
+                card.className = 'section-card';
+                card.id = section.id;
+                card.innerHTML = `
+                    <div class="section-name">${section.name}</div>
+                    <div class="section-description">${section.description}</div>
+                `;
+                card.addEventListener('click', () => selectSection(section));
+                sectionGrid.appendChild(card);
+            }
+        }
+        
+        // 初始化错误类型网格
+        function initErrorTypeGrid() {
+            errorTypes.forEach(type => {
+                const item = document.createElement('div');
+                item.className = 'error-type-item';
+                item.innerHTML = `
+                    <input type="radio" name="errorType" class="error-type-radio" value="${type.value}" id="errorType${type.value}">
+                    <div class="error-type-info">
+                        <div class="error-type-name">${type.name}</div>
+                        <div class="error-type-desc">${type.description}</div>
+                    </div>
+                `;
+                item.addEventListener('click', () => {
+                    document.getElementById(`errorType${type.value}`).checked = true;
+                    selectErrorType(type.value);
+                });
+                errorTypeGrid.appendChild(item);
+            });
+        }
+        
+        // 根据轨道区段返回载频率
+        function frequencyTable(zone) {
+            if (zone === "69G" || zone === "X1LQG" || zone === "IG1") {
+                return 1700;
+            } else if (zone === "57G" || zone === "3DG") {
+                return 2300;
+            } else {
+                return 1700; // 默认频率
+            }
+        }
+        
+        // 选择区段
+        function selectSection(section) {
+            // 移除所有活动状态
+            document.querySelectorAll('.section-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // 添加当前活动状态
+            const card = document.getElementById(section.id);
+            card.classList.add('active');
+            
+            // 更新状态
+            selectedSection = section;
+            
+            // 根据轨道区段查询载频率并更新输入框
+            const frequency = frequencyTable(section.id);
+            document.getElementById('frequency').value = frequency;
+            
+            // 更新验证信息
+            sectionValidation.textContent = '✅ 已选择轨道区段';
+            sectionValidation.className = 'validation-message success';
+            sectionValidation.style.display = 'block';
+            
+            // 启用下一步按钮
+            nextBtn.disabled = false;
+        }
+        
+        // 选择错误类型
+        function selectErrorType(errorValue) {
+            // 移除所有活动状态
+            document.querySelectorAll('.error-type-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 添加当前活动状态
+            const selectedItem = event.currentTarget;
+            selectedItem.classList.add('active');
+            
+            // 更新状态
+            selectedErrorType = parseInt(errorValue);
+            console.log('选择的错误类型:', selectedErrorType);
+            
+            // 更新验证信息
+            errorTypeValidation.textContent = '✅ 已选择错误类型';
+            errorTypeValidation.className = 'validation-message success';
+            errorTypeValidation.style.display = 'block';
+            
+            // 显示对应错误类型的示意图
+            showErrorTypeImage(selectedErrorType);
+            
+            // 启用下一步按钮
+            nextBtn.disabled = false;
+        }
+        
+        // 显示错误类型图片
+        function showErrorTypeImage(errorTypeValue) {
+            // 根据错误类型显示对应的图片
+            const errorImagePath = `/static/images/错误展示${errorTypeValue}.png`;
+            const errorType = errorTypes.find(type => type.value === errorTypeValue);
+            
+            // 更新预览图片，独立显示错误类型图片
+            previewImage.src = errorImagePath;
+            previewImage.alt = `${errorType.name}`;
+            previewInfo.innerHTML = `
+                <div style="font-weight: bold;">${errorType.name}</div>
+                <div style="color: #666; font-size: 14px; margin-top: 5px;">${errorType.description}</div>
+            `;
+            sectionImagePreview.style.display = 'block';
+        }
+        
+        // 上一步
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepUI();
+            }
+        }
+        
+        // 下一步
+        function nextStep() {
+            // 验证当前步骤
+            if (!validateCurrentStep()) {
+                return;
+            }
+            
+            if (currentStep < 3) {
+                currentStep++;
+                updateStepUI();
+            }
+        }
+        
+        // 验证当前步骤
+        function validateCurrentStep() {
+            let isValid = true;
+            
+            // 重置所有验证信息
+            sectionValidation.style.display = 'none';
+            errorTypeValidation.style.display = 'none';
+            
+            switch (currentStep) {
+                case 1:
+                    if (!selectedSection) {
+                        sectionValidation.textContent = '❌ 请选择一个铁路区段';
+                        sectionValidation.className = 'validation-message error';
+                        sectionValidation.style.display = 'block';
+                        isValid = false;
+                    } else {
+                        sectionValidation.textContent = '✅ 已选择轨道区段';
+                        sectionValidation.className = 'validation-message success';
+                        sectionValidation.style.display = 'block';
+                    }
+                    break;
+                case 2:
+                    // 当selectedErrorType为0（无故障）时，验证也应该通过
+                    if (selectedErrorType === null || selectedErrorType === undefined) {
+                        errorTypeValidation.textContent = '❌ 请选择一个错误类型';
+                        errorTypeValidation.className = 'validation-message error';
+                        errorTypeValidation.style.display = 'block';
+                        isValid = false;
+                    } else {
+                        errorTypeValidation.textContent = '✅ 已选择错误类型';
+                        errorTypeValidation.className = 'validation-message success';
+                        errorTypeValidation.style.display = 'block';
+                    }
+                    break;
+            }
+            
+            return isValid;
+        }
+        
+        // 更新步骤UI
+        function updateStepUI() {
+            // 更新按钮状态
+            prevBtn.disabled = currentStep === 1;
+            
+            // 当处于步骤3（输入参数）时，显示开始模拟按钮，隐藏下一步按钮
+            if (currentStep === 3) {
+                nextBtn.style.display = 'none';
+                simulateBtn.style.display = 'inline-block';
+            } else {
+                nextBtn.style.display = 'inline-block';
+                simulateBtn.style.display = 'none';
+            }
+            
+            // 更新按钮文本
+            nextBtn.textContent = '下一步';
+        }
+        
+        // 重置系统
+        function resetSystem() {
+            currentStep = 1;
+            selectedSection = null;
+            selectedErrorType = null;
+            simulationResult = null;
+            
+            // 重置区段选择
+            document.querySelectorAll('.section-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            sectionValidation.style.display = 'none';
+            
+            // 重置错误类型选择
+            document.querySelectorAll('.error-type-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('input[name="errorType"]').forEach(radio => {
+                radio.checked = false;
+            });
+            errorTypeValidation.style.display = 'none';
+            
+            // 重置图片预览
+            sectionImagePreview.style.display = 'none';
+            
+            // 重置表单
+            document.getElementById('simulationForm').reset();
+            formValidation.style.display = 'none';
+            
+            // 重置结果
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = '<p class="loading">请完成前面的步骤并点击"开始模拟"按钮。</p>';
+            
+            // 隐藏下载CSV按钮
+            const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+            downloadCsvBtn.style.display = 'none';
+            
+            // 更新UI
+            updateStepUI();
+        }
+        
+        // 开始模拟
+        async function startSimulation() {
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = '<p class="loading">正在进行故障模拟计算...</p>';
+            
+            try {
+                // 获取表单数据
+                const form = document.getElementById('simulationForm');
+                const formData = new FormData(form);
+                
+                // 简化的模拟计算（使用前端计算代替API调用）
+                const data = {
+                    section_id: selectedSection.id,
+                    section_name: selectedSection.name,
+                    name: formData.get('trackName'),
+                    length: parseFloat(formData.get('trackLength')),
+                    resistance: parseFloat(formData.get('resistance')),
+                    inductance: parseFloat(formData.get('inductance')),
+                    capacitance: parseFloat(formData.get('capacitance')),
+                    frequency: parseFloat(formData.get('frequency')),
+                    error_type: selectedErrorType,
+                    error_value: parseFloat(formData.get('errorValue') || 0)
+                };
+                
+                // 模拟计算结果
+                const result = await simulateCalculation(data);
+                
+                // 显示结果
+                displayResult(result);
+            } catch (error) {
+                resultContent.innerHTML = `<p class="error">模拟计算失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 模拟计算函数
+        function simulateCalculation(data) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    // 简化的实数计算
+                    const inductive_reactance = 2 * Math.PI * data.frequency * data.inductance;
+                    const capacitive_reactance = 1 / (2 * Math.PI * data.frequency * data.capacitance);
+                    const total_reactance = inductive_reactance - capacitive_reactance;
+                    const total_impedance = Math.sqrt(data.resistance * data.resistance + total_reactance * total_reactance);
+                    const total_admittance = 1 / total_impedance;
+                    const propagation_constant = Math.sqrt(total_impedance * total_admittance);
+                    const characteristic_impedance = Math.sqrt(total_impedance / total_admittance);
+                    
+                    // 获取错误类型名称
+                    const errorType = errorTypes.find(type => type.value === data.error_type);
+                    const error_type_name = errorType ? errorType.name : "未知错误类型";
+                    
+                    resolve({
+                        status: 'success',
+                        section_info: {
+                            id: data.section_id,
+                            name: data.section_name,
+                            description: selectedSection.description
+                        },
+                        error_info: {
+                            type: data.error_type,
+                            name: error_type_name
+                        },
+                        input_params: data,
+                        calculation_result: {
+                            total_impedance: total_impedance,
+                            total_admittance: total_admittance,
+                            propagation_constant: propagation_constant,
+                            characteristic_impedance: characteristic_impedance,
+                            inductive_reactance: inductive_reactance,
+                            capacitive_reactance: capacitive_reactance
+                        }
+                    });
+                }, 1000);
+            });
+        }
+        
+        // 显示结果
+        function displayResult(result) {
+            const resultContent = document.getElementById('resultContent');
+            const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+            
+            if (result.status === 'success') {
+                // 存储结果到全局变量
+                simulationResult = result;
+                
+                let html = '<div class="success">✅ 故障模拟计算成功！</div>';
+                
+                // 区段信息
+                html += '<div class="result-section">';
+                html += '<h4>轨道区段信息</h4>';
+                html += '<div class="result-grid">';
+                html += `<div class="result-item"><div class="result-label">区段ID:</div><div class="result-value">${result.section_info.id}</div></div>`;
+                html += `<div class="result-item"><div class="result-label">区段名称:</div><div class="result-value">${result.section_info.name}</div></div>`;
+                html += `<div class="result-item"><div class="result-label">区段描述:</div><div class="result-value">${result.section_info.description}</div></div>`;
+                html += '</div>';
+                html += '</div>';
+                
+                // 错误信息
+                html += '<div class="result-section">';
+                html += '<h4>错误信息</h4>';
+                html += '<div class="result-grid">';
+                html += `<div class="result-item"><div class="result-label">错误类型:</div><div class="result-value">${result.error_info.name}</div></div>`;
+                html += `<div class="result-item"><div class="result-label">错误值:</div><div class="result-value">${result.input_params.error_value}</div></div>`;
+                html += '</div>';
+                html += '</div>';
+                
+                // 输入参数
+                html += '<div class="result-section">';
+                html += '<h4>输入参数</h4>';
+                html += '<div class="result-grid">';
+                html += `<div class="result-item"><div class="result-label">轨道名称:</div><div class="result-value">${result.input_params.name}</div></div>`;
+                html += `<div class="result-item"><div class="result-label">轨道长度:</div><div class="result-value">${result.input_params.length} m</div></div>`;
+                html += `<div class="result-item"><div class="result-label">电阻:</div><div class="result-value">${result.input_params.resistance} Ω/m</div></div>`;
+                html += `<div class="result-item"><div class="result-label">电感:</div><div class="result-value">${result.input_params.inductance} H/m</div></div>`;
+                html += `<div class="result-item"><div class="result-label">电容:</div><div class="result-value">${result.input_params.capacitance} F/m</div></div>`;
+                html += `<div class="result-item"><div class="result-label">频率:</div><div class="result-value">${result.input_params.frequency} Hz</div></div>`;
+                html += `<div class="result-item"><div class="result-label">轨道区段:</div><div class="result-value">${result.input_params.section_id}</div></div>`;
+                html += '</div>';
+                html += '</div>';
+                
+                // 计算结果
+                html += '<div class="result-section">';
+                html += '<h4>计算结果</h4>';
+                html += '<div class="result-grid">';
+                html += `<div class="result-item"><div class="result-label">总阻抗:</div><div class="result-value">${result.calculation_result.total_impedance.toFixed(6)} Ω</div></div>`;
+                html += `<div class="result-item"><div class="result-label">总导纳:</div><div class="result-value">${result.calculation_result.total_admittance.toFixed(6)} S</div></div>`;
+                html += `<div class="result-item"><div class="result-label">传播系数:</div><div class="result-value">${result.calculation_result.propagation_constant.toFixed(6)}</div></div>`;
+                html += `<div class="result-item"><div class="result-label">特性阻抗:</div><div class="result-value">${result.calculation_result.characteristic_impedance.toFixed(6)} Ω</div></div>`;
+                html += `<div class="result-item"><div class="result-label">感抗:</div><div class="result-value">${result.calculation_result.inductive_reactance.toFixed(6)} Ω</div></div>`;
+                html += `<div class="result-item"><div class="result-label">容抗:</div><div class="result-value">${result.calculation_result.capacitive_reactance.toFixed(6)} Ω</div></div>`;
+                html += '</div>';
+                html += '</div>';
+                
+                resultContent.innerHTML = html;
+                
+                // 显示下载CSV按钮
+                downloadCsvBtn.style.display = 'inline-block';
+            } else {
+                resultContent.innerHTML = `<p class="error">模拟计算失败: ${result.message}</p>`;
+                // 隐藏下载CSV按钮
+                downloadCsvBtn.style.display = 'none';
+            }
+        }
+        
+        // 下载CSV文件
+        function downloadCsv() {
+            if (!simulationResult) {
+                alert('没有可用的模拟结果');
+                return;
+            }
+            
+            // 构建CSV内容
+            let csvContent = '';
+            
+            // CSV标题行
+            const headers = [
+                '轨道区段ID',
+                '轨道区段名称',
+                '错误类型',
+                '错误值',
+                '轨道名称',
+                '轨道长度(m)',
+                '电阻(Ω/m)',
+                '电感(H/m)',
+                '电容(F/m)',
+                '频率(Hz)',
+                '总阻抗(Ω)',
+                '总导纳(S)',
+                '传播系数',
+                '特性阻抗(Ω)',
+                '感抗(Ω)',
+                '容抗(Ω)'
+            ];
+            csvContent += headers.join(',') + '\n';
+            
+            // CSV数据行
+            const dataRow = [
+                simulationResult.section_info.id,
+                simulationResult.section_info.name,
+                simulationResult.error_info.name,
+                simulationResult.input_params.error_value,
+                simulationResult.input_params.name,
+                simulationResult.input_params.length,
+                simulationResult.input_params.resistance,
+                simulationResult.input_params.inductance,
+                simulationResult.input_params.capacitance,
+                simulationResult.input_params.frequency,
+                simulationResult.calculation_result.total_impedance.toFixed(6),
+                simulationResult.calculation_result.total_admittance.toFixed(6),
+                simulationResult.calculation_result.propagation_constant.toFixed(6),
+                simulationResult.calculation_result.characteristic_impedance.toFixed(6),
+                simulationResult.calculation_result.inductive_reactance.toFixed(6),
+                simulationResult.calculation_result.capacitive_reactance.toFixed(6)
+            ];
+            csvContent += dataRow.join(',') + '\n';
+            
+            // 创建Blob对象
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            // 创建下载链接
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `轨道电路故障模拟结果_${simulationResult.section_info.id}_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            
+            // 添加到文档并触发下载
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

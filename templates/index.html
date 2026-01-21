@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Interactive Web App</title>
+    <style>
+        /* 基本样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        h2 {
+            color: #3498db;
+            margin: 20px 0 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        h3 {
+            color: #2980b9;
+            margin: 15px 0 10px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn.secondary {
+            background-color: #95a5a6;
+        }
+        
+        .btn.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        /* 标签页样式 */
+        .tabs {
+            margin: 20px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab-button {
+            background-color: #f4f7fa;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button.active {
+            background-color: white;
+            border-bottom-color: #3498db;
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 数据显示区域 */
+        .data-display {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            min-height: 100px;
+            border: 1px solid #ddd;
+        }
+        
+        .loading {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .success {
+            color: #27ae60;
+        }
+        
+        .error {
+            color: #e74c3c;
+        }
+        
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        /* 表单样式 */
+        .form-group {
+            margin: 15px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .form-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 10px;
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .tab-button {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FastAPI 交互式 Web 应用</h1>
+        <p>这是一个基于 FastAPI 框架构建的交互式网页应用。可以与后端 API 进行实时交互，包括调用 jisuan_guidao.py 中的计算函数。</p>
+        
+        <!-- 导航链接 -->
+        <div style="margin-bottom: 20px; text-align: center;">
+            <a href="/image-viewer" class="btn">图片查看器</a>
+            <a href="/section-image-viewer" class="btn">区段图片查看器</a>
+            <a href="/integrated-system" class="btn">整合系统</a>
+        </div>
+        
+        <!-- 标签页 -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'basic')">基础 API</button>
+            <button class="tab-button" onclick="openTab(event, 'impedance')">计算阻抗</button>
+            <button class="tab-button" onclick="openTab(event, 'admittance')">计算导纳</button>
+            <button class="tab-button" onclick="openTab(event, 'current')">计算电流</button>
+            <button class="tab-button" onclick="openTab(event, 'variable')">计算变量</button>
+            <button class="tab-button" onclick="openTab(event, 'error')">错误数据观察</button>
+        </div>
+        
+        <!-- 基础 API 标签页 -->
+        <div id="basic" class="tab-content active">
+            <!-- 按钮区域 -->
+            <div>
+                <button class="btn" onclick="fetchData()">获取数据</button>
+                <button class="btn" onclick="fetchItem()">获取特定项目</button>
+                <button class="btn secondary" onclick="clearData()">清除数据</button>
+            </div>
+            
+            <!-- 表单区域 -->
+            <div class="form-group">
+                <label for="itemId">项目 ID:</label>
+                <input type="number" id="itemId" placeholder="输入项目 ID" value="1">
+            </div>
+        </div>
+        
+        <!-- 计算阻抗标签页 -->
+        <div id="impedance" class="tab-content">
+            <h3>计算阻抗</h3>
+            <p>输入电阻、电感和电容值，计算阻抗。</p>
+            
+            <form id="impedanceForm" onsubmit="event.preventDefault(); calculateImpedance();">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="resist">电阻 (Ω):</label>
+                        <input type="number" id="resist" name="resist" placeholder="输入电阻值" step="any" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="induct">电感 (H):</label>
+                        <input type="number" id="induct" name="induct" placeholder="输入电感值" step="any" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="capacit">电容 (F):</label>
+                        <input type="number" id="capacit" name="capacit" placeholder="输入电容值" step="any" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="angularFrequency">角频率 (rad/s) <span style="font-weight:normal; color:#666;">(可选，默认0)</span>:</label>
+                        <input type="number" id="angularFrequency" name="angular_frequency" placeholder="输入角频率，如314.16" step="any">
+                    </div>
+                </div>
+                <button type="submit" class="btn">计算阻抗</button>
+                <button type="button" class="btn secondary" onclick="clearForm('impedanceForm')">重置</button>
+            </form>
+        </div>
+        
+        <!-- 计算导纳标签页 -->
+        <div id="admittance" class="tab-content">
+            <h3>计算导纳</h3>
+            <p>输入电阻、电感和电容值，计算导纳。</p>
+            
+            <form id="admittanceForm" onsubmit="event.preventDefault(); calculateAdmittance();">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="admitResist">电阻 (Ω):</label>
+                        <input type="number" id="admitResist" name="resist" placeholder="输入电阻值" step="any" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="admitInduct">电感 (H):</label>
+                        <input type="number" id="admitInduct" name="induct" placeholder="输入电感值" step="any" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="admitCapacit">电容 (F):</label>
+                        <input type="number" id="admitCapacit" name="capacit" placeholder="输入电容值" step="any" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="admitAngularFrequency">角频率 (rad/s) <span style="font-weight:normal; color:#666;">(可选，默认0)</span>:</label>
+                        <input type="number" id="admitAngularFrequency" name="angular_frequency" placeholder="输入角频率，如314.16" step="any">
+                    </div>
+                </div>
+                <button type="submit" class="btn">计算导纳</button>
+                <button type="button" class="btn secondary" onclick="clearForm('admittanceForm')">重置</button>
+            </form>
+        </div>
+        
+        <!-- 计算电流标签页 -->
+        <div id="current" class="tab-content">
+            <h3>计算电流</h3>
+            <p>输入电压的实部和虚部，以及电阻、电感和电容值，计算电流。</p>
+            
+            <form id="currentForm" onsubmit="event.preventDefault(); calculateCurrent();">
+                <h4>电压向量</h4>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="voltageReal">电压实部 (V):</label>
+                        <input type="number" id="voltageReal" name="voltage_real" placeholder="输入电压实部" step="any" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="voltageImag">电压虚部 (V):</label>
+                        <input type="number" id="voltageImag" name="voltage_imag" placeholder="输入电压虚部" step="any" required>
+                    </div>
+                </div>
+                
+                <h4>电路参数</h4>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="currentResist">电阻 (Ω):</label>
+                        <input type="number" id="currentResist" name="resist" placeholder="输入电阻值" step="any" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="currentInduct">电感 (H):</label>
+                        <input type="number" id="currentInduct" name="induct" placeholder="输入电感值" step="any" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="currentCapacit">电容 (F):</label>
+                        <input type="number" id="currentCapacit" name="capacit" placeholder="输入电容值" step="any" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn">计算电流</button>
+                <button type="button" class="btn secondary" onclick="clearForm('currentForm')">重置</button>
+            </form>
+        </div>
+        
+        <!-- 计算变量标签页 -->
+        <div id="variable" class="tab-content">
+            <h3>计算变量</h3>
+            <p>输入变量参数，使用 Variable 类计算各种电气参数。</p>
+            
+            <form id="variableForm" onsubmit="event.preventDefault(); calculateVariable();">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="varName">变量名称:</label>
+                        <input type="text" id="varName" name="name" placeholder="输入变量名称" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="varValue">变量值:</label>
+                        <input type="number" id="varValue" name="value" placeholder="输入变量值" step="any" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="lengthGuidao">钢轨长度 (m):</label>
+                        <input type="number" id="lengthGuidao" name="length_guidao" placeholder="输入钢轨长度" step="any" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="resistPerMeter">每米电阻 (Ω/m):</label>
+                        <input type="number" id="resistPerMeter" name="resist_per_meter" placeholder="输入每米电阻" step="any" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="inductPerMeter">每米电感 (H/m):</label>
+                        <input type="number" id="inductPerMeter" name="induct_per_meter" placeholder="输入每米电感" step="any" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="capacitPerMeter">每米电容 (F/m):</label>
+                        <input type="number" id="capacitPerMeter" name="capacit_per_meter" placeholder="输入每米电容" step="any" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn">计算变量</button>
+                <button type="button" class="btn secondary" onclick="clearForm('variableForm')">重置</button>
+            </form>
+        </div>
+        
+        <!-- 错误数据观察标签页 -->
+        <div id="error" class="tab-content">
+            <h3>错误数据观察</h3>
+            <p>输入错误参数，观察轨道电路故障数据。</p>
+            
+            <form id="errorForm" onsubmit="event.preventDefault(); observeErrorData();">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="trail">轨道名称:</label>
+                        <input type="text" id="trail" name="trail" placeholder="输入轨道名称" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="errorType">错误类型:</label>
+                        <select id="errorType" name="error_type" required>
+                            <option value="0">0. 无故障</option>
+                            <option value="1">1. 接收端调谐单元1断路</option>
+                            <option value="2">2. 发送端调谐单元1断路</option>
+                            <option value="3">3. 接收端空心线圈断路</option>
+                            <option value="4">4. 接收端空芯线圈短路</option>
+                            <option value="5">5. 接收端调谐单元2断路</option>
+                            <option value="6">6. 补偿电容3断路</option>
+                            <option value="7">7. 补偿电容3短路</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="errorValue">错误值:</label>
+                        <input type="number" id="errorValue" name="error_value" placeholder="输入错误值" step="any" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="errorPosition">错误位置:</label>
+                        <input type="text" id="errorPosition" name="error_position" placeholder="输入错误位置，如69G" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn">观察错误数据</button>
+                <button type="button" class="btn secondary" onclick="clearForm('errorForm')">重置</button>
+            </form>
+            
+            <div style="margin-top: 20px;">
+                <h4>快速测试</h4>
+                <p>点击以下按钮进行快速测试:</p>
+                <button class="btn" onclick="quickTestError(0, '69G')">无故障 (69G)</button>
+                <button class="btn" onclick="quickTestError(1, '69G')">接收端调谐单元1断路 (69G)</button>
+                <button class="btn" onclick="quickTestError(3, '69G')">接收端空心线圈断路 (69G)</button>
+                <button class="btn" onclick="quickTestError(6, '69G')">补偿电容3断路 (69G)</button>
+            </div>
+        </div>
+        
+        <!-- 数据显示区域 -->
+        <h2>API 响应结果</h2>
+        <div class="data-display" id="dataDisplay">
+            <p class="loading">选择一个标签页开始交互...</p>
+        </div>
+        
+        <!-- 信息区域 -->
+        <h2>应用信息</h2>
+        <div class="card">
+            <p><strong>后端框架:</strong> FastAPI</p>
+            <p><strong>编程语言:</strong> Python</p>
+            <p><strong>部署目标:</strong> PythonAnywhere</p>
+            <p><strong>API 文档:</strong> <a href="/docs" target="_blank">Swagger UI</a> | <a href="/redoc" target="_blank">ReDoc</a></p>
+            <p><strong>计算模块:</strong> jisuan_guidao.py</p>
+        </div>
+    </div>
+    
+    <script>
+        // 标签页功能
+        function openTab(evt, tabName) {
+            // 隐藏所有标签内容
+            var i, tabContent, tabButtons;
+            tabContent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabContent.length; i++) {
+                tabContent[i].style.display = "none";
+            }
+            
+            // 移除所有按钮的活动状态
+            tabButtons = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].className = tabButtons[i].className.replace(" active", "");
+            }
+            
+            // 显示当前标签内容和添加活动状态
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // 获取数据按钮点击事件
+        async function fetchData() {
+            const dataDisplay = document.getElementById('dataDisplay');
+            dataDisplay.innerHTML = '<p class="loading">正在从后端获取数据...</p>';
+            
+            try {
+                const response = await fetch('/api/data');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                
+                // 格式化并显示数据
+                let html = '<p class="success">✅ 数据获取成功！</p>';
+                html += '<h3>响应数据:</h3>';
+                html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.data && data.data.items) {
+                    html += '<h3>项目列表:</h3>';
+                    html += '<table>';
+                    html += '<tr><th>序号</th><th>项目名称</th></tr>';
+                    data.data.items.forEach((item, index) => {
+                        html += `<tr><td>${index + 1}</td><td>${item}</td></tr>`;
+                    });
+                    html += '</table>';
+                }
+                
+                dataDisplay.innerHTML = html;
+            } catch (error) {
+                dataDisplay.innerHTML = `<p class="error">❌ 数据获取失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 获取特定项目按钮点击事件
+        async function fetchItem() {
+            const dataDisplay = document.getElementById('dataDisplay');
+            const itemId = document.getElementById('itemId').value;
+            
+            if (!itemId || isNaN(itemId)) {
+                dataDisplay.innerHTML = '<p class="error">❌ 请输入有效的项目 ID</p>';
+                return;
+            }
+            
+            dataDisplay.innerHTML = `<p class="loading">正在获取项目 ${itemId} 的数据...</p>`;
+            
+            try {
+                const response = await fetch(`/api/items/${itemId}?q=测试参数`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                
+                // 格式化并显示数据
+                let html = '<p class="success">✅ 项目数据获取成功！</p>';
+                html += '<h3>项目详情:</h3>';
+                html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                dataDisplay.innerHTML = html;
+            } catch (error) {
+                dataDisplay.innerHTML = `<p class="error">❌ 项目数据获取失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 清除数据按钮点击事件
+        function clearData() {
+            const dataDisplay = document.getElementById('dataDisplay');
+            dataDisplay.innerHTML = '<p class="loading">选择一个标签页开始交互...</p>';
+        }
+        
+        // 清除表单
+        function clearForm(formId) {
+            document.getElementById(formId).reset();
+        }
+        
+        // 计算阻抗
+        async function calculateImpedance() {
+            const form = document.getElementById('impedanceForm');
+            const dataDisplay = document.getElementById('dataDisplay');
+            
+            dataDisplay.innerHTML = '<p class="loading">正在计算阻抗...</p>';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/api/calculate/impedance', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    let html = '<p class="success">✅ 阻抗计算成功！</p>';
+                    html += '<div class="card">';
+                    html += `<h3>计算结果</h3>`;
+                    html += `<p><strong>阻抗模:</strong> ${result.result.impedance_mod.toFixed(6)} Ω</p>`;
+                    
+                    // 显示复数形式
+                    const impComplex = result.result.impedance_complex;
+                    html += `<h4>复数形式</h4>`;
+                    html += `<p><strong>实部 (R):</strong> ${impComplex.real.toFixed(6)} Ω</p>`;
+                    html += `<p><strong>虚部 (jX):</strong> ${impComplex.imag.toFixed(6)} Ω</p>`;
+                    html += `<p><strong>复数表示:</strong> ${impComplex.real.toFixed(6)} + j${impComplex.imag.toFixed(6)} Ω</p>`;
+                    html += `<p><strong>幅值:</strong> ${impComplex.magnitude.toFixed(6)} Ω</p>`;
+                    html += `<p><strong>相位:</strong> ${impComplex.phase.toFixed(6)}°</p>`;
+                    
+                    html += `<h4>输入参数</h4>`;
+                    html += `<p><strong>电阻:</strong> ${result.result.resist} Ω</p>`;
+                    html += `<p><strong>电感:</strong> ${result.result.induct} H</p>`;
+                    html += `<p><strong>电容:</strong> ${result.result.capacit} F</p>`;
+                    if (result.result.angular_frequency) {
+                        html += `<p><strong>角频率:</strong> ${result.result.angular_frequency.toFixed(3)} rad/s</p>`;
+                    }
+                    html += '</div>';
+                    html += '<h4>完整响应数据:</h4>';
+                    html += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    dataDisplay.innerHTML = html;
+                } else {
+                    dataDisplay.innerHTML = `<p class="error">❌ 计算失败: ${result.message}</p>`;
+                }
+            } catch (error) {
+                dataDisplay.innerHTML = `<p class="error">❌ 计算失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 计算导纳
+        async function calculateAdmittance() {
+            const form = document.getElementById('admittanceForm');
+            const dataDisplay = document.getElementById('dataDisplay');
+            
+            dataDisplay.innerHTML = '<p class="loading">正在计算导纳...</p>';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/api/calculate/admittance', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    let html = '<p class="success">✅ 导纳计算成功！</p>';
+                    html += '<div class="card">';
+                    html += `<h3>计算结果</h3>`;
+                    html += `<p><strong>导纳模:</strong> ${result.result.admittance_mod.toFixed(6)} S</p>`;
+                    
+                    // 显示复数形式
+                    const admComplex = result.result.admittance_complex;
+                    html += `<h4>复数形式</h4>`;
+                    html += `<p><strong>实部 (G):</strong> ${admComplex.real.toFixed(6)} S</p>`;
+                    html += `<p><strong>虚部 (jB):</strong> ${admComplex.imag.toFixed(6)} S</p>`;
+                    html += `<p><strong>复数表示:</strong> ${admComplex.real.toFixed(6)} + j${admComplex.imag.toFixed(6)} S</p>`;
+                    html += `<p><strong>幅值:</strong> ${admComplex.magnitude.toFixed(6)} S</p>`;
+                    html += `<p><strong>相位:</strong> ${admComplex.phase.toFixed(6)}°</p>`;
+                    
+                    html += `<h4>输入参数</h4>`;
+                    html += `<p><strong>电阻:</strong> ${result.result.resist} Ω</p>`;
+                    html += `<p><strong>电感:</strong> ${result.result.induct} H</p>`;
+                    html += `<p><strong>电容:</strong> ${result.result.capacit} F</p>`;
+                    if (result.result.angular_frequency) {
+                        html += `<p><strong>角频率:</strong> ${result.result.angular_frequency.toFixed(3)} rad/s</p>`;
+                    }
+                    html += '</div>';
+                    html += '<h4>完整响应数据:</h4>';
+                    html += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    dataDisplay.innerHTML = html;
+                } else {
+                    dataDisplay.innerHTML = `<p class="error">❌ 计算失败: ${result.message}</p>`;
+                }
+            } catch (error) {
+                dataDisplay.innerHTML = `<p class="error">❌ 计算失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 计算电流
+        async function calculateCurrent() {
+            const form = document.getElementById('currentForm');
+            const dataDisplay = document.getElementById('dataDisplay');
+            
+            dataDisplay.innerHTML = '<p class="loading">正在计算电流...</p>';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/api/calculate/current', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    let html = '<p class="success">✅ 电流计算成功！</p>';
+                    html += '<div class="card">';
+                    html += `<h3>计算结果</h3>`;
+                    html += `<p><strong>电流实部:</strong> ${result.result.current_real.toFixed(6)} A</p>`;
+                    html += `<p><strong>电流虚部:</strong> ${result.result.current_imag.toFixed(6)} A</p>`;
+                    html += `<h4>输入参数</h4>`;
+                    html += `<p><strong>电压实部:</strong> ${result.result.voltage_real} V</p>`;
+                    html += `<p><strong>电压虚部:</strong> ${result.result.voltage_imag} V</p>`;
+                    html += `<p><strong>电阻:</strong> ${result.result.resist} Ω</p>`;
+                    html += `<p><strong>电感:</strong> ${result.result.induct} H</p>`;
+                    html += `<p><strong>电容:</strong> ${result.result.capacit} F</p>`;
+                    html += '</div>';
+                    html += '<h4>完整响应数据:</h4>';
+                    html += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    dataDisplay.innerHTML = html;
+                } else {
+                    dataDisplay.innerHTML = `<p class="error">❌ 计算失败: ${result.message}</p>`;
+                }
+            } catch (error) {
+                dataDisplay.innerHTML = `<p class="error">❌ 计算失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 计算变量
+        async function calculateVariable() {
+            const form = document.getElementById('variableForm');
+            const dataDisplay = document.getElementById('dataDisplay');
+            
+            dataDisplay.innerHTML = '<p class="loading">正在计算变量...</p>';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/api/calculate/variable', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    let html = '<p class="success">✅ 变量计算成功！</p>';
+                    html += '<div class="card">';
+                    html += `<h3>计算结果</h3>`;
+                    html += `<p><strong>变量名称:</strong> ${result.result.name}</p>`;
+                    html += `<p><strong>变量值:</strong> ${result.result.value}</p>`;
+                    html += `<p><strong>阻抗:</strong> ${result.result.impedance.toFixed(6)} Ω</p>`;
+                    html += `<p><strong>导纳:</strong> ${result.result.admittance.toFixed(6)} S</p>`;
+                    html += `<p><strong>传播系数模:</strong> ${result.result.gamma_mod.toFixed(6)}</p>`;
+                    html += `<h4>电气参数</h4>`;
+                    html += `<p><strong>钢轨总电阻:</strong> ${result.result.resist_guidao.toFixed(6)} Ω</p>`;
+                    html += `<p><strong>钢轨总电感:</strong> ${result.result.induct_guidao.toFixed(6)} H</p>`;
+                    html += `<p><strong>钢轨总电容:</strong> ${result.result.capacit_guidao.toFixed(6)} F</p>`;
+                    html += `<p><strong>每米电导:</strong> ${result.result.conduct_per_meter.toFixed(6)} S/m</p>`;
+                    html += `<p><strong>钢轨总电导:</strong> ${result.result.conduct_guidao.toFixed(6)} S</p>`;
+                    html += '</div>';
+                    html += '<h4>完整响应数据:</h4>';
+                    html += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    dataDisplay.innerHTML = html;
+                } else {
+                    dataDisplay.innerHTML = `<p class="error">❌ 计算失败: ${result.message}</p>`;
+                }
+            } catch (error) {
+                dataDisplay.innerHTML = `<p class="error">❌ 计算失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 观察错误数据
+        async function observeErrorData() {
+            const form = document.getElementById('errorForm');
+            const dataDisplay = document.getElementById('dataDisplay');
+            
+            dataDisplay.innerHTML = '<p class="loading">正在观察错误数据...</p>';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/api/error/observe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    let html = '<p class="success">✅ 错误数据观察成功！</p>';
+                    html += '<div class="card">';
+                    html += `<h3>错误信息</h3>`;
+                    html += `<p><strong>轨道名称:</strong> ${result.result.trail}</p>`;
+                    html += `<p><strong>错误类型:</strong> ${result.result.error_type} (${result.result.error_status})</p>`;
+                    html += `<p><strong>错误值:</strong> ${result.result.error_value}</p>`;
+                    html += `<p><strong>错误位置:</strong> ${result.result.error_position}</p>`;
+                    
+                    if (result.result.model_info) {
+                        html += `<h4>电路模型信息</h4>`;
+                        html += `<p><strong>载频率:</strong> ${result.result.model_info.frequency} Hz</p>`;
+                        html += `<p><strong>角频率:</strong> ${result.result.model_info.angular_frequency.toFixed(3)} rad/s</p>`;
+                        html += `<p><strong>补偿电容:</strong> ${result.result.model_info.capacitance} uF</p>`;
+                        html += `<p><strong>变压器变比:</strong> ${result.result.model_info.transformer_ratio}</p>`;
+                    }
+                    
+                    html += '</div>';
+                    html += '<h4>完整响应数据:</h4>';
+                    html += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    dataDisplay.innerHTML = html;
+                } else {
+                    dataDisplay.innerHTML = `<p class="error">❌ 观察失败: ${result.message}</p>`;
+                }
+            } catch (error) {
+                dataDisplay.innerHTML = `<p class="error">❌ 观察失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 快速测试错误数据
+        async function quickTestError(errorType, errorPosition) {
+            const dataDisplay = document.getElementById('dataDisplay');
+            
+            dataDisplay.innerHTML = `<p class="loading">正在快速测试错误类型 ${errorType}...</p>`;
+            
+            try {
+                const formData = new FormData();
+                formData.append('trail', 'test');
+                formData.append('error_type', errorType);
+                formData.append('error_value', 0);
+                formData.append('error_position', errorPosition);
+                
+                const response = await fetch('/api/error/observe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    let html = '<p class="success">✅ 快速测试成功！</p>';
+                    html += '<div class="card">';
+                    html += `<h3>错误信息</h3>`;
+                    html += `<p><strong>轨道名称:</strong> ${result.result.trail}</p>`;
+                    html += `<p><strong>错误类型:</strong> ${result.result.error_type} (${result.result.error_status})</p>`;
+                    html += `<p><strong>错误值:</strong> ${result.result.error_value}</p>`;
+                    html += `<p><strong>错误位置:</strong> ${result.result.error_position}</p>`;
+                    
+                    if (result.result.model_info) {
+                        html += `<h4>电路模型信息</h4>`;
+                        html += `<p><strong>载频率:</strong> ${result.result.model_info.frequency} Hz</p>`;
+                        html += `<p><strong>角频率:</strong> ${result.result.model_info.angular_frequency.toFixed(3)} rad/s</p>`;
+                        html += `<p><strong>补偿电容:</strong> ${result.result.model_info.capacitance} uF</p>`;
+                        html += `<p><strong>变压器变比:</strong> ${result.result.model_info.transformer_ratio}</p>`;
+                    }
+                    
+                    html += '</div>';
+                    html += '<h4>完整响应数据:</h4>';
+                    html += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    dataDisplay.innerHTML = html;
+                } else {
+                    dataDisplay.innerHTML = `<p class="error">❌ 测试失败: ${result.message}</p>`;
+                }
+            } catch (error) {
+                dataDisplay.innerHTML = `<p class="error">❌ 测试失败: ${error.message}</p>`;
+            }
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('FastAPI 交互式 Web 应用已加载');
+            // 可以在这里添加初始化逻辑
+        });
+    </script>
+</body>
+</html>

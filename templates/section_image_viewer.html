@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>铁路区段图片查看器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .main-content {
+            display: flex;
+            gap: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+        }
+        .section-selector {
+            flex: 1;
+            min-width: 300px;
+            max-width: 400px;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .image-display {
+            flex: 2;
+            min-width: 300px;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        .section-title {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .section-list {
+            list-style-type: none;
+        }
+        .section-item {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .section-item:hover {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .section-item.active {
+            background-color: #2196f3;
+            color: white;
+            border-color: #1976d2;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .section-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .section-description {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .image-container {
+            margin: 20px 0;
+        }
+        .display-image {
+            max-width: 100%;
+            max-height: 600px;
+            object-fit: contain;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .image-info {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .image-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .image-description {
+            color: #666;
+            font-size: 14px;
+        }
+        .loading {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .section-selector,
+            .image-display {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>铁路区段图片查看器</h1>
+            <div style="margin-top: 15px;">
+                <a href="/" class="btn">返回首页</a>
+                <a href="/image-viewer" class="btn">图片查看器</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="section-selector">
+                <div class="section-title">选择铁路区段</div>
+                <ul class="section-list" id="sectionList">
+                    <!-- 区段列表将通过JavaScript动态生成 -->
+                </ul>
+            </div>
+            
+            <div class="image-display">
+                <div class="image-container">
+                    <img id="displayImage" class="display-image" src="" alt="" style="display: none;">
+                    <p id="loadingText" class="loading">请选择一个铁路区段</p>
+                </div>
+                <div class="image-info" id="imageInfo" style="display: none;">
+                    <div class="image-title" id="imageTitle"></div>
+                    <div class="image-description" id="imageDescription"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 铁路区段数据配置
+        const railwaySections = {
+            "section1": {
+                id: "section1",
+                name: "区段1 - 无故障",
+                description: "正常运行状态，无故障",
+                image: "/static/images/错误展示0.png",
+                image_title: "错误展示0 - 无故障",
+                image_description: "铁路轨道电路正常运行状态，无任何故障。"
+            },
+            "section2": {
+                id: "section2",
+                name: "区段2 - 接收端调谐单元1断路",
+                description: "接收端调谐单元1发生断路故障",
+                image: "/static/images/错误展示1.png",
+                image_title: "错误展示1 - 接收端调谐单元1断路",
+                image_description: "接收端调谐单元1发生断路，导致轨道电路信号异常。"
+            },
+            "section3": {
+                id: "section3",
+                name: "区段3 - 发送端调谐单元1断路",
+                description: "发送端调谐单元1发生断路故障",
+                image: "/static/images/错误展示2.png",
+                image_title: "错误展示2 - 发送端调谐单元1断路",
+                image_description: "发送端调谐单元1发生断路，影响轨道电路信号发送。"
+            },
+            "section4": {
+                id: "section4",
+                name: "区段4 - 接收端空心线圈断路",
+                description: "接收端空心线圈发生断路故障",
+                image: "/static/images/错误展示3.png",
+                image_title: "错误展示3 - 接收端空心线圈断路",
+                image_description: "接收端空心线圈断路，导致轨道电路电感特性异常。"
+            },
+            "section5": {
+                id: "section5",
+                name: "区段5 - 接收端空芯线圈短路",
+                description: "接收端空芯线圈发生短路故障",
+                image: "/static/images/错误展示4.png",
+                image_title: "错误展示4 - 接收端空芯线圈短路",
+                image_description: "接收端空芯线圈短路，影响轨道电路信号传输。"
+            },
+            "section6": {
+                id: "section6",
+                name: "区段6 - 接收端调谐单元2断路",
+                description: "接收端调谐单元2发生断路故障",
+                image: "/static/images/错误展示5.png",
+                image_title: "错误展示5 - 接收端调谐单元2断路",
+                image_description: "接收端调谐单元2发生断路，导致轨道电路调谐异常。"
+            },
+            "section7": {
+                id: "section7",
+                name: "区段7 - 补偿电容3断路",
+                description: "补偿电容3发生断路故障",
+                image: "/static/images/错误展示6.png",
+                image_title: "错误展示6 - 补偿电容3断路",
+                image_description: "补偿电容3断路，影响轨道电路的电容补偿效果。"
+            },
+            "section8": {
+                id: "section8",
+                name: "区段8 - 补偿电容3短路",
+                description: "补偿电容3发生短路故障",
+                image: "/static/images/错误展示7.png",
+                image_title: "错误展示7 - 补偿电容3短路",
+                image_description: "补偿电容3短路，导致轨道电路电容特性异常。"
+            }
+        };
+        
+        // DOM元素
+        const sectionList = document.getElementById('sectionList');
+        const displayImage = document.getElementById('displayImage');
+        const loadingText = document.getElementById('loadingText');
+        const imageInfo = document.getElementById('imageInfo');
+        const imageTitle = document.getElementById('imageTitle');
+        const imageDescription = document.getElementById('imageDescription');
+        
+        // 初始化区段列表
+        function initSectionList() {
+            for (const [key, section] of Object.entries(railwaySections)) {
+                const li = document.createElement('li');
+                li.className = 'section-item';
+                li.id = section.id;
+                li.innerHTML = `
+                    <div class="section-name">${section.name}</div>
+                    <div class="section-description">${section.description}</div>
+                `;
+                li.addEventListener('click', () => selectSection(section.id));
+                sectionList.appendChild(li);
+            }
+        }
+        
+        // 选择区段
+        function selectSection(sectionId) {
+            // 移除所有活动状态
+            document.querySelectorAll('.section-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 添加当前活动状态
+            const selectedItem = document.getElementById(sectionId);
+            selectedItem.classList.add('active');
+            
+            // 显示对应图片
+            const section = railwaySections[sectionId];
+            if (section) {
+                loadingText.style.display = 'block';
+                displayImage.style.display = 'none';
+                imageInfo.style.display = 'none';
+                
+                // 图片加载完成后显示
+                displayImage.onload = function() {
+                    loadingText.style.display = 'none';
+                    displayImage.style.display = 'block';
+                    imageInfo.style.display = 'block';
+                    
+                    // 更新图片信息
+                    imageTitle.textContent = section.image_title;
+                    imageDescription.textContent = section.image_description;
+                };
+                
+                // 处理图片加载错误
+                displayImage.onerror = function() {
+                    loadingText.innerHTML = '<span class="error">图片加载失败</span>';
+                    displayImage.style.display = 'none';
+                    imageInfo.style.display = 'none';
+                };
+                
+                // 设置图片源
+                displayImage.src = section.image;
+                displayImage.alt = section.image_title;
+            }
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initSectionList();
+            // 默认选择第一个区段
+            if (Object.keys(railwaySections).length > 0) {
+                const firstSectionId = Object.keys(railwaySections)[0];
+                selectSection(firstSectionId);
+            }
+        });
+    </script>
+</body>
+</html>
