@@ -305,7 +305,6 @@ class Error_Of_Trail:
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
             #主轨入电压
             self.output_voltage_main=self.count_output()
-            return self.matrix
         elif self.error_type==2:
             # SPT电缆————匹配变压器——调谐单元(断路）——钢轨及补偿电容——调谐单元——匹配变压器——SPT电缆——接收端
             frequency = self.frequency_table(self.error_position)
@@ -329,7 +328,6 @@ class Error_Of_Trail:
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
             #主轨入电压
             self.output_voltage_main=self.count_output()
-            return self.matrix
         elif self.error_type==5:
             # SPT电缆————匹配变压器——调谐单元——钢轨及补偿电容——调谐单元（断路）——匹配变压器——SPT电缆——接收端
             frequency = self.frequency_table(self.error_position)
@@ -353,7 +351,6 @@ class Error_Of_Trail:
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
             #主轨入电压
             self.output_voltage_main=self.count_output()
-            return self.matrix
         elif self.error_type==6:
             #补偿电容断路，视为没有补偿电容
             frequency = self.frequency_table(self.error_position)
@@ -379,8 +376,6 @@ class Error_Of_Trail:
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
-
-            return self.matrix
         elif self.error_type==7:
             #补偿电容短路即视为电容为零
             frequency = self.frequency_table(self.error_position)
@@ -407,8 +402,19 @@ class Error_Of_Trail:
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
             #主轨入电压
             self.output_voltage_main=self.count_output()
-            return self.matrix
-
+        
+        # 使用实例变量中的电压值作为结果
+        voltage_results = {
+            "send_end_track_voltage": float(self.output_voltage_surface1.real) if hasattr(self, 'output_voltage_surface1') else 0.0,
+            "receive_end_track_voltage": float(self.output_voltage_surface2.real) if hasattr(self, 'output_voltage_surface2') else 0.0,
+            "main_track_input_voltage": float(self.output_voltage_main.real) if hasattr(self, 'output_voltage_main') else 0.0
+        }
+        
+        # 返回包含矩阵和电压结果的字典
+        return {
+            "matrix": self.matrix,
+            "voltage_results": voltage_results
+        }
 
     def call_input(self,input_V,ballast_resist_per_meter):
         """根据故障类型选择需要调用的等效输入阻抗 ballast_resist_per_meter为道床漏阻"""
@@ -577,7 +583,17 @@ class Error_Of_Trail:
     def call_matrix(self):
         """根据故障类型选择合适的传输矩阵"""
         if self.error_type in [0, 1, 2, 3, 4, 5, 6, 7]:
-            return self.call_matrix_main()
+            result = self.call_matrix_main()
+            # 如果返回的是字典，保存电压结果并返回矩阵
+            if isinstance(result, dict):
+                self.voltage_results = result.get('voltage_results', {})
+                # 将矩阵保存到实例变量中，供count_output使用
+                self.matrix = result['matrix']
+                return result['matrix']
+            else:
+                # 兼容旧格式
+                self.matrix = result
+                return result
         else:
             return np.array([[1, 0], [0, 1]])
     
@@ -759,8 +775,30 @@ class Error_Of_Trail:
             # 12. 调用主轨道和小轨道传输矩阵计算方法
             print("\n=== 计算传输矩阵 ===")
             # 计算主轨道传输矩阵
-            main_track_matrix = self.call_matrix_main()
-            print(f"主轨道传输矩阵:\n{main_track_matrix}")
+            main_track_result = self.call_matrix_main()
+            
+            # 处理返回结果，提取矩阵和电压结果
+            if isinstance(main_track_result, dict):
+                main_track_matrix = main_track_result['matrix']
+                voltage_results = main_track_result['voltage_results']
+                
+                # 输出主轨道传输矩阵
+                print(f"主轨道传输矩阵:\n{main_track_matrix}")
+                
+                # 输出新的电压结果
+                print("\n=== 电压计算结果 ===")
+                print(f"送端轨面电压: {voltage_results['send_end_track_voltage']:.2f} V")
+                print(f"受端轨面电压: {voltage_results['receive_end_track_voltage']:.2f} V")
+                print(f"主轨入电压: {voltage_results['main_track_input_voltage']:.2f} V")
+            else:
+                # 兼容旧格式
+                main_track_matrix = main_track_result
+                voltage_results = {
+                    "send_end_track_voltage": 0.0,
+                    "receive_end_track_voltage": 0.0,
+                    "main_track_input_voltage": 0.0
+                }
+                print(f"主轨道传输矩阵:\n{main_track_matrix}")
             
             # 计算小轨道传输矩阵
             small_track_matrix = self.call_matrix_small()
@@ -790,6 +828,7 @@ class Error_Of_Trail:
                     "main_track_matrix": main_track_matrix,
                     "small_track_matrix": small_track_matrix
                 },
+                "voltage_results": voltage_results,
                 "fault_info": {
                     "error_type": self.error_type,
                     "error_status": self.status(),

@@ -963,28 +963,33 @@
                     }
                     
                     resolve({
-                        status: 'success',
-                        section_info: {
-                            id: data.section_id,
-                            name: data.section_name,
-                            description: selectedSection.description
-                        },
-                        error_info: {
-                            type: data.error_type,
-                            name: error_type_name
-                        },
-                        input_params: data,
-                        spt_cable_params: spt_cable_params,
-                        voltage_params: voltage_params,
-                        calculation_result: {
-                            total_impedance: total_impedance,
-                            total_admittance: total_admittance,
-                            propagation_constant: propagation_constant,
-                            characteristic_impedance: characteristic_impedance,
-                            inductive_reactance: inductive_reactance,
-                            capacitive_reactance: capacitive_reactance
-                        }
-                    });
+                status: 'success',
+                section_info: {
+                    id: data.section_id,
+                    name: data.section_name,
+                    description: selectedSection.description
+                },
+                error_info: {
+                    type: data.error_type,
+                    name: error_type_name
+                },
+                input_params: data,
+                spt_cable_params: spt_cable_params,
+                voltage_params: voltage_params,
+                calculation_result: {
+                    total_impedance: total_impedance,
+                    total_admittance: total_admittance,
+                    propagation_constant: propagation_constant,
+                    characteristic_impedance: characteristic_impedance,
+                    inductive_reactance: inductive_reactance,
+                    capacitive_reactance: capacitive_reactance
+                },
+                voltage_results: {
+                    send_end_track_voltage: Math.random() * 10 + 160,  // 模拟送端轨面电压
+                    receive_end_track_voltage: Math.random() * 5 + 150,  // 模拟受端轨面电压
+                    main_track_input_voltage: Math.random() * 5 + 120  // 模拟主轨入电压
+                }
+            });
                 }, 1000);
             });
         }
@@ -1061,17 +1066,29 @@
                 }
                 
                 // 计算结果
+            html += '<div class="result-section">';
+            html += '<h4>计算结果</h4>';
+            html += '<div class="result-grid">';
+            html += `<div class="result-item"><div class="result-label">总阻抗:</div><div class="result-value">${result.calculation_result.total_impedance.toFixed(6)} Ω</div></div>`;
+            html += `<div class="result-item"><div class="result-label">总导纳:</div><div class="result-value">${result.calculation_result.total_admittance.toFixed(6)} S</div></div>`;
+            html += `<div class="result-item"><div class="result-label">传播系数:</div><div class="result-value">${result.calculation_result.propagation_constant.toFixed(6)}</div></div>`;
+            html += `<div class="result-item"><div class="result-label">特性阻抗:</div><div class="result-value">${result.calculation_result.characteristic_impedance.toFixed(6)} Ω</div></div>`;
+            html += `<div class="result-item"><div class="result-label">感抗:</div><div class="result-value">${result.calculation_result.inductive_reactance.toFixed(6)} Ω</div></div>`;
+            html += `<div class="result-item"><div class="result-label">容抗:</div><div class="result-value">${result.calculation_result.capacitive_reactance.toFixed(6)} Ω</div></div>`;
+            html += '</div>';
+            html += '</div>';
+            
+            // 电压计算结果
+            if (result.voltage_results) {
                 html += '<div class="result-section">';
-                html += '<h4>计算结果</h4>';
+                html += '<h4>电压计算结果</h4>';
                 html += '<div class="result-grid">';
-                html += `<div class="result-item"><div class="result-label">总阻抗:</div><div class="result-value">${result.calculation_result.total_impedance.toFixed(6)} Ω</div></div>`;
-                html += `<div class="result-item"><div class="result-label">总导纳:</div><div class="result-value">${result.calculation_result.total_admittance.toFixed(6)} S</div></div>`;
-                html += `<div class="result-item"><div class="result-label">传播系数:</div><div class="result-value">${result.calculation_result.propagation_constant.toFixed(6)}</div></div>`;
-                html += `<div class="result-item"><div class="result-label">特性阻抗:</div><div class="result-value">${result.calculation_result.characteristic_impedance.toFixed(6)} Ω</div></div>`;
-                html += `<div class="result-item"><div class="result-label">感抗:</div><div class="result-value">${result.calculation_result.inductive_reactance.toFixed(6)} Ω</div></div>`;
-                html += `<div class="result-item"><div class="result-label">容抗:</div><div class="result-value">${result.calculation_result.capacitive_reactance.toFixed(6)} Ω</div></div>`;
+                html += `<div class="result-item"><div class="result-label">送端轨面电压:</div><div class="result-value">${result.voltage_results.send_end_track_voltage.toFixed(2)} V</div></div>`;
+                html += `<div class="result-item"><div class="result-label">受端轨面电压:</div><div class="result-value">${result.voltage_results.receive_end_track_voltage.toFixed(2)} V</div></div>`;
+                html += `<div class="result-item"><div class="result-label">主轨入电压:</div><div class="result-value">${result.voltage_results.main_track_input_voltage.toFixed(2)} V</div></div>`;
                 html += '</div>';
                 html += '</div>';
+            }
                 
                 resultContent.innerHTML = html;
                 
@@ -1119,7 +1136,10 @@
                 '传播系数',
                 '特性阻抗(Ω)',
                 '感抗(Ω)',
-                '容抗(Ω)'
+                '容抗(Ω)',
+                '送端轨面电压(V)',
+                '受端轨面电压(V)',
+                '主轨入电压(V)'
             ];
             csvContent += headers.join(',') + '\n';
             
@@ -1148,7 +1168,10 @@
                 simulationResult.calculation_result.propagation_constant.toFixed(6),
                 simulationResult.calculation_result.characteristic_impedance.toFixed(6),
                 simulationResult.calculation_result.inductive_reactance.toFixed(6),
-                simulationResult.calculation_result.capacitive_reactance.toFixed(6)
+                simulationResult.calculation_result.capacitive_reactance.toFixed(6),
+                simulationResult.voltage_results ? simulationResult.voltage_results.send_end_track_voltage.toFixed(2) : '',
+                simulationResult.voltage_results ? simulationResult.voltage_results.receive_end_track_voltage.toFixed(2) : '',
+                simulationResult.voltage_results ? simulationResult.voltage_results.main_track_input_voltage.toFixed(2) : ''
             ];
             csvContent += dataRow.join(',') + '\n';
             
