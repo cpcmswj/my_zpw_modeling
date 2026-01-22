@@ -34,7 +34,7 @@ def start_server():
     """启动Uvicorn服务器"""
     print("正在启动FastAPI服务器...")
     try:
-        # 启动Uvicorn服务器，使用uvloop事件循环
+        # 启动Uvicorn服务器，使用默认事件循环
         cmd = [
             sys.executable,
             "-m", "uvicorn",
@@ -42,7 +42,6 @@ def start_server():
             "--host", "127.0.0.1",
             "--port", "8000",
             "--workers", "1",
-            "--loop", "uvloop",
             "--log-level", "info"
         ]
         

@@ -42,6 +42,10 @@ reinitialize_parameters() - 根据用户输入的参数重新初始化Variable�
 其他: 0Hz (无效)
 """
 
+
+
+
+
 class Error_Of_Trail:
     def __init__(self,trail,error_type,error_value,error_position):
         self.trail=trail

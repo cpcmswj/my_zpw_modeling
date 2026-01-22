@@ -167,15 +167,52 @@ def find_transformer_input_impedance(frequency):
             return item[6]
     return 0
 
-def find_SPTcable_parameters(frequency):
-    """根据载频率查表获取单节SPT电缆的参数(传输常数gamma_cable和特性阻抗Z_d和阻抗角phi)"""
+def find_SPTcable_parameters(frequency, randomize=False, variation=0.1):
+    """根据载频率获取单节SPT电缆的参数(传输常数gamma_cable和特性阻抗Z_d和阻抗角phi)
+    
+    参数：
+        frequency: int, 载频率(Hz)
+        randomize: bool, 是否使用随机生成的值，默认为False
+        variation: float, 随机变化范围，默认为10%
+    
+    返回：
+        tuple: (传输常数gamma_cable, 特性阻抗Z_d, 阻抗角phi)
+    """
+    if randomize:
+        # 使用随机生成的参数
+        try:
+            from random_parameters import generate_random_SPT_cable_params
+            return generate_random_SPT_cable_params(frequency, variation)
+        except ImportError:
+            print("无法导入random_parameters模块，使用原始查表值")
+    
+    # 使用原始查表值
     for item in frequency_parameters_table:
         if item[1] == frequency:
             return item[7], item[8], item[9]
     return 0, 0, 0
 
-def find_tuning_unit_parameters(f, unit):
-    """查表获取F1、F2调谐单元各元件参数的计算值"""
+def find_tuning_unit_parameters(f, unit, randomize=False, variation=0.05):
+    """获取F1、F2调谐单元各元件参数的计算值
+    
+    参数：
+        f: int, 调谐单元类型，1表示F1，2表示F2
+        unit: int, 元件编号，1-3表示不同元件
+        randomize: bool, 是否使用随机生成的值，默认为False
+        variation: float, 随机变化范围，默认为5%
+    
+    返回：
+        float: 调谐单元元件参数值
+    """
+    if randomize:
+        # 使用随机生成的参数
+        try:
+            from random_parameters import generate_random_tuning_unit_params
+            return generate_random_tuning_unit_params(f, unit, variation)
+        except ImportError:
+            print("无法导入random_parameters模块，使用原始查表值")
+    
+    # 使用原始查表值
     if f == 1:  # F1
         if unit == 1:  # L1,单位uH
             return 37.145
@@ -191,34 +228,58 @@ def find_tuning_unit_parameters(f, unit):
     print("未找到该调谐单元参数")
     return 0
 
-def find_tuning_unit_impedance(angular_frequency, F):
-    """根据载频率和调谐单元类型查表获取调谐单元的等效阻抗"""
+def find_tuning_unit_impedance(angular_frequency, F, randomize=False, variation=0.05):
+    """根据载频率和调谐单元类型获取调谐单元的等效阻抗
+    
+    参数：
+        angular_frequency: float, 角频率
+        F: int, 调谐单元类型，1表示F1，2表示F2
+        randomize: bool, 是否使用随机生成的值，默认为False
+        variation: float, 随机变化范围，默认为5%
+    
+    返回：
+        complex: 调谐单元的等效阻抗
+    """
     if F == 1:
-        Z = 1j * angular_frequency * find_tuning_unit_parameters(1, 1) + 1 / (1j * angular_frequency * find_tuning_unit_parameters(1, 2))
+        Z = 1j * angular_frequency * find_tuning_unit_parameters(1, 1, randomize, variation) + \
+            1 / (1j * angular_frequency * find_tuning_unit_parameters(1, 2, randomize, variation))
         return Z
     elif F == 2:
-        Z1 = 1 / (1j * angular_frequency * find_tuning_unit_parameters(2, 3))
-        Z2 = 1j * angular_frequency * find_tuning_unit_parameters(2, 1) + 1 / (1j * angular_frequency * find_tuning_unit_parameters(2, 2))
+        Z1 = 1 / (1j * angular_frequency * find_tuning_unit_parameters(2, 3, randomize, variation))
+        Z2 = 1j * angular_frequency * find_tuning_unit_parameters(2, 1, randomize, variation) + \
+            1 / (1j * angular_frequency * find_tuning_unit_parameters(2, 2, randomize, variation))
         Z = Z1 * Z2 / (Z1 + Z2)
         return Z
     print("未找到该调谐单元参数")
     return 0
 
-def find_tuning_unit_impedance_matrix(angular_frequency, F):
-    """根据载频率（角频率）和调谐单元类型查表获取调谐单元的等效传输矩阵
+def find_tuning_unit_impedance_matrix(angular_frequency, F, randomize=False, variation=0.05):
+    """根据载频率（角频率）和调谐单元类型获取调谐单元的等效传输矩阵
     输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
-    其中T为调谐单元传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
+    其中T为调谐单元传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量
+    
+    参数：
+        angular_frequency: float, 角频率
+        F: int, 调谐单元类型，1表示F1，2表示F2
+        randomize: bool, 是否使用随机生成的值，默认为False
+        variation: float, 随机变化范围，默认为5%
+    
+    返回：
+        np.array: 调谐单元的等效传输矩阵
+    """
     if F == 1:
-        Z = 1j * angular_frequency * find_tuning_unit_parameters(1, 1) + 1 / (1j * angular_frequency * find_tuning_unit_parameters(1, 2))
+        Z = 1j * angular_frequency * find_tuning_unit_parameters(1, 1, randomize, variation) + \
+            1 / (1j * angular_frequency * find_tuning_unit_parameters(1, 2, randomize, variation))
         return np.array([[1, 0], [-1 / Z, 1]])
     elif F == 2:
-        Z1 = 1 / (1j * angular_frequency * find_tuning_unit_parameters(2, 3))
-        Z2 = 1j * angular_frequency * find_tuning_unit_parameters(2, 1) + 1 / (1j * angular_frequency * find_tuning_unit_parameters(2, 2))
+        Z1 = 1 / (1j * angular_frequency * find_tuning_unit_parameters(2, 3, randomize, variation))
+        Z2 = 1j * angular_frequency * find_tuning_unit_parameters(2, 1, randomize, variation) + \
+            1 / (1j * angular_frequency * find_tuning_unit_parameters(2, 2, randomize, variation))
         Z = Z1 * Z2 / (Z1 + Z2)
         return np.array([[1, 0], [-1 / Z, 1]])
     
     print("未找到该调谐单元参数")
-    return 0
+    return np.eye(2)
 
 def find_attenuation(r1, r2):
     """根据端子查表获取衰耗盘接收端变压器次级线圈匝数"""

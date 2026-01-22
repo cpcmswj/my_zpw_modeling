@@ -442,6 +442,40 @@
                                 <input type="number" id="errorValue" name="errorValue" placeholder="输入错误值" value="0" step="any">
                             </div>
                         </div>
+                        
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="voltageLevel">电平档位:</label>
+                                <select id="voltageLevel" name="voltageLevel">
+                                    <option value="1">档位1 (161-170V)</option>
+                                    <option value="2">档位2 (146-154V)</option>
+                                    <option value="3">档位3 (128-135V)</option>
+                                    <option value="4">档位4 (104.5-110.5V)</option>
+                                    <option value="5">档位5 (75-79.5V)</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label for="useRandomVoltage">
+                                    <input type="checkbox" id="useRandomVoltage" name="useRandomVoltage" value="1">
+                                    随机化输出电压幅值
+                                </label>
+                                <div style="margin-top: 5px; font-size: 14px; color: #666;">
+                                    勾选后，将根据档位上下限随机生成输出电压
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="useRandomParams">
+                                    <input type="checkbox" id="useRandomParams" name="useRandomParams" value="1">
+                                    使用随机生成的SPT电缆参数
+                                </label>
+                                <div style="margin-top: 5px; font-size: 14px; color: #666;">
+                                    勾选后，系统将使用随机生成的SPT电缆参数进行模拟计算
+                                </div>
+                            </div>
+                        </div>
                     </form>
                     
                     <div id="formValidation" class="validation-message" style="display: none;"></div>
@@ -811,6 +845,13 @@
                 const form = document.getElementById('simulationForm');
                 const formData = new FormData(form);
                 
+                // 检查是否使用随机参数
+                const useRandomParams = document.getElementById('useRandomParams').checked;
+                
+                // 检查是否使用随机电压
+                const useRandomVoltage = document.getElementById('useRandomVoltage').checked;
+                const voltageLevel = parseInt(document.getElementById('voltageLevel').value);
+                
                 // 简化的模拟计算（使用前端计算代替API调用）
                 const data = {
                     section_id: selectedSection.id,
@@ -822,7 +863,10 @@
                     capacitance: parseFloat(formData.get('capacitance')),
                     frequency: parseFloat(formData.get('frequency')),
                     error_type: selectedErrorType,
-                    error_value: parseFloat(formData.get('errorValue') || 0)
+                    error_value: parseFloat(formData.get('errorValue') || 0),
+                    use_random_params: useRandomParams,
+                    voltage_level: voltageLevel,
+                    use_random_voltage: useRandomVoltage
                 };
                 
                 // 模拟计算结果
@@ -852,6 +896,72 @@
                     const errorType = errorTypes.find(type => type.value === data.error_type);
                     const error_type_name = errorType ? errorType.name : "未知错误类型";
                     
+                    // 生成随机SPT电缆参数（模拟）
+                    let spt_cable_params = null;
+                    if (data.use_random_params) {
+                        // 模拟随机生成的SPT电缆参数
+                        const frequency = data.frequency;
+                        // 根据频率生成不同的随机参数范围
+                        let gamma_range, Z_d_range, phi_range;
+                        if (frequency === 1700) {
+                            gamma_range = { min: 0.5, max: 0.76 };
+                            Z_d_range = { min: 352, max: 440 };
+                            phi_range = { min: -45, max: -33 };
+                        } else if (frequency === 2000) {
+                            gamma_range = { min: 0.55, max: 0.81 };
+                            Z_d_range = { min: 324, max: 410 };
+                            phi_range = { min: -44, max: -32 };
+                        } else if (frequency === 2300) {
+                            gamma_range = { min: 0.59, max: 0.85 };
+                            Z_d_range = { min: 300, max: 386 };
+                            phi_range = { min: -43, max: -31 };
+                        } else if (frequency === 2600) {
+                            gamma_range = { min: 0.62, max: 0.88 };
+                            Z_d_range = { min: 285, max: 365 };
+                            phi_range = { min: -42, max: -30 };
+                        } else {
+                            // 默认范围
+                            gamma_range = { min: 0.5, max: 0.9 };
+                            Z_d_range = { min: 280, max: 450 };
+                            phi_range = { min: -45, max: -30 };
+                        }
+                        
+                        // 生成随机值
+                        spt_cable_params = {
+                            gamma_cable: (gamma_range.min + Math.random() * (gamma_range.max - gamma_range.min)).toFixed(3),
+                            Z_d: (Z_d_range.min + Math.random() * (Z_d_range.max - Z_d_range.min)).toFixed(1),
+                            phi: (phi_range.min + Math.random() * (phi_range.max - phi_range.min)).toFixed(1),
+                            frequency: frequency
+                        };
+                    }
+                    
+                    // 生成随机电压值
+                    let voltage_params = null;
+                    if (data.use_random_voltage) {
+                        const level = data.voltage_level;
+                        let voltage_range;
+                        if (level === 1) {
+                            voltage_range = { min: 161, max: 170 };
+                        } else if (level === 2) {
+                            voltage_range = { min: 146, max: 154 };
+                        } else if (level === 3) {
+                            voltage_range = { min: 128, max: 135 };
+                        } else if (level === 4) {
+                            voltage_range = { min: 104.5, max: 110.5 };
+                        } else if (level === 5) {
+                            voltage_range = { min: 75, max: 79.5 };
+                        } else {
+                            voltage_range = { min: 75, max: 170 };
+                        }
+                        
+                        voltage_params = {
+                            level: level,
+                            voltage: (voltage_range.min + Math.random() * (voltage_range.max - voltage_range.min)).toFixed(2),
+                            min_voltage: voltage_range.min,
+                            max_voltage: voltage_range.max
+                        };
+                    }
+                    
                     resolve({
                         status: 'success',
                         section_info: {
@@ -864,6 +974,8 @@
                             name: error_type_name
                         },
                         input_params: data,
+                        spt_cable_params: spt_cable_params,
+                        voltage_params: voltage_params,
                         calculation_result: {
                             total_impedance: total_impedance,
                             total_admittance: total_admittance,
@@ -918,8 +1030,35 @@
                 html += `<div class="result-item"><div class="result-label">电容:</div><div class="result-value">${result.input_params.capacitance} F/m</div></div>`;
                 html += `<div class="result-item"><div class="result-label">频率:</div><div class="result-value">${result.input_params.frequency} Hz</div></div>`;
                 html += `<div class="result-item"><div class="result-label">轨道区段:</div><div class="result-value">${result.input_params.section_id}</div></div>`;
+                html += `<div class="result-item"><div class="result-label">电平档位:</div><div class="result-value">${result.input_params.voltage_level}</div></div>`;
+                html += `<div class="result-item"><div class="result-label">随机化电压:</div><div class="result-value">${result.input_params.use_random_voltage ? '是' : '否'}</div></div>`;
+                html += `<div class="result-item"><div class="result-label">使用随机SPT参数:</div><div class="result-value">${result.input_params.use_random_params ? '是' : '否'}</div></div>`;
                 html += '</div>';
                 html += '</div>';
+                
+                // 电平档位参数（如果使用了随机电压）
+                if (result.voltage_params) {
+                    html += '<div class="result-section">';
+                    html += '<h4>电平档位输出电压</h4>';
+                    html += '<div class="result-grid">';
+                    html += `<div class="result-item"><div class="result-label">档位:</div><div class="result-value">${result.voltage_params.level}</div></div>`;
+                    html += `<div class="result-item"><div class="result-label">输出电压:</div><div class="result-value">${result.voltage_params.voltage} V</div></div>`;
+                    html += `<div class="result-item"><div class="result-label">电压范围:</div><div class="result-value">${result.voltage_params.min_voltage}-${result.voltage_params.max_voltage} V</div></div>`;
+                    html += '</div>';
+                    html += '</div>';
+                }
+                
+                // 随机SPT电缆参数（如果使用了的话）
+                if (result.spt_cable_params) {
+                    html += '<div class="result-section">';
+                    html += '<h4>随机SPT电缆参数</h4>';
+                    html += '<div class="result-grid">';
+                    html += `<div class="result-item"><div class="result-label">传输常数:</div><div class="result-value">${result.spt_cable_params.gamma_cable} dB/km</div></div>`;
+                    html += `<div class="result-item"><div class="result-label">特性阻抗:</div><div class="result-value">${result.spt_cable_params.Z_d} Ω</div></div>`;
+                    html += `<div class="result-item"><div class="result-label">阻抗角:</div><div class="result-value">${result.spt_cable_params.phi} °</div></div>`;
+                    html += '</div>';
+                    html += '</div>';
+                }
                 
                 // 计算结果
                 html += '<div class="result-section">';
@@ -967,6 +1106,14 @@
                 '电感(H/m)',
                 '电容(F/m)',
                 '频率(Hz)',
+                '电平档位',
+                '随机化电压',
+                '输出电压(V)',
+                '电压范围(V)',
+                '使用随机SPT参数',
+                'SPT传输常数(dB/km)',
+                'SPT特性阻抗(Ω)',
+                'SPT阻抗角(°)',
                 '总阻抗(Ω)',
                 '总导纳(S)',
                 '传播系数',
@@ -988,6 +1135,14 @@
                 simulationResult.input_params.inductance,
                 simulationResult.input_params.capacitance,
                 simulationResult.input_params.frequency,
+                simulationResult.input_params.voltage_level,
+                simulationResult.input_params.use_random_voltage ? '是' : '否',
+                simulationResult.voltage_params ? simulationResult.voltage_params.voltage : '',
+                simulationResult.voltage_params ? `${simulationResult.voltage_params.min_voltage}-${simulationResult.voltage_params.max_voltage}` : '',
+                simulationResult.input_params.use_random_params ? '是' : '否',
+                simulationResult.spt_cable_params ? simulationResult.spt_cable_params.gamma_cable : '',
+                simulationResult.spt_cable_params ? simulationResult.spt_cable_params.Z_d : '',
+                simulationResult.spt_cable_params ? simulationResult.spt_cable_params.phi : '',
                 simulationResult.calculation_result.total_impedance.toFixed(6),
                 simulationResult.calculation_result.total_admittance.toFixed(6),
                 simulationResult.calculation_result.propagation_constant.toFixed(6),
