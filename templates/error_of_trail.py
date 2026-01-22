@@ -287,6 +287,8 @@ class Error_Of_Trail:
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            #送端轨面电压
+            self.output_voltage_surface1=self.count_output()
             # 钢轨矩阵
             self.matrix=np.dot(self.matrix,self.parameter.iron_rail(self.length_parameter/2))
             
@@ -295,11 +297,14 @@ class Error_Of_Trail:
             
             # 钢轨矩阵
             self.matrix=np.dot(self.matrix,self.parameter.iron_rail(self.length_parameter/2))
-
+            #受端轨面电压
+            self.output_voltage_surface2=self.count_output()
             # 匹配变压器矩阵
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
+            #主轨入电压
+            self.output_voltage_main=self.count_output()
             return self.matrix
         elif self.error_type==2:
             # SPT电缆————匹配变压器——调谐单元(断路）——钢轨及补偿电容——调谐单元——匹配变压器——SPT电缆——接收端
