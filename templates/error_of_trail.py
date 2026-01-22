@@ -309,9 +309,12 @@ class Error_Of_Trail:
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
-            
+            #送端轨面电压
+            self.output_voltage_surface1=self.count_output()
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
             self.matrix=np.dot(self.matrix,self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,jg.find_capacitance(frequency)))
+            #受端轨面电压
+            self.output_voltage_surface2=self.count_output()
             #调谐单元矩阵
             F=self.find_BA_type_tuning_zone(frequency)[1]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
@@ -319,6 +322,8 @@ class Error_Of_Trail:
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
+            #主轨入电压
+            self.output_voltage_main=self.count_output()
             return self.matrix
         elif self.error_type==5:
             # SPT电缆————匹配变压器——调谐单元——钢轨及补偿电容——调谐单元（断路）——匹配变压器——SPT电缆——接收端
@@ -331,12 +336,18 @@ class Error_Of_Trail:
             #调谐单元矩阵
             F=self.find_BA_type(frequency)#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
+            #送端轨面电压
+            self.output_voltage_surface1=self.count_output()
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
             self.matrix=np.dot(self.matrix,self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,jg.find_capacitance(frequency)))
+            #受端轨面电压
+            self.output_voltage_surface2=self.count_output()
              # 匹配变压器矩阵
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
+            #主轨入电压
+            self.output_voltage_main=self.count_output()
             return self.matrix
         elif self.error_type==6:
             #补偿电容断路，视为没有补偿电容
@@ -349,8 +360,12 @@ class Error_Of_Trail:
             #调谐单元矩阵
             F=self.find_BA_type_tuning_zone(frequency)[0]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
+            #送端轨面电压
+            self.output_voltage_surface1=self.count_output()
             #钢轨矩阵
             self.matrix=np.dot(self.matrix,self.parameter.iron_rail(self.length_parameter))
+            #受端轨面电压
+            self.output_voltage_surface2=self.count_output()
             #调谐单元矩阵
             F=self.find_BA_type_tuning_zone(frequency)[1]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
@@ -372,8 +387,12 @@ class Error_Of_Trail:
             #调谐单元矩阵
             F=self.find_BA_type_tuning_zone(frequency)[0]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
+            #送端轨面电压
+            self.output_voltage_surface1=self.count_output()
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
             self.matrix=np.dot(self.matrix,self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,0))
+            #受端轨面电压
+            self.output_voltage_surface2=self.count_output()
             #调谐单元矩阵
             F=self.find_BA_type_tuning_zone(frequency)[1]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
@@ -381,6 +400,8 @@ class Error_Of_Trail:
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
+            #主轨入电压
+            self.output_voltage_main=self.count_output()
             return self.matrix
 
 
@@ -586,7 +607,7 @@ class Error_Of_Trail:
         # 获取电压电流的矩阵形式（列向量）
         try:
             input_VC_matrix = voltage_current.get_matrix_transpose()
-            transfer_matrix = self.call_matrix()
+            transfer_matrix = self.matrix
             # 确保transfer_matrix是有效的矩阵
             if transfer_matrix is None or not isinstance(transfer_matrix, np.ndarray):
                 return 0.0
