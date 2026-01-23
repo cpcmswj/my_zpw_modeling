@@ -922,11 +922,14 @@
                 body: formData
             });
             
-            if (!response.ok) {
-                throw new Error('API请求失败');
+            const result = await response.json();
+            
+            if (!response.ok || result.status !== 'success') {
+                const errorMessage = result.message || 'API请求失败';
+                throw new Error(errorMessage);
             }
             
-            return await response.json();
+            return result;
         }
         
         // 开始模拟

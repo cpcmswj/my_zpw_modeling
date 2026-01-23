@@ -110,10 +110,12 @@ class Error_Of_Trail:
             return "69G"
         else:
             return "未知故障位置"
-    def frequency_table(self,zone):
+    def frequency_table(self,zone=None):
         """根据区段名查询载频率(Hz)"""
-        zone=self.error_position
-        if zone=="69G"or zone=="X1LQG"or zone=="IG1":
+        # 如果没有传入zone参数，则使用self.error_position
+        if zone is None:
+            zone = self.error_position
+        if zone=="69G" or zone=="X1LQG" or zone=="IG1":
             return 1700
         elif zone=="57G" or zone=="3DG":
             return 2300
@@ -360,7 +362,7 @@ class Error_Of_Trail:
             transformer_ratio = jg.find_transformer_ratio(frequency)
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             #调谐单元矩阵
-            F=self.find_BA_type_tuning_zone(frequency)[0]#调谐单元类型，之后要改
+            F=self.find_BA_type_tuning_zone()[0]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
             #送端轨面电压
             self.output_voltage_surface1=self.count_output()
@@ -369,13 +371,15 @@ class Error_Of_Trail:
             #受端轨面电压
             self.output_voltage_surface2=self.count_output()
             #调谐单元矩阵
-            F=self.find_BA_type_tuning_zone(frequency)[1]#调谐单元类型，之后要改
+            F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
-
+            
              # 匹配变压器矩阵
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
+            #主轨入电压
+            self.output_voltage_main=self.count_output()
         elif self.error_type==7:
             #补偿电容短路即视为电容为零
             frequency = self.frequency_table(self.error_position)
@@ -403,11 +407,19 @@ class Error_Of_Trail:
             #主轨入电压
             self.output_voltage_main=self.count_output()
         
+        # 确保所有电压属性都已设置
+        if not hasattr(self, 'output_voltage_surface1'):
+            self.output_voltage_surface1 = complex(0.0)
+        if not hasattr(self, 'output_voltage_surface2'):
+            self.output_voltage_surface2 = complex(0.0)
+        if not hasattr(self, 'output_voltage_main'):
+            self.output_voltage_main = complex(0.0)
+        
         # 使用实例变量中的电压值作为结果
         voltage_results = {
-            "send_end_track_voltage": float(self.output_voltage_surface1.real) if hasattr(self, 'output_voltage_surface1') else 0.0,
-            "receive_end_track_voltage": float(self.output_voltage_surface2.real) if hasattr(self, 'output_voltage_surface2') else 0.0,
-            "main_track_input_voltage": float(self.output_voltage_main.real) if hasattr(self, 'output_voltage_main') else 0.0
+            "send_end_track_voltage": float(self.output_voltage_surface1.real),
+            "receive_end_track_voltage": float(self.output_voltage_surface2.real),
+            "main_track_input_voltage": float(self.output_voltage_main.real)
         }
         
         # 返回包含矩阵和电压结果的字典
@@ -537,7 +549,30 @@ class Error_Of_Trail:
             I=self.input_V/Z_input
             return I,Z_input
         elif self.error_type==5:
-            return 0, 0
+            #接收端调谐单元2断路的情况（与error_type==1类似）
+            frequency = self.frequency_table(self.error_position)
+            #调谐区阻抗为
+            Z_tuner=self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca+jg.find_resist_V1V2(frequency)
+            Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca+1j*self.tuning_parameters.L_SVA*self.tuning_parameters.angular_frequency)
+            Z_tuner=jg.calculate_parallel_impedance(Z_tuner+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca,self.tuning_parameters.Z_BA1)
+            #主轨道阻抗为
+            capacitance_step = jg.find_capacitance_step(frequency)
+            if capacitance_step == 0:
+                capacitance_step = 1  # 避免除零错误
+            Z_rail_matrix=self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/capacitance_step,capacitance_step,0,0,1.0e-9)
+            # 避免除以零
+            if abs(Z_rail_matrix[0][1]) < 1e-10:
+                Z_rail = 1.0  # 默认值
+            else:
+                Z_rail=Z_rail_matrix[0][0]/Z_rail_matrix[0][1]
+            #发送端匹配变压器后的总阻抗为前两个阻抗并联
+            Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
+            #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
+            Z_input=self.parameter.transformer_impedance_output(Z_send)
+            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,1)#SPT电缆长度和输入阻抗后续需要修改
+            #计算电流
+            I=self.input_V/Z_input
+            return I,Z_input
         elif self.error_type==6:
             #补偿电容断路即无补偿电容
             frequency = self.frequency_table(self.error_position)
@@ -546,15 +581,24 @@ class Error_Of_Trail:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_BA1)
             
             #主轨道阻抗为
-            Z_rail=1#之后需要修改
-
+            capacitance_step = jg.find_capacitance_step(frequency)
+            if capacitance_step == 0:
+                capacitance_step = 1  # 避免除零错误
+            Z_rail_matrix=self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/capacitance_step,capacitance_step,0,0,1.0e-9)
+            # 避免除以零
+            if abs(Z_rail_matrix[0][1]) < 1e-10:
+                Z_rail = 1.0  # 默认值
+            else:
+                Z_rail=Z_rail_matrix[0][0]/Z_rail_matrix[0][1]
 
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             Z_input=jg.SPTcable_impedance(frequency,0,Z_input,1)#SPT电缆长度和输入阻抗后续需要修改
-            return 0, 0
+            #计算电流
+            I=self.input_V/Z_input
+            return I,Z_input
         elif self.error_type==7:
             frequency = self.frequency_table(self.error_position)
             Z_tuner=self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca+jg.calculate_parallel_impedance(self.tuning_parameters.Z_BA2, jg.find_resist_V1V2(frequency))
@@ -577,7 +621,9 @@ class Error_Of_Trail:
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             Z_input=jg.SPTcable_impedance(frequency,0,Z_input,1)#SPT电缆长度和输入阻抗后续需要修改
-            return 0, 0
+            #计算电流
+            I=self.input_V/Z_input
+            return I,Z_input
         else:
             return 0, 0
     def call_matrix(self):
