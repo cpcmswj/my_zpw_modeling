@@ -23,7 +23,12 @@ code_dic={"L5":21.3,"L4":23.5,"L3":10.3,"L2":12.5,"HB":24.6,"HU":26.8,
         "U2S":20.2,"U2":14.7,"UUS":19.1,"occupancy_check":27.9,"L6":22.4}
         #低频频率及包含的信息，frequency_change为载频切换，occupancy_check为占用检查
 
-
+freq_dic={"1700-1":[1701.4,1712.4,1690.4],"1700-2":[1689.7,1709.7,1687.7],
+        "2000-1":[2001.4,2012.4,1990.4],"2000-2":[1998.7,2009.7,1987.7],
+        "2300-1":[2301.4,2312.4,2290.4],"2300-2":[2298.7,2309.7,2287.7],
+        "2600-1":[2601.4,2612.4,2590.4],"2600-2":[2598.7,2609.7,2587.7]}
+        #载频类型及对应的频率值，数组内分别为中心值、上边频、下边频
+        
 def get_low_frequency(info):
     """
     根据信息查询对应的低频频率
@@ -38,6 +43,22 @@ def get_low_frequency(info):
         return code_dic[info]
     else:
         raise ValueError(f"未知的信息类型: {info}，请从以下选项中选择: {list(code_dic.keys())}")
+
+
+def get_carrier_frequency(carrier_type):
+    """
+    根据载频类型查询对应的频率值
+    
+    参数：
+        carrier_type (str): 载频类型，如"1700-1", "1700-2", "2000-1"等
+        
+    返回：
+        list: 对应的频率值数组，分别为中心值、上边频、下边频
+    """
+    if carrier_type in freq_dic:
+        return freq_dic[carrier_type]
+    else:
+        raise ValueError(f"未知的载频类型: {carrier_type}，请从以下选项中选择: {list(freq_dic.keys())}")
 
 
 def generate_fsk_signal(data, f0, f1, fs, num_points):
@@ -80,6 +101,169 @@ def generate_fsk_signal(data, f0, f1, fs, num_points):
         signal[start:end] = np.sin(2 * np.pi * freq * time[start:end])
     
     return time, signal
+
+
+def generate_2fsk_signal(data, f0, f1, fs, num_points, modulation_type='non_coherent', phase_continuous=False):
+    """
+    生成2FSK信号
+    
+    参数：
+        data (list): 二进制数据序列，元素为0或1
+        f0 (float): 表示0的频率
+        f1 (float): 表示1的频率
+        fs (float): 采样频率
+        num_points (int): 生成的信号长度（点）
+        modulation_type (str): 调制类型，'non_coherent'（非相干）或'coherent'（相干）
+        phase_continuous (bool): 是否保持相位连续
+    
+    返回：
+        tuple: (time, signal)，时间序列和对应的2FSK信号
+    """
+    if len(data) == 0:
+        raise ValueError("数据序列不能为空")
+    
+    # 计算每个比特的采样点数
+    samples_per_bit = num_points // len(data)
+    
+    # 生成时间序列
+    time = np.linspace(0, num_points / fs, num_points)
+    
+    # 生成2FSK信号
+    signal = np.zeros(num_points)
+    
+    # 初始相位
+    phase = 0.0
+    
+    for i, bit in enumerate(data):
+        start = i * samples_per_bit
+        end = start + samples_per_bit
+        if i == len(data) - 1:
+            end = num_points  # 确保最后一个比特覆盖剩余所有采样点
+        
+        # 选择当前比特对应的频率
+        freq = f0 if bit == 0 else f1
+        
+        # 生成当前比特的信号
+        if phase_continuous:
+            # 连续相位2FSK
+            # 计算当前比特的相位增量
+            phase_increment = 2 * np.pi * freq / fs
+            for j in range(start, end):
+                signal[j] = np.sin(phase)
+                phase += phase_increment
+        else:
+            # 非连续相位2FSK
+            # 生成当前比特区间的时间
+            bit_time = time[start:end] - time[start]
+            # 使用不同的调制方式
+            if modulation_type == 'coherent':
+                # 相干2FSK，保持相位连续性
+                phase = (2 * np.pi * freq * time[start]) % (2 * np.pi)
+                signal[start:end] = np.sin(2 * np.pi * freq * bit_time + phase)
+            else:
+                # 非相干2FSK
+                signal[start:end] = np.sin(2 * np.pi * freq * bit_time)
+    
+    return time, signal
+
+
+def generate_gfsk_signal(data, f0, f1, fs, num_points, bt=0.5, sigma=None):
+    """
+    生成高斯频移键控（GFSK）信号
+    
+    参数：
+        data (list): 二进制数据序列，元素为0或1
+        f0 (float): 表示0的频率
+        f1 (float): 表示1的频率
+        fs (float): 采样频率
+        num_points (int): 生成的信号长度（点）
+        bt (float): 带宽时间乘积，默认0.5
+        sigma (float): 高斯滤波器的标准差，默认None，根据bt自动计算
+    
+    返回：
+        tuple: (time, signal)，时间序列和对应的GFSK信号
+    """
+    if len(data) == 0:
+        raise ValueError("数据序列不能为空")
+    
+    # 计算每个比特的采样点数
+    samples_per_bit = num_points // len(data)
+    
+    # 生成时间序列
+    time = np.linspace(0, num_points / fs, num_points)
+    
+    # 计算频率偏移
+    freq_dev = abs(f1 - f0) / 2
+    
+    # 生成矩形脉冲序列
+    pulse = np.zeros(num_points)
+    for i, bit in enumerate(data):
+        start = i * samples_per_bit
+        end = start + samples_per_bit
+        if i == len(data) - 1:
+            end = num_points  # 确保最后一个比特覆盖剩余所有采样点
+        
+        # 生成NRZ编码
+        pulse[start:end] = 2 * bit - 1  # 将0转换为-1，1保持为1
+    
+    # 设计高斯滤波器
+    if sigma is None:
+        # 根据带宽时间乘积计算标准差
+        sigma = samples_per_bit / (2 * np.sqrt(2 * np.log(2))) / bt
+    
+    # 生成高斯脉冲
+    gaussian_pulse = np.exp(-0.5 * (np.arange(-3*sigma, 3*sigma+1) / sigma) ** 2)
+    gaussian_pulse /= np.sum(gaussian_pulse)  # 归一化
+    
+    # 对矩形脉冲进行高斯滤波
+    filtered_pulse = np.convolve(pulse, gaussian_pulse, mode='same')
+    
+    # 生成频率调制信号
+    signal = np.zeros(num_points)
+    phase = 0.0
+    
+    for i in range(num_points):
+        # 积分计算相位
+        phase += 2 * np.pi * freq_dev * filtered_pulse[i] / fs
+        signal[i] = np.sin(2 * np.pi * ((f0 + f1) / 2) * time[i] + phase)
+    
+    return time, signal
+
+
+def calculate_2fsk_parameters(data, f0, f1, fs):
+    """
+    计算2FSK信号的参数
+    
+    参数：
+        data (list): 二进制数据序列
+        f0 (float): 表示0的频率
+        f1 (float): 表示1的频率
+        fs (float): 采样频率
+    
+    返回：
+        dict: 包含2FSK信号的参数
+    """
+    # 计算比特率
+    bit_rate = fs / (len(data) / len(data))
+    
+    # 计算频率偏移
+    freq_dev = abs(f1 - f0) / 2
+    
+    # 计算调制指数
+    modulation_index = freq_dev / bit_rate
+    
+    # 计算带宽
+    bandwidth = 2 * (freq_dev + bit_rate)
+    
+    return {
+        'bit_rate': bit_rate,
+        'frequency_deviation': freq_dev,
+        'modulation_index': modulation_index,
+        'bandwidth': bandwidth,
+        'f0': f0,
+        'f1': f1,
+        'fs': fs
+    }
 
 def generate_random_data(length):
     """
@@ -253,10 +437,13 @@ def main():
     print("程序模式:")
     print("1. 自定义FSK信号生成")
     print("2. 基于信息类型的FSK信号调制演示")
+    print("3. 自定义2FSK信号生成")
+    print("4. 生成GFSK信号")
+    print("5. 根据载频类型查询频率值")
     
     while True:
         try:
-            mode_choice = int(input("请选择程序模式 (1-2): "))
+            mode_choice = int(input("请选择程序模式 (1-5): "))
             if mode_choice == 1:
                 # 自定义FSK信号生成
                 # 选择信号长度
@@ -355,8 +542,248 @@ def main():
                 # FSK信号调制演示
                 fsk_demo()
                 break
+            elif mode_choice == 3:
+                # 自定义2FSK信号生成
+                # 选择信号长度
+                valid_lengths = [16, 32, 64, 128]
+                print("\n可选的信号长度:")
+                for i, length in enumerate(valid_lengths):
+                    print(f"{i+1}. {length}点")
+                
+                while True:
+                    try:
+                        choice = int(input("请选择信号长度 (1-4): "))
+                        if 1 <= choice <= len(valid_lengths):
+                            num_points = valid_lengths[choice - 1]
+                            break
+                        else:
+                            print(f"请输入1-{len(valid_lengths)}之间的数字")
+                    except ValueError:
+                        print("请输入有效的数字")
+                
+                # 选择数据生成方式
+                print("\n数据生成方式:")
+                print("1. 随机生成数据")
+                print("2. 手动输入数据")
+                
+                while True:
+                    try:
+                        data_choice = int(input("请选择数据生成方式 (1-2): "))
+                        if data_choice == 1:
+                            data_length = int(input("请输入数据长度: "))
+                            data = generate_random_data(data_length)
+                            break
+                        elif data_choice == 2:
+                            data = input_manual_data()
+                            break
+                        else:
+                            print("请输入1或2")
+                    except ValueError:
+                        print("请输入有效的数字")
+                
+                # 设置频率参数
+                print("\n频率设置:")
+                try:
+                    f0 = float(input("请输入表示0的频率 (Hz): "))
+                    f1 = float(input("请输入表示1的频率 (Hz): "))
+                except ValueError:
+                    print("频率必须是数字，将使用默认值")
+                    f0 = 1000.0
+                    f1 = 1500.0
+                
+                # 设置采样频率（默认是最高频率的10倍）
+                fs = max(f0, f1) * 10
+                print(f"\n使用采样频率: {fs}Hz")
+                
+                # 选择调制类型
+                print("\n调制类型:")
+                print("1. 非相干调制")
+                print("2. 相干调制")
+                modulation_choice = input("请选择调制类型 (1-2，默认1): ") or "1"
+                modulation_type = 'non_coherent' if modulation_choice == "1" else 'coherent'
+                
+                # 选择是否保持相位连续
+                phase_continuous = input("是否保持相位连续? (y/n，默认n): ").lower() == "y"
+                
+                # 生成2FSK信号
+                print("\n生成2FSK信号...")
+                time, signal = generate_2fsk_signal(data, f0, f1, fs, num_points, modulation_type, phase_continuous)
+                
+                # 计算2FSK参数
+                fsk_params = calculate_2fsk_parameters(data, f0, f1, fs)
+                
+                # 显示生成的数据和参数
+                print(f"\n生成的数据: {data}")
+                print(f"数据长度: {len(data)}")
+                print(f"信号长度: {len(signal)}点")
+                print(f"调制类型: {modulation_type}")
+                print(f"相位连续: {phase_continuous}")
+                print(f"比特率: {fsk_params['bit_rate']:.2f} bps")
+                print(f"频率偏移: {fsk_params['frequency_deviation']:.2f} Hz")
+                print(f"调制指数: {fsk_params['modulation_index']:.2f}")
+                print(f"带宽: {fsk_params['bandwidth']:.2f} Hz")
+                
+                # 选择操作
+                print("\n操作选项:")
+                print("1. 绘制信号")
+                print("2. 保存信号")
+                print("3. 绘制并保存信号")
+                print("4. 仅显示信号数据")
+                
+                while True:
+                    try:
+                        action_choice = int(input("请选择操作 (1-4): "))
+                        if 1 <= action_choice <= 4:
+                            break
+                        else:
+                            print("请输入1-4之间的数字")
+                    except ValueError:
+                        print("请输入有效的数字")
+                
+                if action_choice in [1, 3]:
+                    # 绘制信号
+                    plot_fsk_signal(time, signal, data, f0, f1, fs)
+                
+                if action_choice in [2, 3]:
+                    # 保存信号
+                    save_fsk_signal(time, signal, data, f0, f1, fs)
+                
+                if action_choice == 4:
+                    # 显示信号数据
+                    print("\n信号数据 (前20个点):")
+                    for i in range(min(20, len(signal))):
+                        print(f"时间: {time[i]:.6f}s, 幅值: {signal[i]:.6f}")
+                
+                break
+            elif mode_choice == 4:
+                # 生成GFSK信号
+                # 选择信号长度
+                valid_lengths = [16, 32, 64, 128]
+                print("\n可选的信号长度:")
+                for i, length in enumerate(valid_lengths):
+                    print(f"{i+1}. {length}点")
+                
+                while True:
+                    try:
+                        choice = int(input("请选择信号长度 (1-4): "))
+                        if 1 <= choice <= len(valid_lengths):
+                            num_points = valid_lengths[choice - 1]
+                            break
+                        else:
+                            print(f"请输入1-{len(valid_lengths)}之间的数字")
+                    except ValueError:
+                        print("请输入有效的数字")
+                
+                # 选择数据生成方式
+                print("\n数据生成方式:")
+                print("1. 随机生成数据")
+                print("2. 手动输入数据")
+                
+                while True:
+                    try:
+                        data_choice = int(input("请选择数据生成方式 (1-2): "))
+                        if data_choice == 1:
+                            data_length = int(input("请输入数据长度: "))
+                            data = generate_random_data(data_length)
+                            break
+                        elif data_choice == 2:
+                            data = input_manual_data()
+                            break
+                        else:
+                            print("请输入1或2")
+                    except ValueError:
+                        print("请输入有效的数字")
+                
+                # 设置频率参数
+                print("\n频率设置:")
+                try:
+                    f0 = float(input("请输入表示0的频率 (Hz): "))
+                    f1 = float(input("请输入表示1的频率 (Hz): "))
+                except ValueError:
+                    print("频率必须是数字，将使用默认值")
+                    f0 = 1000.0
+                    f1 = 1500.0
+                
+                # 设置采样频率（默认是最高频率的10倍）
+                fs = max(f0, f1) * 10
+                print(f"\n使用采样频率: {fs}Hz")
+                
+                # 设置带宽时间乘积
+                try:
+                    bt = float(input("请输入带宽时间乘积 (默认0.5): ") or "0.5")
+                except ValueError:
+                    print("带宽时间乘积必须是数字，将使用默认值0.5")
+                    bt = 0.5
+                
+                # 生成GFSK信号
+                print("\n生成GFSK信号...")
+                time, signal = generate_gfsk_signal(data, f0, f1, fs, num_points, bt)
+                
+                # 显示生成的数据
+                print(f"\n生成的数据: {data}")
+                print(f"数据长度: {len(data)}")
+                print(f"信号长度: {len(signal)}点")
+                print(f"带宽时间乘积: {bt}")
+                
+                # 选择操作
+                print("\n操作选项:")
+                print("1. 绘制信号")
+                print("2. 保存信号")
+                print("3. 绘制并保存信号")
+                print("4. 仅显示信号数据")
+                
+                while True:
+                    try:
+                        action_choice = int(input("请选择操作 (1-4): "))
+                        if 1 <= action_choice <= 4:
+                            break
+                        else:
+                            print("请输入1-4之间的数字")
+                    except ValueError:
+                        print("请输入有效的数字")
+                
+                if action_choice in [1, 3]:
+                    # 绘制信号
+                    plot_fsk_signal(time, signal, data, f0, f1, fs)
+                
+                if action_choice in [2, 3]:
+                    # 保存信号
+                    save_fsk_signal(time, signal, data, f0, f1, fs)
+                
+                if action_choice == 4:
+                    # 显示信号数据
+                    print("\n信号数据 (前20个点):")
+                    for i in range(min(20, len(signal))):
+                        print(f"时间: {time[i]:.6f}s, 幅值: {signal[i]:.6f}")
+                
+                break
+            elif mode_choice == 5:
+                # 根据载频类型查询频率值
+                print("=== 根据载频类型查询频率值 ===\n")
+                
+                # 显示可用的载频类型
+                print("可用的载频类型及对应的频率值:")
+                for carrier_type, freqs in sorted(freq_dic.items()):
+                    print(f"  {carrier_type}: 中心值={freqs[0]}Hz, 上边频={freqs[1]}Hz, 下边频={freqs[2]}Hz")
+                
+                # 选择载频类型
+                while True:
+                    try:
+                        carrier_type = input("\n请选择载频类型: ")
+                        frequencies = get_carrier_frequency(carrier_type)
+                        break
+                    except ValueError as e:
+                        print(e)
+                
+                # 显示查询结果
+                print(f"\n查询结果:")
+                print(f"载频类型: {carrier_type}")
+                print(f"中心值: {frequencies[0]} Hz")
+                print(f"上边频: {frequencies[1]} Hz")
+                print(f"下边频: {frequencies[2]} Hz")
+                break
             else:
-                print("请输入1或2")
+                print("请输入1-5之间的数字")
         except ValueError:
             print("请输入有效的数字")
     
