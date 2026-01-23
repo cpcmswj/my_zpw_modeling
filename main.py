@@ -772,11 +772,15 @@ async def calculate_track_circuit_api(
                 "frequency": frequency
             },
             "voltage_results": result["voltage_results"],
-            "matrix": result["matrix"].tolist()
+            "matrix": result["matrix"].real.tolist()  # 只取矩阵的实部，避免JSON序列化错误
         }
         
         return JSONResponse(response)
     except Exception as e:
+        import traceback
+        print(f"API错误详情: {e}")
+        print(f"错误类型: {type(e)}")
+        traceback.print_exc()
         return JSONResponse(
             {"status": "error", "message": str(e)},
             status_code=400

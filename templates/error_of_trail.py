@@ -322,7 +322,7 @@ class Error_Of_Trail:
             #受端轨面电压
             self.output_voltage_surface2=self.count_output()
             #调谐单元矩阵
-            F=self.find_BA_type_tuning_zone(frequency)[1]#调谐单元类型，之后要改
+            F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
              # 匹配变压器矩阵
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
@@ -389,7 +389,7 @@ class Error_Of_Trail:
             transformer_ratio = jg.find_transformer_ratio(frequency)
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             #调谐单元矩阵
-            F=self.find_BA_type_tuning_zone(frequency)[0]#调谐单元类型，之后要改
+            F=self.find_BA_type_tuning_zone()[0]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
             #送端轨面电压
             self.output_voltage_surface1=self.count_output()
@@ -398,7 +398,7 @@ class Error_Of_Trail:
             #受端轨面电压
             self.output_voltage_surface2=self.count_output()
             #调谐单元矩阵
-            F=self.find_BA_type_tuning_zone(frequency)[1]#调谐单元类型，之后要改
+            F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
              # 匹配变压器矩阵
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
@@ -677,19 +677,19 @@ class Error_Of_Trail:
             transfer_matrix = self.matrix
             # 确保transfer_matrix是有效的矩阵
             if transfer_matrix is None or not isinstance(transfer_matrix, np.ndarray):
-                return 0.0
+                return complex(0.0)
             # 执行矩阵乘法
             VC_output = np.dot(transfer_matrix, input_VC_matrix)
             result = VC_output[0][0]
             # 检查结果是否有效（非NaN和非无穷大）
             if not np.isfinite(result.real) or not np.isfinite(result.imag):
-                return 0.0
+                return complex(0.0)
             return result
         except Exception as e:
             import traceback
             traceback.print_exc()
             print(f"计算输出电压时出错: {e}")
-            return 0.0
+            return complex(0.0)
     
 
 
