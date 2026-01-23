@@ -712,5 +712,75 @@ async def observe_error_api(
             status_code=400
         )
 
+# 轨道电路故障模拟计算API端点
+@app.post("/api/calculate/track-circuit")
+async def calculate_track_circuit_api(
+    trail: str = Form(...),
+    error_type: int = Form(...),
+    error_value: float = Form(...),
+    error_position: str = Form(...),
+    track_length: float = Form(...),
+    resist_per_meter: float = Form(...),
+    induct_per_meter: float = Form(...),
+    capacit_per_meter: float = Form(...),
+    frequency: float = Form(...)
+):
+    try:
+        # 创建Error_Of_Trail实例
+        error_instance = Error_Of_Trail(
+            trail=trail,
+            error_type=error_type,
+            error_value=error_value,
+            error_position=error_position
+        )
+        
+        # 重新初始化参数
+        error_instance.reinitialize_parameters(
+            error_type=error_type,
+            error_value=error_value,
+            error_position=error_position,
+            length_parameter=track_length,
+            resist_per_meter=resist_per_meter,
+            induct_per_meter=induct_per_meter,
+            capacit_per_meter=capacit_per_meter
+        )
+        
+        # 调用call_matrix_main方法获取计算结果
+        result = error_instance.call_matrix_main()
+        
+        # 构建响应数据
+        response = {
+            "status": "success",
+            "section_info": {
+                "id": error_position,
+                "name": trail,
+                "description": f"{trail}轨道区段"
+            },
+            "error_info": {
+                "type": error_type,
+                "name": error_instance.status()
+            },
+            "input_params": {
+                "trail": trail,
+                "error_type": error_type,
+                "error_value": error_value,
+                "error_position": error_position,
+                "track_length": track_length,
+                "resist_per_meter": resist_per_meter,
+                "induct_per_meter": induct_per_meter,
+                "capacit_per_meter": capacit_per_meter,
+                "frequency": frequency
+            },
+            "voltage_results": result["voltage_results"],
+            "matrix": result["matrix"].tolist()
+        }
+        
+        return JSONResponse(response)
+    except Exception as e:
+        return JSONResponse(
+            {"status": "error", "message": str(e)},
+            status_code=400
+        )
+
 # 启动应用的命令（用于开发环境）
 # 运行：uvicorn main:app --reload

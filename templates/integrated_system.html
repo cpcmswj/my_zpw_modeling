@@ -879,119 +879,145 @@
             }
         }
         
-        // 模拟计算函数
-        function simulateCalculation(data) {
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    // 简化的实数计算
-                    const inductive_reactance = 2 * Math.PI * data.frequency * data.inductance;
-                    const capacitive_reactance = 1 / (2 * Math.PI * data.frequency * data.capacitance);
-                    const total_reactance = inductive_reactance - capacitive_reactance;
-                    const total_impedance = Math.sqrt(data.resistance * data.resistance + total_reactance * total_reactance);
-                    const total_admittance = 1 / total_impedance;
-                    const propagation_constant = Math.sqrt(total_impedance * total_admittance);
-                    const characteristic_impedance = Math.sqrt(total_impedance / total_admittance);
-                    
-                    // 获取错误类型名称
-                    const errorType = errorTypes.find(type => type.value === data.error_type);
-                    const error_type_name = errorType ? errorType.name : "未知错误类型";
-                    
-                    // 生成随机SPT电缆参数（模拟）
-                    let spt_cable_params = null;
-                    if (data.use_random_params) {
-                        // 模拟随机生成的SPT电缆参数
-                        const frequency = data.frequency;
-                        // 根据频率生成不同的随机参数范围
-                        let gamma_range, Z_d_range, phi_range;
-                        if (frequency === 1700) {
-                            gamma_range = { min: 0.5, max: 0.76 };
-                            Z_d_range = { min: 352, max: 440 };
-                            phi_range = { min: -45, max: -33 };
-                        } else if (frequency === 2000) {
-                            gamma_range = { min: 0.55, max: 0.81 };
-                            Z_d_range = { min: 324, max: 410 };
-                            phi_range = { min: -44, max: -32 };
-                        } else if (frequency === 2300) {
-                            gamma_range = { min: 0.59, max: 0.85 };
-                            Z_d_range = { min: 300, max: 386 };
-                            phi_range = { min: -43, max: -31 };
-                        } else if (frequency === 2600) {
-                            gamma_range = { min: 0.62, max: 0.88 };
-                            Z_d_range = { min: 285, max: 365 };
-                            phi_range = { min: -42, max: -30 };
-                        } else {
-                            // 默认范围
-                            gamma_range = { min: 0.5, max: 0.9 };
-                            Z_d_range = { min: 280, max: 450 };
-                            phi_range = { min: -45, max: -30 };
-                        }
-                        
-                        // 生成随机值
-                        spt_cable_params = {
-                            gamma_cable: (gamma_range.min + Math.random() * (gamma_range.max - gamma_range.min)).toFixed(3),
-                            Z_d: (Z_d_range.min + Math.random() * (Z_d_range.max - Z_d_range.min)).toFixed(1),
-                            phi: (phi_range.min + Math.random() * (phi_range.max - phi_range.min)).toFixed(1),
-                            frequency: frequency
-                        };
+        // 模拟计算函数 - 调用真实API
+        async function simulateCalculation(data) {
+            try {
+                // 先获取无故障状态的计算结果
+                const normalData = {
+                    ...data,
+                    error_type: 0 // 无故障
+                };
+                const normalResponse = await fetchCalculation(normalData);
+                
+                // 获取当前故障状态的计算结果
+                const faultResponse = await fetchCalculation(data);
+                
+                // 生成随机SPT电缆参数（模拟）
+                let spt_cable_params = null;
+                if (data.use_random_params) {
+                    // 模拟随机生成的SPT电缆参数
+                    const frequency = data.frequency;
+                    // 根据频率生成不同的随机参数范围
+                    let gamma_range, Z_d_range, phi_range;
+                    if (frequency === 1700) {
+                        gamma_range = { min: 0.5, max: 0.76 };
+                        Z_d_range = { min: 352, max: 440 };
+                        phi_range = { min: -45, max: -33 };
+                    } else if (frequency === 2000) {
+                        gamma_range = { min: 0.55, max: 0.81 };
+                        Z_d_range = { min: 324, max: 410 };
+                        phi_range = { min: -44, max: -32 };
+                    } else if (frequency === 2300) {
+                        gamma_range = { min: 0.59, max: 0.85 };
+                        Z_d_range = { min: 300, max: 386 };
+                        phi_range = { min: -43, max: -31 };
+                    } else if (frequency === 2600) {
+                        gamma_range = { min: 0.62, max: 0.88 };
+                        Z_d_range = { min: 285, max: 365 };
+                        phi_range = { min: -42, max: -30 };
+                    } else {
+                        // 默认范围
+                        gamma_range = { min: 0.5, max: 0.9 };
+                        Z_d_range = { min: 280, max: 450 };
+                        phi_range = { min: -45, max: -30 };
                     }
                     
-                    // 生成随机电压值
-                    let voltage_params = null;
-                    if (data.use_random_voltage) {
-                        const level = data.voltage_level;
-                        let voltage_range;
-                        if (level === 1) {
-                            voltage_range = { min: 161, max: 170 };
-                        } else if (level === 2) {
-                            voltage_range = { min: 146, max: 154 };
-                        } else if (level === 3) {
-                            voltage_range = { min: 128, max: 135 };
-                        } else if (level === 4) {
-                            voltage_range = { min: 104.5, max: 110.5 };
-                        } else if (level === 5) {
-                            voltage_range = { min: 75, max: 79.5 };
-                        } else {
-                            voltage_range = { min: 75, max: 170 };
-                        }
-                        
-                        voltage_params = {
-                            level: level,
-                            voltage: (voltage_range.min + Math.random() * (voltage_range.max - voltage_range.min)).toFixed(2),
-                            min_voltage: voltage_range.min,
-                            max_voltage: voltage_range.max
-                        };
-                    }
-                    
-                    resolve({
-                status: 'success',
-                section_info: {
-                    id: data.section_id,
-                    name: data.section_name,
-                    description: selectedSection.description
-                },
-                error_info: {
-                    type: data.error_type,
-                    name: error_type_name
-                },
-                input_params: data,
-                spt_cable_params: spt_cable_params,
-                voltage_params: voltage_params,
-                calculation_result: {
-                    total_impedance: total_impedance,
-                    total_admittance: total_admittance,
-                    propagation_constant: propagation_constant,
-                    characteristic_impedance: characteristic_impedance,
-                    inductive_reactance: inductive_reactance,
-                    capacitive_reactance: capacitive_reactance
-                },
-                voltage_results: {
-                    send_end_track_voltage: Math.random() * 10 + 160,  // 模拟送端轨面电压
-                    receive_end_track_voltage: Math.random() * 5 + 150,  // 模拟受端轨面电压
-                    main_track_input_voltage: Math.random() * 5 + 120  // 模拟主轨入电压
+                    // 生成随机值
+                    spt_cable_params = {
+                        gamma_cable: (gamma_range.min + Math.random() * (gamma_range.max - gamma_range.min)).toFixed(3),
+                        Z_d: (Z_d_range.min + Math.random() * (Z_d_range.max - Z_d_range.min)).toFixed(1),
+                        phi: (phi_range.min + Math.random() * (phi_range.max - phi_range.min)).toFixed(1),
+                        frequency: frequency
+                    };
                 }
+                
+                // 生成随机电压值
+                let voltage_params = null;
+                if (data.use_random_voltage) {
+                    const level = data.voltage_level;
+                    let voltage_range;
+                    if (level === 1) {
+                        voltage_range = { min: 161, max: 170 };
+                    } else if (level === 2) {
+                        voltage_range = { min: 146, max: 154 };
+                    } else if (level === 3) {
+                        voltage_range = { min: 128, max: 135 };
+                    } else if (level === 4) {
+                        voltage_range = { min: 104.5, max: 110.5 };
+                    } else if (level === 5) {
+                        voltage_range = { min: 75, max: 79.5 };
+                    } else {
+                        voltage_range = { min: 75, max: 170 };
+                    }
+                    
+                    voltage_params = {
+                        level: level,
+                        voltage: (voltage_range.min + Math.random() * (voltage_range.max - voltage_range.min)).toFixed(2),
+                        min_voltage: voltage_range.min,
+                        max_voltage: voltage_range.max
+                    };
+                }
+                
+                // 简化的实数计算（用于模拟其他参数）
+                const inductive_reactance = 2 * Math.PI * data.frequency * data.inductance;
+                const capacitive_reactance = 1 / (2 * Math.PI * data.frequency * data.capacitance);
+                const total_reactance = inductive_reactance - capacitive_reactance;
+                const total_impedance = Math.sqrt(data.resistance * data.resistance + total_reactance * total_reactance);
+                const total_admittance = 1 / total_impedance;
+                const propagation_constant = Math.sqrt(total_impedance * total_admittance);
+                const characteristic_impedance = Math.sqrt(total_impedance / total_admittance);
+                
+                // 获取错误类型名称
+                const errorType = errorTypes.find(type => type.value === data.error_type);
+                const error_type_name = errorType ? errorType.name : "未知错误类型";
+                
+                return {
+                    status: 'success',
+                    section_info: faultResponse.section_info,
+                    error_info: faultResponse.error_info,
+                    input_params: data,
+                    spt_cable_params: spt_cable_params,
+                    voltage_params: voltage_params,
+                    calculation_result: {
+                        total_impedance: total_impedance,
+                        total_admittance: total_admittance,
+                        propagation_constant: propagation_constant,
+                        characteristic_impedance: characteristic_impedance,
+                        inductive_reactance: inductive_reactance,
+                        capacitive_reactance: capacitive_reactance
+                    },
+                    voltage_results: faultResponse.voltage_results,
+                    normal_voltage_results: normalResponse.voltage_results  // 使用真实API获取的无故障状态电压结果
+                };
+            } catch (error) {
+                console.error('模拟计算失败:', error);
+                throw error;
+            }
+        }
+        
+        // 调用计算API
+        async function fetchCalculation(data) {
+            const formData = new FormData();
+            formData.append('trail', data.name);
+            formData.append('error_type', data.error_type);
+            formData.append('error_value', data.error_value);
+            formData.append('error_position', data.section_id);
+            formData.append('track_length', data.length);
+            formData.append('resist_per_meter', data.resistance);
+            formData.append('induct_per_meter', data.inductance);
+            formData.append('capacit_per_meter', data.capacitance);
+            formData.append('frequency', data.frequency);
+            
+            const response = await fetch('/api/calculate/track-circuit', {
+                method: 'POST',
+                body: formData
             });
-                }, 1000);
-            });
+            
+            if (!response.ok) {
+                throw new Error('API请求失败');
+            }
+            
+            return await response.json();
         }
         
         // 显示结果
@@ -1083,9 +1109,37 @@
                 html += '<div class="result-section">';
                 html += '<h4>电压计算结果</h4>';
                 html += '<div class="result-grid">';
-                html += `<div class="result-item"><div class="result-label">送端轨面电压:</div><div class="result-value">${result.voltage_results.send_end_track_voltage.toFixed(2)} V</div></div>`;
-                html += `<div class="result-item"><div class="result-label">受端轨面电压:</div><div class="result-value">${result.voltage_results.receive_end_track_voltage.toFixed(2)} V</div></div>`;
-                html += `<div class="result-item"><div class="result-label">主轨入电压:</div><div class="result-value">${result.voltage_results.main_track_input_voltage.toFixed(2)} V</div></div>`;
+                
+                // 送端轨面电压
+                html += `<div class="result-item"><div class="result-label">送端轨面电压:</div><div class="result-value">${result.voltage_results.send_end_track_voltage.toFixed(2)} V`;
+                if (result.error_info.type !== 0 && result.normal_voltage_results) {
+                    const diff = result.voltage_results.send_end_track_voltage - result.normal_voltage_results.send_end_track_voltage;
+                    const percent_diff = (diff / result.normal_voltage_results.send_end_track_voltage) * 100;
+                    html += `<span style="color: ${diff >= 0 ? '#27ae60' : '#e74c3c'}; margin-left: 10px; font-weight: normal;">`;
+                    html += ` (与无故障相比: ${diff >= 0 ? '+' : ''}${diff.toFixed(2)} V, ${percent_diff >= 0 ? '+' : ''}${percent_diff.toFixed(2)}%)</span>`;
+                }
+                html += '</div></div>';
+                
+                // 受端轨面电压
+                html += `<div class="result-item"><div class="result-label">受端轨面电压:</div><div class="result-value">${result.voltage_results.receive_end_track_voltage.toFixed(2)} V`;
+                if (result.error_info.type !== 0 && result.normal_voltage_results) {
+                    const diff = result.voltage_results.receive_end_track_voltage - result.normal_voltage_results.receive_end_track_voltage;
+                    const percent_diff = (diff / result.normal_voltage_results.receive_end_track_voltage) * 100;
+                    html += `<span style="color: ${diff >= 0 ? '#27ae60' : '#e74c3c'}; margin-left: 10px; font-weight: normal;">`;
+                    html += ` (与无故障相比: ${diff >= 0 ? '+' : ''}${diff.toFixed(2)} V, ${percent_diff >= 0 ? '+' : ''}${percent_diff.toFixed(2)}%)</span>`;
+                }
+                html += '</div></div>';
+                
+                // 主轨入电压
+                html += `<div class="result-item"><div class="result-label">主轨入电压:</div><div class="result-value">${result.voltage_results.main_track_input_voltage.toFixed(2)} V`;
+                if (result.error_info.type !== 0 && result.normal_voltage_results) {
+                    const diff = result.voltage_results.main_track_input_voltage - result.normal_voltage_results.main_track_input_voltage;
+                    const percent_diff = (diff / result.normal_voltage_results.main_track_input_voltage) * 100;
+                    html += `<span style="color: ${diff >= 0 ? '#27ae60' : '#e74c3c'}; margin-left: 10px; font-weight: normal;">`;
+                    html += ` (与无故障相比: ${diff >= 0 ? '+' : ''}${diff.toFixed(2)} V, ${percent_diff >= 0 ? '+' : ''}${percent_diff.toFixed(2)}%)</span>`;
+                }
+                html += '</div></div>';
+                
                 html += '</div>';
                 html += '</div>';
             }
