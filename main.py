@@ -686,7 +686,8 @@ async def observe_error_api(
             trail=trail,
             error_type=error_type,
             error_value=error_value,
-            error_position=error_position
+            error_position=error_position,
+            length_parameter=100.0
         )
         
         # 构建电路模型

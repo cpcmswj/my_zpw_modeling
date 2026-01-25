@@ -528,7 +528,8 @@
             "69G": {
                 id: "69G",
                 name: "轨道区段 - 69G",
-                description: "69G轨道区段，标准轨道电路区段",
+                type: "股道区段",
+                description: "69G轨道区段，标准股道电路区段",
                 image: "/static/images/错误展示0.png",
                 image_title: "69G区段 - 无故障",
                 image_description: "69G轨道区段正常运行状态，无任何故障。"
@@ -536,7 +537,8 @@
             "X1LQG": {
                 id: "X1LQG",
                 name: "轨道区段 - X1LQG",
-                description: "X1LQG轨道区段，标准轨道电路区段",
+                type: "区间轨道区段",
+                description: "X1LQG轨道区段，标准区间轨道电路区段",
                 image: "/static/images/错误展示0.png",
                 image_title: "X1LQG区段 - 无故障",
                 image_description: "X1LQG轨道区段正常运行状态，无任何故障。"
@@ -544,7 +546,8 @@
             "IG1": {
                 id: "IG1",
                 name: "轨道区段 - IG1",
-                description: "IG1轨道区段，标准轨道电路区段",
+                type: "股道区段",
+                description: "IG1轨道区段，标准股道电路区段",
                 image: "/static/images/错误展示0.png",
                 image_title: "IG1区段 - 无故障",
                 image_description: "IG1轨道区段正常运行状态，无任何故障。"
@@ -552,7 +555,8 @@
             "57G": {
                 id: "57G",
                 name: "轨道区段 - 57G",
-                description: "57G轨道区段，标准轨道电路区段",
+                type: "股道区段",
+                description: "57G轨道区段，标准股道电路区段",
                 image: "/static/images/错误展示0.png",
                 image_title: "57G区段 - 无故障",
                 image_description: "57G轨道区段正常运行状态，无任何故障。"
@@ -560,7 +564,8 @@
             "3DG": {
                 id: "3DG",
                 name: "轨道区段 - 3DG",
-                description: "3DG轨道区段，标准轨道电路区段",
+                type: "道岔区段",
+                description: "3DG轨道区段，标准道岔轨道电路区段",
                 image: "/static/images/错误展示0.png",
                 image_title: "3DG区段 - 无故障",
                 image_description: "3DG轨道区段正常运行状态，无任何故障。"
@@ -608,6 +613,7 @@
                 card.id = section.id;
                 card.innerHTML = `
                     <div class="section-name">${section.name}</div>
+                    <div class="section-type" style="font-size: 12px; color: #2196f3; font-weight: bold; margin-bottom: 5px;">${section.type}</div>
                     <div class="section-description">${section.description}</div>
                 `;
                 card.addEventListener('click', () => selectSection(section));

@@ -30,17 +30,99 @@ define_pages = {
     'test_image': 'http://127.0.0.1:8000/test-image'
 }
 
+def is_port_in_use(port):
+    """检查端口是否被占用"""
+    import socket
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(1)
+            s.bind(('127.0.0.1', port))
+        return False
+    except socket.error:
+        return True
+
+def get_process_using_port(port):
+    """获取占用端口的进程ID和名称"""
+    try:
+        # 使用netstat命令查找占用端口的进程
+        result = subprocess.run(
+            ['netstat', '-ano', f'| findstr :{port}'],
+            capture_output=True,
+            text=True, shell=True
+        )
+        if result.stdout:
+            # 提取PID
+            lines = result.stdout.strip().split('\n')
+            if lines:
+                # 获取第一行的PID
+                pid = lines[0].strip().split()[-1]
+                # 使用tasklist命令查找进程名称
+                task_result = subprocess.run(
+                    ['tasklist', '/FI', f'PID eq {pid}'],
+                    capture_output=True,
+                    text=True
+                )
+                if task_result.stdout:
+                    # 提取进程名称
+                    task_lines = task_result.stdout.strip().split('\n')
+                    if len(task_lines) > 1:
+                        process_name = task_lines[1].strip().split()[0]
+                        return pid, process_name
+        return None, None
+    except Exception:
+        return None, None
+
+def kill_process(pid):
+    """终止指定PID的进程"""
+    try:
+        subprocess.run(
+            ['taskkill', '/F', '/PID', pid],
+            capture_output=True,
+            text=True
+        )
+        return True
+    except Exception:
+        return False
+
 def start_server():
     """启动Uvicorn服务器"""
     print("正在启动FastAPI服务器...")
+    
+    # 默认端口
+    port = 8000
+    host = "127.0.0.1"
+    
+    # 检查端口是否被占用
+    while is_port_in_use(port):
+        print(f"❌ 端口 {port} 已被占用！")
+        pid, process_name = get_process_using_port(port)
+        
+        if pid and process_name:
+            print(f"占用端口的进程：{process_name} (PID: {pid})")
+            # 自动终止占用端口的进程
+            print(f"正在终止占用端口 {port} 的进程 {process_name} (PID: {pid})...")
+            if kill_process(pid):
+                print(f"✅ 已成功终止进程 {process_name} (PID: {pid})")
+                # 等待片刻，确保端口释放
+                time.sleep(1)
+            else:
+                print(f"❌ 无法终止进程 {process_name} (PID: {pid})")
+                # 尝试使用其他端口
+                port += 1
+                print(f"尝试使用端口 {port}...")
+        else:
+            # 无法获取进程信息，尝试使用其他端口
+            port += 1
+            print(f"尝试使用端口 {port}...")
+    
     try:
         # 启动Uvicorn服务器，使用默认事件循环
         cmd = [
             sys.executable,
             "-m", "uvicorn",
             "main:app",
-            "--host", "127.0.0.1",
-            "--port", "8000",
+            "--host", host,
+            "--port", str(port),
             "--workers", "1",
             "--log-level", "info"
         ]
@@ -64,14 +146,21 @@ def start_server():
             return None
         
         print("✅ 服务器已成功启动！")
-        print(f"服务器地址：http://127.0.0.1:8000/")
+        print(f"服务器地址：http://{host}:{port}/")
         print("要停止服务器，请按 Ctrl+C 或关闭终端窗口")
         print("=" * 50)
+        
+        # 更新全局页面映射中的端口
+        global define_pages
+        for page_name in define_pages:
+            define_pages[page_name] = define_pages[page_name].replace(":8000", f":{port}")
         
         return server_process
         
     except Exception as e:
         print(f"❌ 启动服务器时出错：{e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def open_pages(pages_to_open):
