@@ -1044,6 +1044,10 @@
             formData.append('capacit_per_meter', data.capacitance);
             formData.append('conduct_per_meter', data.conductance);
             formData.append('frequency', data.frequency);
+            // 添加SPT电缆长度参数
+            if (data.spt_cable_length) {
+                formData.append('spt_cable_length', data.spt_cable_length);
+            }
             
             // 使用相对路径，不硬编码端口号，确保与当前页面端口一致
             const response = await fetch('/api/calculate/track-circuit', {

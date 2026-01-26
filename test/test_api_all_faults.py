@@ -12,6 +12,8 @@ base_data = {
     'resist_per_meter': 0.1,
     'induct_per_meter': 1.0e-3,
     'capacit_per_meter': 1.0e-9,
+    'conduct_per_meter': 0.0,
+    'spt_cable_length': 10.0,
     'frequency': 1700
 }
 

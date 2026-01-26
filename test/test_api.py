@@ -1,100 +1,40 @@
 import requests
 
-# 测试阻抗计算API
-def test_impedance_calculation():
-    print("测试阻抗计算API...")
-    url = "http://127.0.0.1:8000/api/calculate/impedance"
-    data = {
-        "resist": 100,
-        "induct": 0.01,
-        "capacit": 0.00001,
-        "angular_frequency": 2 * 3.14159 * 50  # 50Hz
-    }
-    
-    try:
-        response = requests.post(url, data=data)
-        result = response.json()
-        print(f"状态码: {response.status_code}")
-        print(f"响应: {result}")
-        
-        # 验证是否包含复数形式
-        if "impedance_complex" in result["result"]:
-            print("✅ 阻抗包含复数形式")
-        
-        return result
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return None
+# API端点URL
+url = 'http://localhost:8000/api/calculate/track-circuit'
 
-# 测试导纳计算API
-def test_admittance_calculation():
-    print("\n测试导纳计算API...")
-    url = "http://127.0.0.1:8000/api/calculate/admittance"
-    data = {
-        "resist": 100,
-        "induct": 0.01,
-        "capacit": 0.00001,
-        "angular_frequency": 2 * 3.14159 * 50  # 50Hz
-    }
-    
-    try:
-        response = requests.post(url, data=data)
-        result = response.json()
-        print(f"状态码: {response.status_code}")
-        print(f"响应: {result}")
-        
-        # 验证是否包含复数形式
-        if "admittance_complex" in result["result"]:
-            print("✅ 导纳包含复数形式")
-        
-        return result
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return None
+# 表单数据
+data = {
+    'trail': 'test',
+    'error_type': 0,
+    'error_value': 0,
+    'error_position': '69G',
+    'track_length': 100,
+    'resist_per_meter': 0.1,
+    'induct_per_meter': 1.0e-3,
+    'capacit_per_meter': 1.0e-9,
+    'conduct_per_meter': 0.0,
+    'spt_cable_length': 10.0,
+    'frequency': 1700
+}
 
-# 测试变量计算API
-def test_variable_calculation():
-    print("\n测试变量计算API...")
-    url = "http://127.0.0.1:8000/api/calculate/variable"
-    data = {
-        "name": "test_variable",
-        "value": 100,
-        "length_guidao": 1000,
-        "resist_per_meter": 0.01,
-        "induct_per_meter": 1e-6,
-        "capacit_per_meter": 1e-9
-    }
-    
-    try:
-        response = requests.post(url, data=data)
-        result = response.json()
-        print(f"状态码: {response.status_code}")
-        print(f"响应: {result}")
-        
-        # 验证复数形式是否正确包含
-        complex_fields = ["impedance", "admittance", "gamma", "Z_c"]
-        all_passed = True
-        for field in complex_fields:
-            if field in result["result"] and "complex" in result["result"][field]:
-                print(f"✅ {field} 包含复数形式")
-            else:
-                print(f"❌ {field} 缺少复数形式")
-                all_passed = False
-        
-        if all_passed:
-            print("✅ 所有参数都包含复数形式")
-        
-        return result
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return None
+print("正在测试API...")
+print(f"请求URL: {url}")
+print(f"请求数据: {data}")
 
-if __name__ == "__main__":
-    print("开始测试FastAPI API端点...\n")
+try:
+    # 发送POST请求
+    response = requests.post(url, data=data)
     
-    # 运行所有测试
-    test_impedance_calculation()
-    test_admittance_calculation()
-    test_variable_calculation()
+    # 打印响应状态码
+    print(f"\n响应状态码: {response.status_code}")
     
-    print("\n所有测试完成！")
+    # 打印响应内容
+    print("响应内容:")
+    print(response.json())
+    
+    print("\n✅ API测试成功！")
+except Exception as e:
+    print(f"\n❌ API测试失败: {e}")
+    import traceback
+    traceback.print_exc()
