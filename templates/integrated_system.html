@@ -419,16 +419,24 @@
                         
                         <div class="form-row">
                             <div class="form-col">
-                                <label for="resistance">电阻 (Ω/m):</label>
+                                <label for="resistance">钢轨电阻 (Ω/m):</label>
                                 <input type="number" id="resistance" name="resistance" placeholder="输入电阻值" value="0.1" step="0.01" min="0" required>
                             </div>
                             <div class="form-col">
-                                <label for="inductance">电感 (H/m):</label>
+                                <label for="inductance">钢轨电感 (H/m):</label>
                                 <input type="number" id="inductance" name="inductance" placeholder="输入电感值" value="1.0e-3" step="0.000001" min="0" required>
                             </div>
                             <div class="form-col">
-                                <label for="capacitance">电容 (F/m):</label>
+                                <label for="capacitance">漏泄电容 (F/m):</label>
                                 <input type="number" id="capacitance" name="capacitance" placeholder="输入电容值" value="1.0e-9" step="0.000000001" min="0" required>
+                            </div>
+                            <div class="form-col">
+                                <label for="leakageResistance">钢轨漏泄电阻 (Ω/km):</label>
+                                <select id="leakageResistance" name="leakageResistance">
+                                    <option value="1">1 Ω/km</option>
+                                    <option value="1.2">1.2 Ω/km</option>
+                                    <option value="1.5" selected>1.5 Ω/km</option>
+                                </select>
                             </div>
                         </div>
                         
@@ -454,6 +462,17 @@
                                     <option value="5">档位5 (75-79.5V)</option>
                                 </select>
                             </div>
+                            <div class="form-col">
+                                <label for="sptCableLength">SPT电缆长度 (km):</label>
+                                <select id="sptCableLength" name="sptCableLength">
+                                    <option value="10">10km</option>
+                                    <option value="12.5">12.5km</option>
+                                    <option value="15">15km</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
                             <div class="form-col">
                                 <label for="useRandomVoltage">
                                     <input type="checkbox" id="useRandomVoltage" name="useRandomVoltage" value="1">
@@ -858,6 +877,13 @@
                 const useRandomVoltage = document.getElementById('useRandomVoltage').checked;
                 const voltageLevel = parseInt(document.getElementById('voltageLevel').value);
                 
+                // 获取SPT电缆长度
+                const sptCableLength = parseFloat(formData.get('sptCableLength'));
+                
+                // 获取钢轨漏泄电阻（Ω/km），并转换为电导（S/m）
+                const leakageResistance = parseFloat(formData.get('leakageResistance')); // Ω/km
+                const conductance = 1 / (leakageResistance * 1000); // 转换为S/m
+                
                 // 简化的模拟计算（使用前端计算代替API调用）
                 const data = {
                     section_id: selectedSection.id,
@@ -867,12 +893,15 @@
                     resistance: parseFloat(formData.get('resistance')),
                     inductance: parseFloat(formData.get('inductance')),
                     capacitance: parseFloat(formData.get('capacitance')),
+                    conductance: conductance, // 钢轨电导（S/m）
+                    leakage_resistance: leakageResistance, // 钢轨漏泄电阻（Ω/km）
                     frequency: parseFloat(formData.get('frequency')),
                     error_type: selectedErrorType,
                     error_value: parseFloat(formData.get('errorValue') || 0),
                     use_random_params: useRandomParams,
                     voltage_level: voltageLevel,
-                    use_random_voltage: useRandomVoltage
+                    use_random_voltage: useRandomVoltage,
+                    spt_cable_length: sptCableLength
                 };
                 
                 // 模拟计算结果
@@ -1013,6 +1042,7 @@
             formData.append('resist_per_meter', data.resistance);
             formData.append('induct_per_meter', data.inductance);
             formData.append('capacit_per_meter', data.capacitance);
+            formData.append('conduct_per_meter', data.conductance);
             formData.append('frequency', data.frequency);
             
             // 使用相对路径，不硬编码端口号，确保与当前页面端口一致
@@ -1070,8 +1100,10 @@
                 html += `<div class="result-item"><div class="result-label">电阻:</div><div class="result-value">${result.input_params.resistance} Ω/m</div></div>`;
                 html += `<div class="result-item"><div class="result-label">电感:</div><div class="result-value">${result.input_params.inductance} H/m</div></div>`;
                 html += `<div class="result-item"><div class="result-label">电容:</div><div class="result-value">${result.input_params.capacitance} F/m</div></div>`;
+                html += `<div class="result-item"><div class="result-label">钢轨漏泄电阻:</div><div class="result-value">${result.input_params.leakage_resistance} Ω/km</div></div>`;
                 html += `<div class="result-item"><div class="result-label">频率:</div><div class="result-value">${result.input_params.frequency} Hz</div></div>`;
                 html += `<div class="result-item"><div class="result-label">轨道区段:</div><div class="result-value">${result.input_params.section_id}</div></div>`;
+                html += `<div class="result-item"><div class="result-label">SPT电缆长度:</div><div class="result-value">${result.input_params.spt_cable_length} km</div></div>`;
                 html += `<div class="result-item"><div class="result-label">电平档位:</div><div class="result-value">${result.input_params.voltage_level}</div></div>`;
                 html += `<div class="result-item"><div class="result-label">随机化电压:</div><div class="result-value">${result.input_params.use_random_voltage ? '是' : '否'}</div></div>`;
                 html += `<div class="result-item"><div class="result-label">使用随机SPT参数:</div><div class="result-value">${result.input_params.use_random_params ? '是' : '否'}</div></div>`;

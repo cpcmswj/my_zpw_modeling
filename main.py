@@ -727,12 +727,14 @@ async def calculate_track_circuit_api(
     frequency: float = Form(...)
 ):
     try:
-        # 创建Error_Of_Trail实例
+        # 创建Error_Of_Trail实例，添加默认的SPT电缆长度
         error_instance = Error_Of_Trail(
             trail=trail,
             error_type=error_type,
             error_value=error_value,
-            error_position=error_position
+            error_position=error_position,
+            length_parameter=track_length,
+            SPT_cable_length=10.0  # 默认SPT电缆长度为10.0
         )
         
         # 重新初始化参数
