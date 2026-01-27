@@ -363,6 +363,10 @@ def attenuation_matrix(r1, r2):
     输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
     其中T为衰耗盘传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
     N_rirj = find_attenuation(r1, r2)  # 获取衰耗盘次级线圈匝数
+    if N_rirj == 0:
+        # 当未找到匹配的端子组合时，返回单位矩阵，避免除以零错误
+        print("警告：衰耗盘端子组合无效，使用单位矩阵代替")
+        return np.array([[1, 0], [0, 1]])
     return np.array([[N_rirj / 116, 0], [0, 116 / N_rirj]])
 
 def calculate_current(voltage, resist, induct, capacit, angular_frequency=0):
