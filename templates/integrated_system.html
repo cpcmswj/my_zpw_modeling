@@ -474,6 +474,39 @@
                         
                         <div class="form-row">
                             <div class="form-col">
+                                <label for="r1">衰耗盘端子1:</label>
+                                <select id="r1" name="r1">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label for="r2">衰耗盘端子2:</label>
+                                <select id="r2" name="r2">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-col">
                                 <label for="useRandomVoltage">
                                     <input type="checkbox" id="useRandomVoltage" name="useRandomVoltage" value="1">
                                     随机化输出电压幅值
@@ -630,9 +663,12 @@
                 const card = document.createElement('div');
                 card.className = 'section-card';
                 card.id = section.id;
+                // 获取载频率
+                const frequency = frequencyTable(section.id);
                 card.innerHTML = `
                     <div class="section-name">${section.name}</div>
                     <div class="section-type" style="font-size: 12px; color: #2196f3; font-weight: bold; margin-bottom: 5px;">${section.type}</div>
+                    <div class="section-frequency" style="font-size: 12px; color: #4caf50; font-weight: bold; margin-bottom: 5px;">载频率: ${frequency}Hz</div>
                     <div class="section-description">${section.description}</div>
                 `;
                 card.addEventListener('click', () => selectSection(section));
@@ -901,7 +937,9 @@
                     use_random_params: useRandomParams,
                     voltage_level: voltageLevel,
                     use_random_voltage: useRandomVoltage,
-                    spt_cable_length: sptCableLength
+                    spt_cable_length: sptCableLength,
+                    r1: parseInt(formData.get('r1')),
+                    r2: parseInt(formData.get('r2'))
                 };
                 
                 // 模拟计算结果
@@ -1048,6 +1086,13 @@
             if (data.spt_cable_length) {
                 formData.append('spt_cable_length', data.spt_cable_length);
             }
+            // 添加衰耗盘端子参数
+            if (data.r1) {
+                formData.append('r1', data.r1);
+            }
+            if (data.r2) {
+                formData.append('r2', data.r2);
+            }
             
             // 使用相对路径，不硬编码端口号，确保与当前页面端口一致
             const response = await fetch('/api/calculate/track-circuit', {
@@ -1187,6 +1232,16 @@
                 }
                 html += '</div></div>';
                 
+                // 轨出1电压
+                html += `<div class="result-item"><div class="result-label">轨出1电压:</div><div class="result-value">${result.voltage_results.main_track_output_voltage_1.toFixed(2)} V`;
+                if (result.error_info.type !== 0 && result.normal_voltage_results && result.normal_voltage_results.main_track_output_voltage_1) {
+                    const diff = result.voltage_results.main_track_output_voltage_1 - result.normal_voltage_results.main_track_output_voltage_1;
+                    const percent_diff = (diff / result.normal_voltage_results.main_track_output_voltage_1) * 100;
+                    html += `<span style="color: ${diff >= 0 ? '#27ae60' : '#e74c3c'}; margin-left: 10px; font-weight: normal;">`;
+                    html += ` (与无故障相比: ${diff >= 0 ? '+' : ''}${diff.toFixed(2)} V, ${percent_diff >= 0 ? '+' : ''}${percent_diff.toFixed(2)}%)</span>`;
+                }
+                html += '</div></div>';
+                
                 html += '</div>';
                 html += '</div>';
             }
@@ -1240,7 +1295,8 @@
                 '容抗(Ω)',
                 '送端轨面电压(V)',
                 '受端轨面电压(V)',
-                '主轨入电压(V)'
+                '主轨入电压(V)',
+                '轨出1电压(V)'
             ];
             csvContent += headers.join(',') + '\n';
             
@@ -1272,7 +1328,8 @@
                 simulationResult.calculation_result.capacitive_reactance.toFixed(6),
                 simulationResult.voltage_results ? simulationResult.voltage_results.send_end_track_voltage.toFixed(2) : '',
                 simulationResult.voltage_results ? simulationResult.voltage_results.receive_end_track_voltage.toFixed(2) : '',
-                simulationResult.voltage_results ? simulationResult.voltage_results.main_track_input_voltage.toFixed(2) : ''
+                simulationResult.voltage_results ? simulationResult.voltage_results.main_track_input_voltage.toFixed(2) : '',
+                simulationResult.voltage_results ? simulationResult.voltage_results.main_track_output_voltage_1.toFixed(2) : ''
             ];
             csvContent += dataRow.join(',') + '\n';
             

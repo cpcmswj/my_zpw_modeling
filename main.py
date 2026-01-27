@@ -726,7 +726,9 @@ async def calculate_track_circuit_api(
     capacit_per_meter: float = Form(...),
     conduct_per_meter: float = Form(...),
     frequency: float = Form(...),
-    spt_cable_length: float = Form(10.0)  # SPT电缆长度，默认10.0
+    spt_cable_length: float = Form(10.0),  # SPT电缆长度，默认10.0
+    r1: int = Form(1),  # 衰耗盘端子1，默认1
+    r2: int = Form(1)   # 衰耗盘端子2，默认1
 ):
     try:
         # 创建Error_Of_Trail实例
@@ -736,7 +738,9 @@ async def calculate_track_circuit_api(
             error_value=error_value,
             error_position=error_position,
             length_parameter=track_length,
-            SPT_cable_length=spt_cable_length  # 使用前端传递的SPT电缆长度
+            SPT_cable_length=spt_cable_length,  # 使用前端传递的SPT电缆长度
+            r1=r1,  # 传递衰耗盘端子1
+            r2=r2   # 传递衰耗盘端子2
         )
         
         # 重新初始化参数
@@ -749,7 +753,9 @@ async def calculate_track_circuit_api(
             resist_per_meter=resist_per_meter,
             induct_per_meter=induct_per_meter,
             capacit_per_meter=capacit_per_meter,
-            conduct_per_meter=conduct_per_meter  # 添加电导参数
+            conduct_per_meter=conduct_per_meter,  # 添加电导参数
+            r1=r1,  # 添加衰耗盘端子1
+            r2=r2   # 添加衰耗盘端子2
         )
         
         # 调用call_matrix_main方法获取计算结果

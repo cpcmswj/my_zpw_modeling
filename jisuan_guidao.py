@@ -299,7 +299,8 @@ def find_attenuation(r1, r2):
         return 84
     elif r1 == 8 and r2 == 10:
         return 126
-    print("未找到该衰耗盘参数/端子错误")
+    error_msg = f"未找到该衰耗盘参数/端子错误：r1={r1}, r2={r2}。请检查端子输入是否正确。"
+    print(error_msg)
     return 0
 
 def find_track_circuit_length(ballast_resist, cable_length, frequency):
