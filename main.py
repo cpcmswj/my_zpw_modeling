@@ -755,6 +755,19 @@ async def calculate_track_circuit_api(
         # 调用call_matrix_main方法获取计算结果
         result = error_instance.call_matrix_main()
         
+        # 处理矩阵中的NaN值，确保JSON序列化成功
+        def safe_matrix(matrix):
+            try:
+                # 转换为实数矩阵
+                real_matrix = matrix.real
+                # 替换NaN和无穷大值为0
+                real_matrix = np.nan_to_num(real_matrix, nan=0.0, posinf=0.0, neginf=0.0)
+                # 转换为列表
+                return real_matrix.tolist()
+            except:
+                # 如果出错，返回空矩阵
+                return [[0.0, 0.0], [0.0, 0.0]]
+        
         # 构建响应数据
         response = {
             "status": "success",
@@ -779,7 +792,7 @@ async def calculate_track_circuit_api(
                 "frequency": frequency
             },
             "voltage_results": result["voltage_results"],
-            "matrix": result["matrix"].real.tolist()  # 只取矩阵的实部，避免JSON序列化错误
+            "matrix": safe_matrix(result["matrix"])  # 处理矩阵中的NaN值
         }
         
         return JSONResponse(response)

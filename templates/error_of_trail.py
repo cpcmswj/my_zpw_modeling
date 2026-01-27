@@ -422,10 +422,25 @@ class Error_Of_Trail:
             self.output_voltage_main = complex(0.0)
         
         # 使用实例变量中的电压值作为结果（电压有效值：复数模的平方根）
+        # 添加NaN检查，确保返回有效的数值
+        def safe_voltage_calc(voltage):
+            try:
+                if voltage is None:
+                    return 0.0
+                abs_val = np.abs(voltage)
+                if not np.isfinite(abs_val):
+                    return 0.0
+                sqrt_val = np.sqrt(abs_val)
+                if not np.isfinite(sqrt_val):
+                    return 0.0
+                return float(sqrt_val)
+            except:
+                return 0.0
+        
         voltage_results = {
-            "send_end_track_voltage": float(np.sqrt(np.abs(self.output_voltage_surface1))),
-            "receive_end_track_voltage": float(np.sqrt(np.abs(self.output_voltage_surface2))),
-            "main_track_input_voltage": float(np.sqrt(np.abs(self.output_voltage_main)))
+            "send_end_track_voltage": safe_voltage_calc(self.output_voltage_surface1),
+            "receive_end_track_voltage": safe_voltage_calc(self.output_voltage_surface2),
+            "main_track_input_voltage": safe_voltage_calc(self.output_voltage_main)
         }
         
         # 返回包含矩阵和电压结果的字典
