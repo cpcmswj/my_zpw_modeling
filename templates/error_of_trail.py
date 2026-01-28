@@ -469,6 +469,7 @@ class Error_Of_Trail:
             frequency = self.frequency_table(self.error_position)
             # 计算钢轨阻抗（使用Variable类的impedance属性）
             Z_rail = self.parameter.impedance_complex
+
             # 设置道床漏阻
             R_b = ballast_resist_per_meter * self.length_parameter  #道床漏阻一般取值为1.0或1.2Ω或1.5/km
             # 计算组合阻抗
@@ -487,15 +488,8 @@ class Error_Of_Trail:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca+1j*self.tuning_parameters.L_SVA*self.tuning_parameters.angular_frequency)
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca,self.tuning_parameters.Z_BA1)
             #主轨道阻抗为
-            capacitance_step = jg.find_capacitance_step(frequency)
-            if capacitance_step == 0:
-                capacitance_step = 1  # 避免除零错误
-            Z_rail_matrix=self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/capacitance_step,capacitance_step,0,0,1.0e-9)
-            # 避免除以零
-            if abs(Z_rail_matrix[0][1]) < 1e-10:
-                Z_rail = 1.0  # 默认值
-            else:
-                Z_rail=Z_rail_matrix[0][0]/Z_rail_matrix[0][1]
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
@@ -542,7 +536,11 @@ class Error_Of_Trail:
             if capacitance_step == 0:
                 capacitance_step = 1  # 避免除零错误
             Z_rail_matrix=self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/capacitance_step,capacitance_step,0,0,1.0e-9)
-            Z_rail=Z_rail_matrix[0][0]/Z_rail_matrix[0][1]
+            # 避免除以零
+            if abs(Z_rail_matrix[0][1]) < 1e-10:
+                Z_rail = 1.0  # 默认值
+            else:
+                Z_rail=Z_rail_matrix[0][0]/Z_rail_matrix[0][1]
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
