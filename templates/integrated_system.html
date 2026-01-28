@@ -475,7 +475,7 @@
                         <div class="form-row">
                             <div class="form-col">
                                 <label for="r1">衰耗盘端子1:</label>
-                                <select id="r1" name="r1">
+                                <select id="r1" name="r1" onchange="validateAttenuationTerminals()">
                                     <option value="1">1</option>
                                     <option value="2">2</option>
                                     <option value="3">3</option>
@@ -490,7 +490,7 @@
                             </div>
                             <div class="form-col">
                                 <label for="r2">衰耗盘端子2:</label>
-                                <select id="r2" name="r2">
+                                <select id="r2" name="r2" onchange="validateAttenuationTerminals()">
                                     <option value="1">1</option>
                                     <option value="2">2</option>
                                     <option value="3">3</option>
@@ -504,6 +504,9 @@
                                 </select>
                             </div>
                         </div>
+                        
+                        <!-- 衰耗盘端子错误提示 -->
+                        <div id="attenuationValidation" class="validation-message" style="display: none;"></div>
                         
                         <div class="form-row">
                             <div class="form-col">
@@ -830,6 +833,38 @@
                         errorTypeValidation.textContent = '✅ 已选择错误类型';
                         errorTypeValidation.className = 'validation-message success';
                         errorTypeValidation.style.display = 'block';
+                    }
+                    break;
+                case 3:
+                    // 验证衰耗盘端子选择
+                    const r1 = parseInt(document.getElementById('r1').value);
+                    const r2 = parseInt(document.getElementById('r2').value);
+                    const validationElement = document.getElementById('attenuationValidation');
+                    
+                    // 有效的端子组合列表
+                    const validCombinations = [
+                        [1, 2],
+                        [3, 4],
+                        [4, 5],
+                        [3, 5],
+                        [6, 7],
+                        [8, 9],
+                        [9, 10],
+                        [8, 10]
+                    ];
+                    
+                    // 检查当前组合是否有效
+                    const isTerminalValid = validCombinations.some(comb => comb[0] === r1 && comb[1] === r2);
+                    
+                    if (!isTerminalValid) {
+                        validationElement.textContent = '❌ 衰耗盘端子组合无效，请选择正确的端子组合';
+                        validationElement.className = 'validation-message error';
+                        validationElement.style.display = 'block';
+                        isValid = false;
+                    } else {
+                        validationElement.textContent = '✅ 衰耗盘端子选择正确';
+                        validationElement.className = 'validation-message success';
+                        validationElement.style.display = 'block';
                     }
                     break;
             }
@@ -1347,6 +1382,38 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+        
+        // 验证衰耗盘端子选择
+        function validateAttenuationTerminals() {
+            const r1 = parseInt(document.getElementById('r1').value);
+            const r2 = parseInt(document.getElementById('r2').value);
+            const validationElement = document.getElementById('attenuationValidation');
+            
+            // 有效的端子组合列表
+            const validCombinations = [
+                [1, 2],
+                [3, 4],
+                [4, 5],
+                [3, 5],
+                [6, 7],
+                [8, 9],
+                [9, 10],
+                [8, 10]
+            ];
+            
+            // 检查当前组合是否有效
+            const isValid = validCombinations.some(comb => comb[0] === r1 && comb[1] === r2);
+            
+            if (isValid) {
+                validationElement.textContent = '✅ 衰耗盘端子选择正确';
+                validationElement.className = 'validation-message success';
+                validationElement.style.display = 'block';
+            } else {
+                validationElement.textContent = '❌ 衰耗盘端子组合无效，请选择正确的端子组合';
+                validationElement.className = 'validation-message error';
+                validationElement.style.display = 'block';
+            }
         }
         
         // 页面加载完成后初始化
