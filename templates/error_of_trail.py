@@ -306,14 +306,9 @@ class Error_Of_Trail:
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             #送端轨面电压
             self.output_voltage_surface1=self.count_output()
-            # 钢轨矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.iron_rail(self.length_parameter/2))
+            #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
+            self.matrix=np.dot(self.matrix,self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,jg.find_capacitance(frequency)))
             
-            # 补偿电容矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.capacitance_matrix(0.1, 1.0e-6, 1.0e-6))
-            
-            # 钢轨矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.iron_rail(self.length_parameter/2))
             #受端轨面电压
             self.output_voltage_surface2=self.count_output()
             # 匹配变压器矩阵

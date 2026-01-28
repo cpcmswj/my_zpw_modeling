@@ -714,6 +714,10 @@ class tuning_zone_parameters:
         """计算轨道电路等效传输特性矩阵 有n个补偿电容 包含钢轨在内 l_nc为补偿电容步长 R_cb为电容连接线电阻 L_cb为电容连接线电感 C_cb为补偿电容电容
         输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
         其中T为轨道电路传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
+        # 确保n为整数，补偿电容数量必须是整数
+        n = int(round(n))
+        # 确保n至少为1，避免计算错误
+        n = max(1, n)
         g_0 = n * self.variable.get_gamma_complex(self.variable.length_guidao)
         
         # 处理补偿电容为0的情况
