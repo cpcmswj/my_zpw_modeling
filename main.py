@@ -58,6 +58,11 @@ async def read_comparison_system(request: Request):
 async def read_fsk_signal_viewer(request: Request):
     return templates.TemplateResponse("fsk_signal_viewer.html", {"request": request})
 
+# 批量故障模拟页面
+@app.get("/batch-simulation", response_class=HTMLResponse)
+async def read_batch_simulation(request: Request):
+    return templates.TemplateResponse("batch_simulation.html", {"request": request})
+
 # 直接返回HTML内容的图片查看器页面
 @app.get("/image-viewer-direct", response_class=HTMLResponse)
 async def read_image_viewer_direct():

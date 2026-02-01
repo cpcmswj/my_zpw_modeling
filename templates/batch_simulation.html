@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量故障模拟系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn.secondary {
+            background-color: #95a5a6;
+        }
+        .btn.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .btn.disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .main-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .section h2 {
+            color: #3498db;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section h3 {
+            color: #2c3e50;
+            margin: 15px 0 10px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .form-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .result-container {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        .result-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        .result-content {
+            background-color: white;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-item.success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        .result-item.error {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        .loading {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .parameter-range {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .parameter-range input {
+            flex: 1;
+        }
+        .parameter-range span {
+            min-width: 60px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>批量故障模拟系统</h1>
+            <div style="margin-top: 15px;">
+                <a href="/" class="btn">返回首页</a>
+                <a href="/integrated-system" class="btn">集成故障模拟</a>
+                <a href="/comparison-system" class="btn">对比故障模拟</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- 批量设置 -->
+            <div class="section">
+                <h2>🔧 批量设置</h2>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="batchSize">批量生成数量:</label>
+                        <input type="number" id="batchSize" name="batchSize" value="10" min="1" max="100">
+                    </div>
+                    <div class="form-col">
+                        <label for="concurrentCount">并发执行数量:</label>
+                        <input type="number" id="concurrentCount" name="concurrentCount" value="3" min="1" max="10">
+                    </div>
+                </div>
+                
+                <!-- 轨道区段选择 -->
+                <h3>轨道区段选择</h3>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="section69G" name="sections" value="69G" checked>
+                        <label for="section69G">69G</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="sectionX1LQG" name="sections" value="X1LQG" checked>
+                        <label for="sectionX1LQG">X1LQG</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="sectionIG1" name="sections" value="IG1" checked>
+                        <label for="sectionIG1">IG1</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="section57G" name="sections" value="57G" checked>
+                        <label for="section57G">57G</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="section3DG" name="sections" value="3DG" checked>
+                        <label for="section3DG">3DG</label>
+                    </div>
+                </div>
+                
+                <!-- 错误类型选择 -->
+                <h3>错误类型选择</h3>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="error0" name="errorTypes" value="0" checked>
+                        <label for="error0">0 - 无故障</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="error1" name="errorTypes" value="1" checked>
+                        <label for="error1">1 - 接收端调谐单元1断路</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="error2" name="errorTypes" value="2" checked>
+                        <label for="error2">2 - 发送端调谐单元1断路</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="error3" name="errorTypes" value="3" checked>
+                        <label for="error3">3 - 接收端空心线圈断路</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="error4" name="errorTypes" value="4" checked>
+                        <label for="error4">4 - 接收端空芯线圈短路</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="error5" name="errorTypes" value="5" checked>
+                        <label for="error5">5 - 接收端调谐单元2断路</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="error6" name="errorTypes" value="6" checked>
+                        <label for="error6">6 - 补偿电容3断路</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="error7" name="errorTypes" value="7" checked>
+                        <label for="error7">7 - 补偿电容3短路</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 参数范围设置 -->
+            <div class="section">
+                <h2>🎛️ 参数范围设置</h2>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="trackLengthMin">轨道长度范围 (m):</label>
+                        <div class="parameter-range">
+                            <input type="number" id="trackLengthMin" name="trackLengthMin" value="50" min="10">
+                            <span>至</span>
+                            <input type="number" id="trackLengthMax" name="trackLengthMax" value="200" min="10">
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <label for="resistanceMin">钢轨电阻范围 (Ω/m):</label>
+                        <div class="parameter-range">
+                            <input type="number" id="resistanceMin" name="resistanceMin" value="0.08" step="0.01" min="0.01">
+                            <span>至</span>
+                            <input type="number" id="resistanceMax" name="resistanceMax" value="0.12" step="0.01" min="0.01">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="inductanceMin">钢轨电感范围 (H/m):</label>
+                        <div class="parameter-range">
+                            <input type="number" id="inductanceMin" name="inductanceMin" value="0.8e-3" step="0.0001" min="0.0001">
+                            <span>至</span>
+                            <input type="number" id="inductanceMax" name="inductanceMax" value="1.2e-3" step="0.0001" min="0.0001">
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <label for="capacitanceMin">漏泄电容范围 (F/m):</label>
+                        <div class="parameter-range">
+                            <input type="number" id="capacitanceMin" name="capacitanceMin" value="0.8e-9" step="0.0000000001" min="0.0000000001">
+                            <span>至</span>
+                            <input type="number" id="capacitanceMax" name="capacitanceMax" value="1.2e-9" step="0.0000000001" min="0.0000000001">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="leakageResistance">钢轨漏泄电阻 (Ω/km):</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <select id="leakageResistance" name="leakageResistance">
+                                <option value="1">1 Ω/km</option>
+                                <option value="1.2">1.2 Ω/km</option>
+                                <option value="1.5" selected>1.5 Ω/km</option>
+                            </select>
+                            <label for="randomLeakageResistance" style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                                <input type="checkbox" id="randomLeakageResistance" name="randomLeakageResistance">
+                                随机
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <label for="sptCableLength">SPT电缆长度 (km):</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <select id="sptCableLength" name="sptCableLength">
+                                <option value="10">10km</option>
+                                <option value="12.5">12.5km</option>
+                                <option value="15">15km</option>
+                            </select>
+                            <label for="randomSptCableLength" style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                                <input type="checkbox" id="randomSptCableLength" name="randomSptCableLength">
+                                随机
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="voltageLevel">电平档位:</label>
+                        <select id="voltageLevel" name="voltageLevel">
+                            <option value="1">档位1 (161-170V)</option>
+                            <option value="2">档位2 (146-154V)</option>
+                            <option value="3">档位3 (128-135V)</option>
+                            <option value="4">档位4 (104.5-110.5V)</option>
+                            <option value="5">档位5 (75-79.5V)</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="errorValueMin">错误值范围:</label>
+                        <div class="parameter-range">
+                            <input type="number" id="errorValueMin" name="errorValueMin" value="0" step="0.1" min="0">
+                            <span>至</span>
+                            <input type="number" id="errorValueMax" name="errorValueMax" value="10" step="0.1" min="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="section">
+                <h2>🚀 操作控制</h2>
+                <div style="text-align: center;">
+                    <button id="startBatchBtn" class="btn" onclick="startBatchSimulation()">开始批量模拟</button>
+                    <button id="stopBatchBtn" class="btn secondary" onclick="stopBatchSimulation()" disabled>停止</button>
+                    <button id="downloadBatchBtn" class="btn secondary" onclick="downloadBatchData()" disabled>下载数据</button>
+                    <button id="clearResultsBtn" class="btn secondary" onclick="clearResults()">清空结果</button>
+                </div>
+            </div>
+            
+            <!-- 结果显示 -->
+            <div class="section">
+                <h2>📊 模拟结果</h2>
+                
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%;">0%</div>
+                </div>
+                
+                <div class="result-container">
+                    <div class="result-title">
+                        批量模拟结果
+                        <span id="resultStats" style="float: right; font-weight: normal; color: #666;">
+                            已完成: 0 / 0
+                        </span>
+                    </div>
+                    <div class="result-content" id="resultContent">
+                        <p class="loading">请点击"开始批量模拟"按钮开始生成数据。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 全局状态
+        let batchResults = [];
+        let isBatchRunning = false;
+        let currentBatchIndex = 0;
+        let totalBatchSize = 0;
+        let batchSimulationTimeout = null;
+        
+        // 轨道区段数据
+        const railwaySections = {
+            "69G": { id: "69G", name: "轨道区段 - 69G", type: "股道区段", frequency: 1700 },
+            "X1LQG": { id: "X1LQG", name: "轨道区段 - X1LQG", type: "区间轨道区段", frequency: 1700 },
+            "IG1": { id: "IG1", name: "轨道区段 - IG1", type: "股道区段", frequency: 1700 },
+            "57G": { id: "57G", name: "轨道区段 - 57G", type: "股道区段", frequency: 2300 },
+            "3DG": { id: "3DG", name: "轨道区段 - 3DG", type: "道岔区段", frequency: 2300 }
+        };
+        
+        // 错误类型数据
+        const errorTypes = [
+            { value: 0, name: "0 - 无故障", description: "正常运行状态，无故障" },
+            { value: 1, name: "1 - 接收端调谐单元1断路", description: "接收端调谐单元1发生断路故障" },
+            { value: 2, name: "2 - 发送端调谐单元1断路", description: "发送端调谐单元1发生断路故障" },
+            { value: 3, name: "3 - 接收端空心线圈断路", description: "接收端空心线圈发生断路故障" },
+            { value: 4, name: "4 - 接收端空芯线圈短路", description: "接收端空芯线圈发生短路故障" },
+            { value: 5, name: "5 - 接收端调谐单元2断路", description: "接收端调谐单元2发生断路故障" },
+            { value: 6, name: "6 - 补偿电容3断路", description: "补偿电容3发生断路故障" },
+            { value: 7, name: "7 - 补偿电容3短路", description: "补偿电容3发生短路故障" }
+        ];
+        
+        // 有效的衰耗盘端子组合
+        const validAttenuationCombinations = [
+            [1, 2],
+            [3, 4],
+            [4, 5],
+            [3, 5],
+            [6, 7],
+            [8, 9],
+            [9, 10],
+            [8, 10]
+        ];
+        
+        // 随机生成参数
+        function generateRandomParams() {
+            // 获取选中的轨道区段
+            const selectedSections = Array.from(document.querySelectorAll('input[name="sections"]:checked')).map(cb => cb.value);
+            if (selectedSections.length === 0) {
+                alert('请至少选择一个轨道区段');
+                return null;
+            }
+            
+            // 随机选择轨道区段
+            const randomSectionId = selectedSections[Math.floor(Math.random() * selectedSections.length)];
+            const section = railwaySections[randomSectionId];
+            
+            // 获取选中的错误类型
+            const selectedErrorTypes = Array.from(document.querySelectorAll('input[name="errorTypes"]:checked')).map(cb => parseInt(cb.value));
+            if (selectedErrorTypes.length === 0) {
+                alert('请至少选择一个错误类型');
+                return null;
+            }
+            
+            // 随机选择错误类型
+            const randomErrorType = selectedErrorTypes[Math.floor(Math.random() * selectedErrorTypes.length)];
+            
+            // 随机生成参数
+            const trackLengthMin = parseFloat(document.getElementById('trackLengthMin').value);
+            const trackLengthMax = parseFloat(document.getElementById('trackLengthMax').value);
+            const trackLength = trackLengthMin + Math.random() * (trackLengthMax - trackLengthMin);
+            
+            const resistanceMin = parseFloat(document.getElementById('resistanceMin').value);
+            const resistanceMax = parseFloat(document.getElementById('resistanceMax').value);
+            const resistance = resistanceMin + Math.random() * (resistanceMax - resistanceMin);
+            
+            const inductanceMin = parseFloat(document.getElementById('inductanceMin').value);
+            const inductanceMax = parseFloat(document.getElementById('inductanceMax').value);
+            const inductance = inductanceMin + Math.random() * (inductanceMax - inductanceMin);
+            
+            const capacitanceMin = parseFloat(document.getElementById('capacitanceMin').value);
+            const capacitanceMax = parseFloat(document.getElementById('capacitanceMax').value);
+            const capacitance = capacitanceMin + Math.random() * (capacitanceMax - capacitanceMin);
+            
+            const errorValueMin = parseFloat(document.getElementById('errorValueMin').value);
+            const errorValueMax = parseFloat(document.getElementById('errorValueMax').value);
+            const errorValue = errorValueMin + Math.random() * (errorValueMax - errorValueMin);
+            
+            // 随机选择衰耗盘端子组合
+            const randomTerminalCombination = validAttenuationCombinations[Math.floor(Math.random() * validAttenuationCombinations.length)];
+            const r1 = randomTerminalCombination[0];
+            const r2 = randomTerminalCombination[1];
+            
+            // 获取其他参数
+            let leakageResistance;
+            const randomLeakage = document.getElementById('randomLeakageResistance').checked;
+            if (randomLeakage) {
+                // 随机选择钢轨漏泄电阻
+                const leakageOptions = [1, 1.2, 1.5];
+                leakageResistance = leakageOptions[Math.floor(Math.random() * leakageOptions.length)];
+            } else {
+                leakageResistance = parseFloat(document.getElementById('leakageResistance').value);
+            }
+            
+            let sptCableLength;
+            const randomSpt = document.getElementById('randomSptCableLength').checked;
+            if (randomSpt) {
+                // 随机选择SPT电缆长度
+                const sptOptions = [10, 12.5, 15];
+                sptCableLength = sptOptions[Math.floor(Math.random() * sptOptions.length)];
+            } else {
+                sptCableLength = parseFloat(document.getElementById('sptCableLength').value);
+            }
+            
+            const voltageLevel = parseInt(document.getElementById('voltageLevel').value);
+            
+            return {
+                section_id: section.id,
+                section_name: section.name,
+                section_type: section.type,
+                frequency: section.frequency,
+                error_type: randomErrorType,
+                error_type_name: errorTypes.find(e => e.value === randomErrorType).name,
+                track_length: trackLength,
+                resistance: resistance,
+                inductance: inductance,
+                capacitance: capacitance,
+                leakage_resistance: leakageResistance,
+                spt_cable_length: sptCableLength,
+                voltage_level: voltageLevel,
+                error_value: errorValue,
+                r1: r1,
+                r2: r2
+            };
+        }
+        
+        // 开始批量模拟
+        async function startBatchSimulation() {
+            const batchSize = parseInt(document.getElementById('batchSize').value);
+            const concurrentCount = parseInt(document.getElementById('concurrentCount').value);
+            
+            if (batchSize <= 0) {
+                alert('请输入有效的批量生成数量');
+                return;
+            }
+            
+            // 重置状态
+            batchResults = [];
+            isBatchRunning = true;
+            currentBatchIndex = 0;
+            totalBatchSize = batchSize;
+            
+            // 更新UI
+            document.getElementById('startBatchBtn').disabled = true;
+            document.getElementById('stopBatchBtn').disabled = false;
+            document.getElementById('downloadBatchBtn').disabled = true;
+            document.getElementById('resultContent').innerHTML = '<p class="loading">正在准备批量模拟...</p>';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressFill').textContent = '0%';
+            document.getElementById('resultStats').textContent = `已完成: 0 / ${batchSize}`;
+            
+            try {
+                // 生成模拟任务
+                const tasks = [];
+                for (let i = 0; i < batchSize; i++) {
+                    tasks.push(async () => {
+                        if (!isBatchRunning) return null;
+                        
+                        const params = generateRandomParams();
+                        if (!params) return null;
+                        
+                        try {
+                            // 模拟API调用
+                            const result = await simulateSingle(params);
+                            return { params, result };
+                        } catch (error) {
+                            console.error('模拟失败:', error);
+                            return { params, error: error.message };
+                        }
+                    });
+                }
+                
+                // 并发执行任务
+                await executeConcurrentTasks(tasks, concurrentCount);
+                
+            } catch (error) {
+                console.error('批量模拟失败:', error);
+                addResultItem('error', `批量模拟失败: ${error.message}`);
+            } finally {
+                // 完成批量模拟
+                finishBatchSimulation();
+            }
+        }
+        
+        // 并发执行任务
+        async function executeConcurrentTasks(tasks, concurrentCount) {
+            let runningTasks = [];
+            let taskIndex = 0;
+            
+            while (taskIndex < tasks.length && isBatchRunning) {
+                // 启动新任务
+                while (runningTasks.length < concurrentCount && taskIndex < tasks.length) {
+                    const task = tasks[taskIndex];
+                    const taskPromise = task().then(result => {
+                        // 从运行任务中移除
+                        runningTasks = runningTasks.filter(t => t !== taskPromise);
+                        
+                        // 处理结果
+                        if (result && isBatchRunning) {
+                            processSimulationResult(result);
+                        }
+                    });
+                    
+                    runningTasks.push(taskPromise);
+                    taskIndex++;
+                }
+                
+                // 等待任一任务完成
+                if (runningTasks.length > 0) {
+                    await Promise.race(runningTasks);
+                }
+            }
+            
+            // 等待所有任务完成
+            if (isBatchRunning) {
+                await Promise.all(runningTasks);
+            }
+        }
+        
+        // 模拟单个故障
+        async function simulateSingle(params) {
+            // 构建表单数据
+            const formData = new FormData();
+            formData.append('trail', `batch_${Date.now()}_${Math.floor(Math.random() * 1000)}`);
+            formData.append('error_type', params.error_type);
+            formData.append('error_value', params.error_value);
+            formData.append('error_position', params.section_id);
+            formData.append('track_length', params.track_length);
+            formData.append('resist_per_meter', params.resistance);
+            formData.append('induct_per_meter', params.inductance);
+            formData.append('capacit_per_meter', params.capacitance);
+            formData.append('conduct_per_meter', 1.0 / (params.leakage_resistance * 1000)); // 转换为S/m
+            formData.append('frequency', params.frequency);
+            formData.append('spt_cable_length', params.spt_cable_length);
+            formData.append('r1', params.r1);
+            formData.append('r2', params.r2);
+            
+            // 模拟API调用延迟
+            await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+            
+            // 实际API调用
+            const response = await fetch('/api/calculate/track-circuit', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API调用失败: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.status !== 'success') {
+                throw new Error(result.message || '模拟失败');
+            }
+            
+            return result;
+        }
+        
+        // 处理模拟结果
+        function processSimulationResult(simulation) {
+            if (!isBatchRunning) return;
+            
+            currentBatchIndex++;
+            
+            if (simulation.error) {
+                // 处理错误
+                addResultItem('error', `模拟失败 (${simulation.params.section_id}, 错误类型: ${simulation.params.error_type}): ${simulation.error}`);
+            } else {
+                // 处理成功结果
+                const result = simulation.result;
+                const params = simulation.params;
+                
+                // 构建结果对象
+                const resultData = {
+                    section_id: params.section_id,
+                    section_name: params.section_name,
+                    error_type: params.error_type,
+                    error_type_name: params.error_type_name,
+                    track_length: params.track_length,
+                    resistance: params.resistance,
+                    inductance: params.inductance,
+                    capacitance: params.capacitance,
+                    leakage_resistance: params.leakage_resistance,
+                    spt_cable_length: params.spt_cable_length,
+                    voltage_level: params.voltage_level,
+                    error_value: params.error_value,
+                    r1: params.r1,
+                    r2: params.r2,
+                    send_end_track_voltage: result.voltage_results.send_end_track_voltage,
+                    receive_end_track_voltage: result.voltage_results.receive_end_track_voltage,
+                    main_track_input_voltage: result.voltage_results.main_track_input_voltage,
+                    main_track_output_voltage_1: result.voltage_results.main_track_output_voltage_1,
+                    timestamp: new Date().toISOString()
+                };
+                
+                batchResults.push(resultData);
+                
+                // 添加结果到UI
+                addResultItem('success', `模拟成功 (${params.section_id}, 错误类型: ${params.error_type}) - 受端轨面电压: ${result.voltage_results.receive_end_track_voltage.toFixed(2)}V`);
+            }
+            
+            // 更新进度
+            const progress = (currentBatchIndex / totalBatchSize) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressFill').textContent = `${Math.round(progress)}%`;
+            document.getElementById('resultStats').textContent = `已完成: ${currentBatchIndex} / ${totalBatchSize}`;
+            
+            // 检查是否完成
+            if (currentBatchIndex >= totalBatchSize) {
+                finishBatchSimulation();
+            }
+        }
+        
+        // 完成批量模拟
+        function finishBatchSimulation() {
+            isBatchRunning = false;
+            
+            // 更新UI
+            document.getElementById('startBatchBtn').disabled = false;
+            document.getElementById('stopBatchBtn').disabled = true;
+            document.getElementById('downloadBatchBtn').disabled = batchResults.length === 0;
+            
+            if (batchResults.length > 0) {
+                addResultItem('success', `批量模拟完成！共生成 ${batchResults.length} 条有效数据。`);
+            } else if (currentBatchIndex > 0) {
+                addResultItem('error', `批量模拟完成，但未生成任何有效数据。`);
+            }
+        }
+        
+        // 停止批量模拟
+        function stopBatchSimulation() {
+            isBatchRunning = false;
+            
+            // 更新UI
+            document.getElementById('startBatchBtn').disabled = false;
+            document.getElementById('stopBatchBtn').disabled = true;
+            document.getElementById('downloadBatchBtn').disabled = batchResults.length === 0;
+            
+            addResultItem('error', `批量模拟已手动停止。已生成 ${batchResults.length} 条数据。`);
+        }
+        
+        // 添加结果项
+        function addResultItem(type, message) {
+            const resultContent = document.getElementById('resultContent');
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item ${type}`;
+            resultItem.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            
+            // 如果是首次添加结果，清空加载提示
+            if (resultContent.querySelector('.loading')) {
+                resultContent.innerHTML = '';
+            }
+            
+            resultContent.appendChild(resultItem);
+            
+            // 滚动到底部
+            resultContent.scrollTop = resultContent.scrollHeight;
+        }
+        
+        // 下载批量数据
+        function downloadBatchData() {
+            if (batchResults.length === 0) {
+                alert('没有可下载的数据');
+                return;
+            }
+            
+            // 构建CSV内容
+            let csvContent = '';
+            
+            // CSV标题行
+            const headers = [
+                '时间戳',
+                '轨道区段ID',
+                '轨道区段名称',
+                '错误类型',
+                '错误类型名称',
+                '轨道长度(m)',
+                '钢轨电阻(Ω/m)',
+                '钢轨电感(H/m)',
+                '漏泄电容(F/m)',
+                '钢轨漏泄电阻(Ω/km)',
+                'SPT电缆长度(km)',
+                '电平档位',
+                '错误值',
+                '衰耗盘端子1',
+                '衰耗盘端子2',
+                '送端轨面电压(V)',
+                '受端轨面电压(V)',
+                '主轨入电压(V)',
+                '轨出1电压(V)'
+            ];
+            csvContent += headers.join(',') + '\n';
+            
+            // CSV数据行
+            for (const data of batchResults) {
+                const row = [
+                    data.timestamp,
+                    data.section_id,
+                    data.section_name,
+                    data.error_type,
+                    data.error_type_name,
+                    data.track_length.toFixed(2),
+                    data.resistance.toFixed(6),
+                    data.inductance.toFixed(9),
+                    data.capacitance.toFixed(12),
+                    data.leakage_resistance,
+                    data.spt_cable_length,
+                    data.voltage_level,
+                    data.error_value.toFixed(2),
+                    data.r1,
+                    data.r2,
+                    data.send_end_track_voltage.toFixed(2),
+                    data.receive_end_track_voltage.toFixed(2),
+                    data.main_track_input_voltage.toFixed(2),
+                    data.main_track_output_voltage_1.toFixed(2)
+                ];
+                csvContent += row.join(',') + '\n';
+            }
+            
+            // 创建Blob对象，添加BOM标记以确保Excel能正确识别UTF-8编码
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            // 创建下载链接
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `批量模拟数据_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            
+            // 添加到文档并触发下载
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 清空结果
+        function clearResults() {
+            batchResults = [];
+            document.getElementById('resultContent').innerHTML = '<p class="loading">请点击"开始批量模拟"按钮开始生成数据。</p>';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressFill').textContent = '0%';
+            document.getElementById('resultStats').textContent = '已完成: 0 / 0';
+            document.getElementById('downloadBatchBtn').disabled = true;
+        }
+    </script>
+</body>
+</html>

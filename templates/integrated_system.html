@@ -1368,8 +1368,9 @@
             ];
             csvContent += dataRow.join(',') + '\n';
             
-            // 创建Blob对象
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            // 创建Blob对象，添加BOM标记以确保Excel能正确识别UTF-8编码
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
             
             // 创建下载链接
             const link = document.createElement('a');
