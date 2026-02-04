@@ -619,8 +619,8 @@
                         // 从运行任务中移除
                         runningTasks = runningTasks.filter(t => t !== taskPromise);
                         
-                        // 处理结果
-                        if (result && isBatchRunning) {
+                        // 处理结果，即使批量模拟已停止也继续处理
+                        if (result) {
                             processSimulationResult(result);
                         }
                     });
@@ -636,13 +636,13 @@
             }
             
             // 等待所有任务完成
-            if (isBatchRunning) {
+            if (runningTasks.length > 0) {
                 await Promise.all(runningTasks);
             }
         }
         
         // 模拟单个故障
-        async function simulateSingle(params) {
+        async function simulateSingle(params, retryCount = 0) {
             // 构建表单数据
             const formData = new FormData();
             formData.append('trail', `batch_${Date.now()}_${Math.floor(Math.random() * 1000)}`);
@@ -659,32 +659,54 @@
             formData.append('r1', params.r1);
             formData.append('r2', params.r2);
             
-            // 模拟API调用延迟
-            await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-            
-            // 实际API调用
-            const response = await fetch('/api/calculate/track-circuit', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                throw new Error(`API调用失败: ${response.status}`);
+            try {
+                // 模拟API调用延迟
+                await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+                
+                // 实际API调用，添加超时处理
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+                
+                const response = await fetch('/api/calculate/track-circuit', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`API调用失败: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status !== 'success') {
+                    throw new Error(result.message || '模拟失败');
+                }
+                
+                return result;
+            } catch (error) {
+                console.error('模拟失败:', error);
+                
+                // 如果重试次数小于2，重新生成参数并重试
+                if (retryCount < 2) {
+                    console.log(`正在重新尝试模拟 (${retryCount + 1}/2)...`);
+                    // 重新生成参数
+                    const newParams = generateRandomParams();
+                    if (newParams) {
+                        return simulateSingle(newParams, retryCount + 1);
+                    }
+                }
+                
+                // 超过重试次数，抛出错误
+                throw error;
             }
-            
-            const result = await response.json();
-            
-            if (result.status !== 'success') {
-                throw new Error(result.message || '模拟失败');
-            }
-            
-            return result;
         }
         
         // 处理模拟结果
         function processSimulationResult(simulation) {
-            if (!isBatchRunning) return;
-            
+            // 即使批量模拟已停止，也要处理结果
             currentBatchIndex++;
             
             if (simulation.error) {
@@ -730,9 +752,13 @@
             document.getElementById('progressFill').textContent = `${Math.round(progress)}%`;
             document.getElementById('resultStats').textContent = `已完成: ${currentBatchIndex} / ${totalBatchSize}`;
             
-            // 检查是否完成
-            if (currentBatchIndex >= totalBatchSize) {
+            // 检查是否完成，但只在批量模拟仍在运行时调用finishBatchSimulation
+            if (currentBatchIndex >= totalBatchSize && isBatchRunning) {
                 finishBatchSimulation();
+            } else if (currentBatchIndex >= totalBatchSize && !isBatchRunning) {
+                // 如果批量模拟已停止但所有任务都完成了，更新下载按钮状态
+                document.getElementById('downloadBatchBtn').disabled = batchResults.length === 0;
+                addResultItem('success', `所有模拟任务已完成！共生成 ${batchResults.length} 条有效数据。`);
             }
         }
         

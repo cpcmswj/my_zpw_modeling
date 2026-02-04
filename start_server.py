@@ -21,11 +21,12 @@ import sys
 
 # 定义页面映射
 define_pages = {
-    'index': 'http://127.0.0.1:8000/',
+    'index': 'http://127.0.0.1:8000/integrated-system',
     'image_viewer': 'http://127.0.0.1:8000/image-viewer',
     'section_image': 'http://127.0.0.1:8000/section-image-viewer',
     'integrated': 'http://127.0.0.1:8000/integrated-system',
     'comparison': 'http://127.0.0.1:8000/comparison-system',
+    'batch_simulation': 'http://127.0.0.1:8000/batch-simulation',
     'fsk_signal': 'http://127.0.0.1:8000/fsk-signal-viewer',
     'test_image': 'http://127.0.0.1:8000/test-image'
 }
