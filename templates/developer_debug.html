@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开发者调试页面 - 轨道电路故障模拟系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h2 {
+            color: #3498db;
+            margin: 20px 0 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #2c3e50;
+            margin: 15px 0 10px;
+        }
+        h4 {
+            color: #555;
+            margin: 10px 0 5px;
+        }
+        .header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn.secondary {
+            background-color: #95a5a6;
+        }
+        .btn.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .btn.success {
+            background-color: #27ae60;
+        }
+        .btn.success:hover {
+            background-color: #229954;
+        }
+        .btn.error {
+            background-color: #e74c3c;
+        }
+        .btn.error:hover {
+            background-color: #c0392b;
+        }
+        .btn.disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .main-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .form-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="number"], select, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .result-container {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .result-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        .result-content {
+            background-color: white;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-item.success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        .result-item.error {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        .result-item.info {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+        }
+        .loading {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .parameter-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .parameter-card h4 {
+            color: #3498db;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .parameter-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .parameter-item:last-child {
+            border-bottom: none;
+        }
+        .parameter-name {
+            font-weight: bold;
+            color: #555;
+        }
+        .parameter-value {
+            color: #333;
+            font-family: monospace;
+        }
+        .matrix-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .tabs {
+            margin: 20px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-button {
+            background-color: #f4f7fa;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: white;
+            border-bottom-color: #3498db;
+            color: #3498db;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .debug-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #3498db;
+        }
+        .timeline-item {
+            position: relative;
+            margin: 20px 0;
+            padding: 0 40px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: calc(50% - 6px);
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #3498db;
+        }
+        .timeline-content {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .flex-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .flex-item {
+            flex: 1;
+            min-width: 300px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .badge.success {
+            background-color: #27ae60;
+            color: white;
+        }
+        .badge.error {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .badge.info {
+            background-color: #3498db;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>开发者调试页面 - 轨道电路故障模拟系统</h1>
+            <div style="margin-top: 15px;">
+                <a href="/" class="btn">返回首页</a>
+                <a href="/integrated-system" class="btn">集成故障模拟</a>
+                <a href="/batch-simulation" class="btn">批量故障模拟</a>
+                <a href="/fsk-signal-viewer" class="btn">FSK信号查看器</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- 参数输入区域 -->
+            <div class="section">
+                <h2>📝 参数输入</h2>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="trail">轨道名称:</label>
+                        <input type="text" id="trail" name="trail" value="test_track" placeholder="输入轨道名称">
+                    </div>
+                    <div class="form-col">
+                        <label for="errorType">错误类型:</label>
+                        <select id="errorType" name="errorType">
+                            <option value="0">0 - 无故障</option>
+                            <option value="1">1 - 接收端调谐单元1断路</option>
+                            <option value="2">2 - 发送端调谐单元1断路</option>
+                            <option value="3">3 - 接收端空心线圈断路</option>
+                            <option value="4">4 - 接收端空芯线圈短路</option>
+                            <option value="5">5 - 接收端调谐单元2断路</option>
+                            <option value="6">6 - 补偿电容3断路</option>
+                            <option value="7">7 - 补偿电容3短路</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="errorValue">错误值:</label>
+                        <input type="number" id="errorValue" name="errorValue" value="0" step="0.1" placeholder="输入错误值">
+                    </div>
+                    <div class="form-col">
+                        <label for="errorPosition">故障位置:</label>
+                        <select id="errorPosition" name="errorPosition">
+                            <option value="69G">69G</option>
+                            <option value="X1LQG">X1LQG</option>
+                            <option value="IG1">IG1</option>
+                            <option value="57G">57G</option>
+                            <option value="3DG">3DG</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="trackLength">轨道长度 (m):</label>
+                        <input type="number" id="trackLength" name="trackLength" value="100" min="10" max="1000" placeholder="输入轨道长度">
+                    </div>
+                    <div class="form-col">
+                        <label for="resistance">钢轨电阻 (Ω/m):</label>
+                        <input type="number" id="resistance" name="resistance" value="0.1" step="0.01" min="0.01" placeholder="输入钢轨电阻">
+                    </div>
+                    <div class="form-col">
+                        <label for="inductance">钢轨电感 (H/m):</label>
+                        <input type="number" id="inductance" name="inductance" value="1.0e-3" step="0.0001" min="0.0001" placeholder="输入钢轨电感">
+                    </div>
+                    <div class="form-col">
+                        <label for="capacitance">漏泄电容 (F/m):</label>
+                        <input type="number" id="capacitance" name="capacitance" value="1.0e-9" step="0.0000000001" min="0.0000000001" placeholder="输入漏泄电容">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="conductance">漏泄电导 (S/m):</label>
+                        <input type="number" id="conductance" name="conductance" value="1.0e-6" step="0.0000001" min="0.0000001" placeholder="输入漏泄电导">
+                    </div>
+                    <div class="form-col">
+                        <label for="sptCableLength">SPT电缆长度 (km):</label>
+                        <input type="number" id="sptCableLength" name="sptCableLength" value="10" step="0.5" min="1" max="20" placeholder="输入SPT电缆长度">
+                    </div>
+                    <div class="form-col">
+                        <label for="r1">衰耗盘端子1:</label>
+                        <input type="number" id="r1" name="r1" value="1" min="1" max="10" placeholder="输入衰耗盘端子1">
+                    </div>
+                    <div class="form-col">
+                        <label for="r2">衰耗盘端子2:</label>
+                        <input type="number" id="r2" name="r2" value="2" min="1" max="10" placeholder="输入衰耗盘端子2">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模拟控制区域 -->
+            <div class="section">
+                <h2>🎮 模拟控制</h2>
+                <div style="text-align: center;">
+                    <button id="startDebugBtn" class="btn success" onclick="startDebugSimulation()">开始调试模拟</button>
+                    <button id="stopDebugBtn" class="btn error" onclick="stopDebugSimulation()" disabled>停止</button>
+                    <button id="resetDebugBtn" class="btn secondary" onclick="resetDebugSimulation()">重置</button>
+                    <button id="downloadDebugBtn" class="btn secondary" onclick="downloadDebugData()" disabled>下载调试数据</button>
+                </div>
+                
+                <div class="progress-bar" id="debugProgressBar">
+                    <div class="progress-fill" id="debugProgressFill" style="width: 0%;">0%</div>
+                </div>
+            </div>
+            
+            <!-- 结果显示区域 -->
+            <div class="section">
+                <h2>📊 模拟结果</h2>
+                
+                <div class="tabs">
+                    <button class="tab-button active" onclick="openTab(event, 'voltageResults')">电压结果</button>
+                    <button class="tab-button" onclick="openTab(event, 'detailedParams')">详细参数</button>
+                    <button class="tab-button" onclick="openTab(event, 'debugInfo')">调试信息</button>
+                    <button class="tab-button" onclick="openTab(event, 'timelineView')">时间线视图</button>
+                </div>
+                
+                <div id="voltageResults" class="tab-content active">
+                    <div class="result-container">
+                        <div class="result-title">电压计算结果</div>
+                        <div class="result-content" id="voltageResultContent">
+                            <p class="loading">请点击"开始调试模拟"按钮开始模拟</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="detailedParams" class="tab-content">
+                    <div class="flex-container">
+                        <div class="flex-item">
+                            <div class="parameter-card">
+                                <h4>基本参数</h4>
+                                <div id="basicParamsContent">
+                                    <p class="loading">请运行模拟以查看参数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-item">
+                            <div class="parameter-card">
+                                <h4>电气参数</h4>
+                                <div id="electricalParamsContent">
+                                    <p class="loading">请运行模拟以查看参数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-item">
+                            <div class="parameter-card">
+                                <h4>传输矩阵</h4>
+                                <div id="matrixParamsContent">
+                                    <p class="loading">请运行模拟以查看参数</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="debugInfo" class="tab-content">
+                    <div class="result-container">
+                        <div class="result-title">详细调试信息</div>
+                        <div class="debug-info" id="debugInfoContent">
+                            <p>请运行模拟以查看调试信息</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="timelineView" class="tab-content">
+                    <div class="timeline" id="timelineContent">
+                        <p class="loading">请运行模拟以查看时间线</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 步骤详情区域 -->
+            <div class="section">
+                <h2>🔍 步骤详情</h2>
+                <div id="stepsContent">
+                    <p class="loading">请运行模拟以查看步骤详情</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 全局状态
+        let debugSimulationRunning = false;
+        let debugSimulationData = null;
+        let debugSteps = [];
+        
+        // 切换标签页
+        function openTab(evt, tabName) {
+            const tabButtons = document.getElementsByClassName('tab-button');
+            const tabContents = document.getElementsByClassName('tab-content');
+            
+            // 隐藏所有标签内容
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            
+            // 移除所有标签按钮的活动状态
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove('active');
+            }
+            
+            // 显示当前标签内容并激活当前标签按钮
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+        
+        // 开始调试模拟
+        async function startDebugSimulation() {
+            // 更新UI
+            document.getElementById('startDebugBtn').disabled = true;
+            document.getElementById('stopDebugBtn').disabled = false;
+            document.getElementById('downloadDebugBtn').disabled = true;
+            
+            // 清空之前的结果
+            document.getElementById('voltageResultContent').innerHTML = '<p class="loading">正在准备模拟...</p>';
+            document.getElementById('basicParamsContent').innerHTML = '<p class="loading">正在准备模拟...</p>';
+            document.getElementById('electricalParamsContent').innerHTML = '<p class="loading">正在准备模拟...</p>';
+            document.getElementById('matrixParamsContent').innerHTML = '<p class="loading">正在准备模拟...</p>';
+            document.getElementById('debugInfoContent').textContent = '正在准备模拟...';
+            document.getElementById('timelineContent').innerHTML = '<p class="loading">正在准备模拟...</p>';
+            document.getElementById('stepsContent').innerHTML = '<p class="loading">正在准备模拟...</p>';
+            
+            // 重置进度条
+            document.getElementById('debugProgressFill').style.width = '0%';
+            document.getElementById('debugProgressFill').textContent = '0%';
+            
+            // 设置模拟状态为运行中
+            debugSimulationRunning = true;
+            debugSteps = [];
+            
+            try {
+                // 获取输入参数
+                const params = getInputParams();
+                
+                // 构建表单数据
+                const formData = new FormData();
+                formData.append('trail', params.trail);
+                formData.append('error_type', params.errorType);
+                formData.append('error_value', params.errorValue);
+                formData.append('error_position', params.errorPosition);
+                formData.append('track_length', params.trackLength);
+                formData.append('resist_per_meter', params.resistance);
+                formData.append('induct_per_meter', params.inductance);
+                formData.append('capacit_per_meter', params.capacitance);
+                formData.append('conduct_per_meter', params.conductance);
+                formData.append('frequency', params.frequency);
+                formData.append('spt_cable_length', params.sptCableLength);
+                formData.append('r1', params.r1);
+                formData.append('r2', params.r2);
+                
+                // 更新进度条
+                updateProgress(10, '正在发送API请求...');
+                
+                // 发送API请求
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+                
+                const response = await fetch('/api/calculate/track-circuit', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status !== 'success') {
+                    throw new Error(result.message || '模拟失败');
+                }
+                
+                updateProgress(50, '正在处理模拟结果...');
+                
+                // 保存模拟数据
+                debugSimulationData = result;
+                
+                // 处理结果
+                await processDebugResult(result);
+                
+                updateProgress(100, '模拟完成');
+                
+                // 更新UI
+                document.getElementById('startDebugBtn').disabled = false;
+                document.getElementById('stopDebugBtn').disabled = true;
+                document.getElementById('downloadDebugBtn').disabled = false;
+                
+                addResultItem('success', '调试模拟完成！');
+                
+            } catch (error) {
+                console.error('调试模拟失败:', error);
+                
+                // 更新UI
+                document.getElementById('startDebugBtn').disabled = false;
+                document.getElementById('stopDebugBtn').disabled = true;
+                
+                // 显示错误信息
+                document.getElementById('voltageResultContent').innerHTML = `<p class="result-item error">模拟失败: ${error.message}</p>`;
+                document.getElementById('debugInfoContent').textContent = `错误: ${error.message}\n\n${error.stack || ''}`;
+                
+                addResultItem('error', `模拟失败: ${error.message}`);
+            } finally {
+                // 设置模拟状态为已停止
+                debugSimulationRunning = false;
+            }
+        }
+        
+        // 停止调试模拟
+        function stopDebugSimulation() {
+            debugSimulationRunning = false;
+            
+            // 更新UI
+            document.getElementById('startDebugBtn').disabled = false;
+            document.getElementById('stopDebugBtn').disabled = true;
+            
+            addResultItem('info', '模拟已手动停止');
+        }
+        
+        // 重置调试模拟
+        function resetDebugSimulation() {
+            // 重置状态
+            debugSimulationRunning = false;
+            debugSimulationData = null;
+            debugSteps = [];
+            
+            // 重置UI
+            document.getElementById('startDebugBtn').disabled = false;
+            document.getElementById('stopDebugBtn').disabled = true;
+            document.getElementById('downloadDebugBtn').disabled = true;
+            
+            // 清空结果
+            document.getElementById('voltageResultContent').innerHTML = '<p class="loading">请点击"开始调试模拟"按钮开始模拟</p>';
+            document.getElementById('basicParamsContent').innerHTML = '<p class="loading">请运行模拟以查看参数</p>';
+            document.getElementById('electricalParamsContent').innerHTML = '<p class="loading">请运行模拟以查看参数</p>';
+            document.getElementById('matrixParamsContent').innerHTML = '<p class="loading">请运行模拟以查看参数</p>';
+            document.getElementById('debugInfoContent').textContent = '请运行模拟以查看调试信息';
+            document.getElementById('timelineContent').innerHTML = '<p class="loading">请运行模拟以查看时间线</p>';
+            document.getElementById('stepsContent').innerHTML = '<p class="loading">请运行模拟以查看步骤详情</p>';
+            
+            // 重置进度条
+            document.getElementById('debugProgressFill').style.width = '0%';
+            document.getElementById('debugProgressFill').textContent = '0%';
+        }
+        
+        // 下载调试数据
+        function downloadDebugData() {
+            if (!debugSimulationData) {
+                alert('没有可下载的数据');
+                return;
+            }
+            
+            // 构建JSON数据
+            const dataToDownload = {
+                simulationData: debugSimulationData,
+                steps: debugSteps,
+                timestamp: new Date().toISOString(),
+                inputParams: getInputParams()
+            };
+            
+            // 创建Blob对象
+            const blob = new Blob([JSON.stringify(dataToDownload, null, 2)], { type: 'application/json' });
+            
+            // 创建下载链接
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `debug_data_${new Date().toISOString().slice(0, 10)}.json`);
+            link.style.visibility = 'hidden';
+            
+            // 添加到文档并触发下载
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 获取输入参数
+        function getInputParams() {
+            // 计算频率
+            const errorPosition = document.getElementById('errorPosition').value;
+            let frequency = 1700; // 默认频率
+            
+            if (errorPosition === '57G' || errorPosition === '3DG') {
+                frequency = 2300;
+            }
+            
+            return {
+                trail: document.getElementById('trail').value,
+                errorType: parseInt(document.getElementById('errorType').value),
+                errorValue: parseFloat(document.getElementById('errorValue').value),
+                errorPosition: errorPosition,
+                trackLength: parseFloat(document.getElementById('trackLength').value),
+                resistance: parseFloat(document.getElementById('resistance').value),
+                inductance: parseFloat(document.getElementById('inductance').value),
+                capacitance: parseFloat(document.getElementById('capacitance').value),
+                conductance: parseFloat(document.getElementById('conductance').value),
+                frequency: frequency,
+                sptCableLength: parseFloat(document.getElementById('sptCableLength').value),
+                r1: parseInt(document.getElementById('r1').value),
+                r2: parseInt(document.getElementById('r2').value)
+            };
+        }
+        
+        // 处理调试结果
+        async function processDebugResult(result) {
+            // 更新进度
+            updateProgress(60, '正在显示电压结果...');
+            
+            // 显示电压结果
+            displayVoltageResults(result);
+            
+            updateProgress(70, '正在显示详细参数...');
+            
+            // 显示详细参数
+            displayDetailedParams(result);
+            
+            updateProgress(80, '正在构建时间线...');
+            
+            // 构建时间线
+            buildTimeline(result);
+            
+            updateProgress(90, '正在生成步骤详情...');
+            
+            // 生成步骤详情
+            generateStepsDetails(result);
+            
+            updateProgress(100, '完成');
+        }
+        
+        // 显示电压结果
+        function displayVoltageResults(result) {
+            const voltageResults = result.voltage_results;
+            
+            let html = '<div class="parameter-grid">';
+            html += '<div class="parameter-card">';
+            html += '<h4>电压结果</h4>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">送端轨面电压:</span>';
+            html += `<span class="parameter-value">${voltageResults.send_end_track_voltage.toFixed(4)} V</span>`;
+            html += '</div>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">受端轨面电压:</span>';
+            html += `<span class="parameter-value">${voltageResults.receive_end_track_voltage.toFixed(4)} V</span>`;
+            html += '</div>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">主轨入电压:</span>';
+            html += `<span class="parameter-value">${voltageResults.main_track_input_voltage.toFixed(4)} V</span>`;
+            html += '</div>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">轨出1电压:</span>';
+            html += `<span class="parameter-value">${voltageResults.main_track_output_voltage_1.toFixed(4)} V</span>`;
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            
+            document.getElementById('voltageResultContent').innerHTML = html;
+        }
+        
+        // 显示详细参数
+        function displayDetailedParams(result) {
+            const inputParams = result.input_params;
+            const sectionInfo = result.section_info;
+            const errorInfo = result.error_info;
+            
+            // 显示基本参数
+            let basicHtml = '<div class="parameter-item">';
+            basicHtml += '<span class="parameter-name">轨道名称:</span>';
+            basicHtml += `<span class="parameter-value">${inputParams.trail}</span>`;
+            basicHtml += '</div>';
+            basicHtml += '<div class="parameter-item">';
+            basicHtml += '<span class="parameter-name">故障位置:</span>';
+            basicHtml += `<span class="parameter-value">${inputParams.error_position}</span>`;
+            basicHtml += '</div>';
+            basicHtml += '<div class="parameter-item">';
+            basicHtml += '<span class="parameter-name">错误类型:</span>';
+            basicHtml += `<span class="parameter-value">${inputParams.error_type} - ${errorInfo.name}</span>`;
+            basicHtml += '</div>';
+            basicHtml += '<div class="parameter-item">';
+            basicHtml += '<span class="parameter-name">错误值:</span>';
+            basicHtml += `<span class="parameter-value">${inputParams.error_value}</span>`;
+            basicHtml += '</div>';
+            basicHtml += '<div class="parameter-item">';
+            basicHtml += '<span class="parameter-name">轨道长度:</span>';
+            basicHtml += `<span class="parameter-value">${inputParams.track_length} m</span>`;
+            basicHtml += '</div>';
+            basicHtml += '<div class="parameter-item">';
+            basicHtml += '<span class="parameter-name">频率:</span>';
+            basicHtml += `<span class="parameter-value">${inputParams.frequency} Hz</span>`;
+            basicHtml += '</div>';
+            
+            document.getElementById('basicParamsContent').innerHTML = basicHtml;
+            
+            // 显示电气参数
+            let electricalHtml = '<div class="parameter-item">';
+            electricalHtml += '<span class="parameter-name">钢轨电阻:</span>';
+            electricalHtml += `<span class="parameter-value">${inputParams.resist_per_meter} Ω/m</span>`;
+            electricalHtml += '</div>';
+            electricalHtml += '<div class="parameter-item">';
+            electricalHtml += '<span class="parameter-name">钢轨电感:</span>';
+            electricalHtml += `<span class="parameter-value">${inputParams.induct_per_meter} H/m</span>`;
+            electricalHtml += '</div>';
+            electricalHtml += '<div class="parameter-item">';
+            electricalHtml += '<span class="parameter-name">漏泄电容:</span>';
+            electricalHtml += `<span class="parameter-value">${inputParams.capacit_per_meter} F/m</span>`;
+            electricalHtml += '</div>';
+            
+            document.getElementById('electricalParamsContent').innerHTML = electricalHtml;
+            
+            // 显示矩阵参数
+            let matrixHtml = '<div class="parameter-item">';
+            matrixHtml += '<span class="parameter-name">传输矩阵:</span>';
+            matrixHtml += '</div>';
+            matrixHtml += '<div class="matrix-display">';
+            
+            const matrix = result.matrix;
+            if (matrix && matrix.length === 2 && matrix[0].length === 2) {
+                matrixHtml += `[${matrix[0][0].toFixed(4)}, ${matrix[0][1].toFixed(4)}]\n`;
+                matrixHtml += `[${matrix[1][0].toFixed(4)}, ${matrix[1][1].toFixed(4)}]`;
+            } else {
+                matrixHtml += '矩阵数据不可用';
+            }
+            
+            matrixHtml += '</div>';
+            
+            document.getElementById('matrixParamsContent').innerHTML = matrixHtml;
+            
+            // 显示调试信息
+            let debugHtml = `模拟时间: ${new Date().toISOString()}\n`;
+            debugHtml += `轨道区段: ${sectionInfo.name}\n`;
+            debugHtml += `故障类型: ${errorInfo.type} - ${errorInfo.name}\n`;
+            debugHtml += `输入参数: ${JSON.stringify(inputParams, null, 2)}\n`;
+            debugHtml += `电压结果: ${JSON.stringify(result.voltage_results, null, 2)}\n`;
+            
+            document.getElementById('debugInfoContent').textContent = debugHtml;
+        }
+        
+        // 构建时间线
+        function buildTimeline(result) {
+            let timelineHtml = '<div class="timeline">';
+            
+            // 添加时间线项目
+            timelineHtml += '<div class="timeline-item">';
+            timelineHtml += '<div class="timeline-content">';
+            timelineHtml += '<h4>初始化</h4>';
+            timelineHtml += '<p>读取输入参数，准备模拟环境</p>';
+            timelineHtml += '</div>';
+            timelineHtml += '</div>';
+            
+            timelineHtml += '<div class="timeline-item">';
+            timelineHtml += '<div class="timeline-content">';
+            timelineHtml += '<h4>参数计算</h4>';
+            timelineHtml += '<p>计算电气参数，构建电路模型</p>';
+            timelineHtml += '</div>';
+            timelineHtml += '</div>';
+            
+            timelineHtml += '<div class="timeline-item">';
+            timelineHtml += '<div class="timeline-content">';
+            timelineHtml += '<h4>传输矩阵计算</h4>';
+            timelineHtml += '<p>计算各组件的传输矩阵，构建完整传输链</p>';
+            timelineHtml += '</div>';
+            timelineHtml += '</div>';
+            
+            timelineHtml += '<div class="timeline-item">';
+            timelineHtml += '<div class="timeline-content">';
+            timelineHtml += '<h4>电压计算</h4>';
+            timelineHtml += '<p>计算各节点电压，包括送端轨面电压、受端轨面电压等</p>';
+            timelineHtml += '</div>';
+            timelineHtml += '</div>';
+            
+            timelineHtml += '<div class="timeline-item">';
+            timelineHtml += '<div class="timeline-content">';
+            timelineHtml += '<h4>结果输出</h4>';
+            timelineHtml += '<p>整理计算结果，生成最终报告</p>';
+            timelineHtml += '</div>';
+            timelineHtml += '</div>';
+            
+            timelineHtml += '</div>';
+            
+            document.getElementById('timelineContent').innerHTML = timelineHtml;
+        }
+        
+        // 生成步骤详情
+        function generateStepsDetails(result) {
+            let stepsHtml = '<div class="result-container">';
+            stepsHtml += '<div class="result-title">模拟步骤详情</div>';
+            stepsHtml += '<div class="result-content">';
+            
+            // 步骤1: 初始化
+            stepsHtml += '<div class="result-item info">';
+            stepsHtml += '<h4>步骤1: 初始化</h4>';
+            stepsHtml += '<p>读取输入参数，设置模拟环境</p>';
+            stepsHtml += '<div class="parameter-item">';
+            stepsHtml += '<span class="parameter-name">轨道名称:</span>';
+            stepsHtml += `<span class="parameter-value">${result.input_params.trail}</span>`;
+            stepsHtml += '</div>';
+            stepsHtml += '<div class="parameter-item">';
+            stepsHtml += '<span class="parameter-name">故障位置:</span>';
+            stepsHtml += `<span class="parameter-value">${result.input_params.error_position}</span>`;
+            stepsHtml += '</div>';
+            stepsHtml += '<div class="parameter-item">';
+            stepsHtml += '<span class="parameter-name">错误类型:</span>';
+            stepsHtml += `<span class="parameter-value">${result.input_params.error_type} - ${result.error_info.name}</span>`;
+            stepsHtml += '</div>';
+            stepsHtml += '</div>';
+            
+            // 步骤2: 参数计算
+            stepsHtml += '<div class="result-item info">';
+            stepsHtml += '<h4>步骤2: 参数计算</h4>';
+            stepsHtml += '<p>计算电气参数，构建电路模型</p>';
+            stepsHtml += '<div class="parameter-item">';
+            stepsHtml += '<span class="parameter-name">轨道长度:</span>';
+            stepsHtml += `<span class="parameter-value">${result.input_params.track_length} m</span>`;
+            stepsHtml += '</div>';
+            stepsHtml += '<div class="parameter-item">';
+            stepsHtml += '<span class="parameter-name">频率:</span>';
+            stepsHtml += `<span class="parameter-value">${result.input_params.frequency} Hz</span>`;
+            stepsHtml += '</div>';
+            stepsHtml += '</div>';
+            
+            // 步骤3: 传输矩阵计算
+            stepsHtml += '<div class="result-item info">';
+            stepsHtml += '<h4>步骤3: 传输矩阵计算</h4>';
+            stepsHtml += '<p>计算各组件的传输矩阵，构建完整传输链</p>';
+            stepsHtml += '<div class="matrix-display">';
+            const matrix = result.matrix;
+            if (matrix && matrix.length === 2 && matrix[0].length === 2) {
+                stepsHtml += `[${matrix[0][0].toFixed(4)}, ${matrix[0][1].toFixed(4)}]\n`;
+                stepsHtml += `[${matrix[1][0].toFixed(4)}, ${matrix[1][1].toFixed(4)}]`;
+            } else {
+                stepsHtml += '矩阵数据不可用';
+            }
+            stepsHtml += '</div>';
+            stepsHtml += '</div>';
+            
+            // 步骤4: 电压计算
+            stepsHtml += '<div class="result-item success">';
+            stepsHtml += '<h4>步骤4: 电压计算</h4>';
+            stepsHtml += '<p>计算各节点电压，包括送端轨面电压、受端轨面电压等</p>';
+            stepsHtml += '<div class="parameter-item">';
+            stepsHtml += '<span class="parameter-name">送端轨面电压:</span>';
+            stepsHtml += `<span class="parameter-value">${result.voltage_results.send_end_track_voltage.toFixed(4)} V</span>`;
+            stepsHtml += '</div>';
+            stepsHtml += '<div class="parameter-item">';
+            stepsHtml += '<span class="parameter-name">受端轨面电压:</span>';
+            stepsHtml += `<span class="parameter-value">${result.voltage_results.receive_end_track_voltage.toFixed(4)} V</span>`;
+            stepsHtml += '</div>';
+            stepsHtml += '<div class="parameter-item">';
+            stepsHtml += '<span class="parameter-name">主轨入电压:</span>';
+            stepsHtml += `<span class="parameter-value">${result.voltage_results.main_track_input_voltage.toFixed(4)} V</span>`;
+            stepsHtml += '</div>';
+            stepsHtml += '<div class="parameter-item">';
+            stepsHtml += '<span class="parameter-name">轨出1电压:</span>';
+            stepsHtml += `<span class="parameter-value">${result.voltage_results.main_track_output_voltage_1.toFixed(4)} V</span>`;
+            stepsHtml += '</div>';
+            stepsHtml += '</div>';
+            
+            // 步骤5: 结果输出
+            stepsHtml += '<div class="result-item success">';
+            stepsHtml += '<h4>步骤5: 结果输出</h4>';
+            stepsHtml += '<p>整理计算结果，生成最终报告</p>';
+            stepsHtml += '<p>模拟完成，所有参数计算完毕</p>';
+            stepsHtml += '</div>';
+            
+            stepsHtml += '</div>';
+            stepsHtml += '</div>';
+            
+            document.getElementById('stepsContent').innerHTML = stepsHtml;
+        }
+        
+        // 更新进度条
+        function updateProgress(percentage, message) {
+            const progressFill = document.getElementById('debugProgressFill');
+            progressFill.style.width = `${percentage}%`;
+            progressFill.textContent = `${percentage}% - ${message}`;
+        }
+        
+        // 添加结果项
+        function addResultItem(type, message) {
+            const resultContent = document.getElementById('voltageResultContent');
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item ${type}`;
+            resultItem.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            
+            // 如果是首次添加结果，清空加载提示
+            if (resultContent.querySelector('.loading')) {
+                resultContent.innerHTML = '';
+            }
+            
+            resultContent.appendChild(resultItem);
+            
+            // 滚动到底部
+            resultContent.scrollTop = resultContent.scrollHeight;
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化页面
+            console.log('开发者调试页面已加载');
+        });
+    </script>
+</body>
+</html>

@@ -61,16 +61,21 @@ class Error_Of_Trail:
         self.r1 = r1
         self.r2 = r2
 
+        # 计算频率
+        frequency = self.frequency_table(self.error_position)
+        # 根据频率获取钢轨参数
+        resist_per_meter, induct_per_meter = jg.get_rail_parameters(frequency)
+        
         # 正确初始化Variable实例
         self.parameter=jg.Variable(
             name="track_circuit",
             value=error_value,
             length_guidao=self.length_parameter,
-            resist_per_meter=0.1,
-            induct_per_meter=1.0e-3,
+            resist_per_meter=resist_per_meter,
+            induct_per_meter=induct_per_meter,
             capacit_per_meter=1.0e-9,
             conduct_per_meter=1.0e-6,
-            frequency=self.frequency_table(self.error_position)
+            frequency=frequency
         )
         self.tuning_parameters=jg.tuning_zone_parameters(
             Variable=self.parameter,

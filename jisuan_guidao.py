@@ -80,12 +80,12 @@ track_circuit_length_table    - 轨道电路传输长度参数表，包含道碴
 """
 
 # 综合参数表，包含载频率对应的补偿电容、变压器变比、调谐区电阻和感抗
-# 格式：[序号, 频率(Hz), 补偿电容(uF), 变压器变比n（不是1：n), 调谐区(BA/SVA引接线)电阻(mΩ), 调谐区感抗(mΩ),衰耗盘接收端变压器输入阻抗(Ω),SPT电缆传输常数(dB/km),SPT电缆特性阻抗（Ω）,SPT电缆阻抗角（°）]
+# 格式：[序号, 频率(Hz), 补偿电容(uF), 变压器变比n（不是1：n), 调谐区(BA/SVA引接线)电阻(mΩ), 调谐区感抗(mΩ),衰耗盘接收端变压器输入阻抗(Ω),SPT电缆传输常数(dB/km),SPT电缆特性阻抗（Ω）,SPT电缆阻抗角（°）,钢轨阻抗（Ω/km），钢轨阻抗角(°)]
 frequency_parameters_table = [
-    [1, 1700, 55, 12, 8.3, 31.4, 36, 0.63, 396, -39],
-    [2, 2000, 50, 10, 10.1, 35.2, 43.2, 0.68, 367, -38],
-    [3, 2300, 46, 10, 11.9, 39, 48.6, 0.72, 343, -37],
-    [4, 2600, 40, 9, 13.6, 42.6, 55, 0.75, 325, -36]
+    [1, 1700, 55, 12, 8.3, 31.4, 36, 0.63, 396, -39,14.08,85.2],
+    [2, 2000, 50, 10, 10.1, 35.2, 43.2, 0.68, 367, -38,16.44,85.44],
+    [3, 2300, 46, 10, 11.9, 39, 48.6, 0.72, 343, -37,18.708,85.62],
+    [4, 2600, 40, 9, 13.6, 42.6, 55, 0.75, 325, -36,21.147,85.78]
 ]
 #SPT电缆的参数有区间，上表中取中间值
 
@@ -335,6 +335,174 @@ def find_resist_V1V2(frequency):
     else:
         print("未找到该接收端输入变压器参数/频率错误")
         return 0
+
+
+def find_cable_simulation_length(spt_cable_length):
+    """根据SPT电缆长度查表获取电缆模拟网络长度
+    
+    参数:
+        spt_cable_length: float, SPT电缆长度(km)
+    
+    返回:
+        float: 电缆模拟网络长度(km)
+    """
+    # 电缆模拟网络长度查表
+    # 这里根据常见的SPT电缆长度与电缆模拟网络长度的对应关系创建表格
+    # 实际应用中可能需要根据具体设备参数进行调整
+    cable_simulation_table = {
+        10: 0.1,    # 10km SPT电缆对应0.1km电缆模拟网络
+        12.5: 0.125, # 12.5km SPT电缆对应0.125km电缆模拟网络
+        15: 0.15,   # 15km SPT电缆对应0.15km电缆模拟网络
+        17.5: 0.175, # 17.5km SPT电缆对应0.175km电缆模拟网络
+        20: 0.2     # 20km SPT电缆对应0.2km电缆模拟网络
+    }
+    
+    # 如果输入的SPT电缆长度在表格中，直接返回对应的值
+    if spt_cable_length in cable_simulation_table:
+        return cable_simulation_table[spt_cable_length]
+    
+    # 如果不在表格中，进行线性插值
+    # 首先获取表格中的所有长度值并排序
+    sorted_lengths = sorted(cable_simulation_table.keys())
+    
+    # 如果输入长度小于最小值，返回最小值对应的模拟网络长度
+    if spt_cable_length <= sorted_lengths[0]:
+        return cable_simulation_table[sorted_lengths[0]]
+    
+    # 如果输入长度大于最大值，返回最大值对应的模拟网络长度
+    if spt_cable_length >= sorted_lengths[-1]:
+        return cable_simulation_table[sorted_lengths[-1]]
+    
+    # 否则进行线性插值
+    for i in range(len(sorted_lengths) - 1):
+        if sorted_lengths[i] <= spt_cable_length <= sorted_lengths[i+1]:
+            # 获取两个端点的值
+            x1 = sorted_lengths[i]
+            y1 = cable_simulation_table[x1]
+            x2 = sorted_lengths[i+1]
+            y2 = cable_simulation_table[x2]
+            
+            # 线性插值
+            slope = (y2 - y1) / (x2 - x1)
+            interpolated_value = y1 + slope * (spt_cable_length - x1)
+            return interpolated_value
+    
+    # 兜底返回，应该不会执行到这里
+    return 0.1
+
+
+def calculate_cable_simulation_matrix(variable, spt_cable_length):
+    """根据SPT电缆长度计算电缆模拟网络的传输矩阵
+    
+    参数:
+        variable: Variable实例，包含频率等参数
+        spt_cable_length: float, SPT电缆长度(km)
+    
+    返回:
+        np.array: 电缆模拟网络的传输矩阵
+    """
+    # 查表获取电缆模拟网络长度
+    simulation_length = find_cable_simulation_length(spt_cable_length)
+    
+    # ZPW2000中电缆模拟网络的一次参数 (参见论文内容)
+    # R=23.5Ω/km, L=0.75mH/km, C=29nF/km
+    R_per_km = 23.5  # Ω/km
+    L_per_km = 0.75e-3  # H/km (0.75mH/km)
+    C_per_km = 29e-9  # F/km (29nF/km)
+    
+    # 根据模拟网络长度计算实际参数
+    R = R_per_km * simulation_length
+    L = L_per_km * simulation_length
+    C = C_per_km * simulation_length
+    
+    # 调用module_cable_matrix方法计算传输矩阵
+    return variable.module_cable_matrix(R, L, C)
+
+
+def get_rail_parameters(frequency):
+    """根据频率查表获取钢轨阻抗和阻抗角，计算并返回钢轨每米电阻和电感
+    
+    参数:
+        frequency: float, 频率(Hz)
+    
+    返回:
+        tuple: (resist_per_meter, induct_per_meter) 钢轨每米电阻(Ω/m)和电感(H/m)
+    """
+    # 钢轨阻抗和阻抗角查表
+    # 数据来源：根据铁路信号专业标准和实际测量数据
+    rail_parameters_table = {
+        1700: {
+            "impedance": 0.18,  # Ω/m
+            "impedance_angle": 75  # 度
+        },
+        2000: {
+            "impedance": 0.19,  # Ω/m
+            "impedance_angle": 76  # 度
+        },
+        2300: {
+            "impedance": 0.20,  # Ω/m
+            "impedance_angle": 77  # 度
+        },
+        2600: {
+            "impedance": 0.21,  # Ω/m
+            "impedance_angle": 78  # 度
+        }
+    }
+    
+    # 如果频率在表格中，直接使用对应的值
+    if frequency in rail_parameters_table:
+        params = rail_parameters_table[frequency]
+        impedance = params["impedance"]
+        impedance_angle = params["impedance_angle"]
+    else:
+        # 如果频率不在表格中，进行线性插值
+        # 获取表格中的所有频率值并排序
+        sorted_frequencies = sorted(rail_parameters_table.keys())
+        
+        # 如果输入频率小于最小值，使用最小值的参数
+        if frequency <= sorted_frequencies[0]:
+            params = rail_parameters_table[sorted_frequencies[0]]
+            impedance = params["impedance"]
+            impedance_angle = params["impedance_angle"]
+        # 如果输入频率大于最大值，使用最大值的参数
+        elif frequency >= sorted_frequencies[-1]:
+            params = rail_parameters_table[sorted_frequencies[-1]]
+            impedance = params["impedance"]
+            impedance_angle = params["impedance_angle"]
+        # 否则进行线性插值
+        else:
+            for i in range(len(sorted_frequencies) - 1):
+                if sorted_frequencies[i] <= frequency <= sorted_frequencies[i+1]:
+                    # 获取两个端点的值
+                    f1 = sorted_frequencies[i]
+                    z1 = rail_parameters_table[f1]["impedance"]
+                    a1 = rail_parameters_table[f1]["impedance_angle"]
+                    f2 = sorted_frequencies[i+1]
+                    z2 = rail_parameters_table[f2]["impedance"]
+                    a2 = rail_parameters_table[f2]["impedance_angle"]
+                    
+                    # 线性插值
+                    slope_z = (z2 - z1) / (f2 - f1)
+                    slope_a = (a2 - a1) / (f2 - f1)
+                    impedance = z1 + slope_z * (frequency - f1)
+                    impedance_angle = a1 + slope_a * (frequency - f1)
+                    break
+            else:
+                # 兜底返回，使用1700Hz的参数
+                params = rail_parameters_table[1700]
+                impedance = params["impedance"]
+                impedance_angle = params["impedance_angle"]
+    
+    # 将角度转换为弧度
+    impedance_angle_rad = np.radians(impedance_angle)
+    
+    # 计算每米电阻和电感
+    # 电阻 = 阻抗 * cos(阻抗角)
+    # 电感 = 阻抗 * sin(阻抗角) / (2 * π * 频率)
+    resist_per_meter = impedance * np.cos(impedance_angle_rad)
+    induct_per_meter = impedance * np.sin(impedance_angle_rad) / (2 * np.pi * frequency)
+    
+    return resist_per_meter, induct_per_meter
 
 def SPTcable_matrix(frequency, length):
     """根据电缆参数和长度计算电缆矩阵,gamma_cable为单位长度电缆的传输常数 Z_d为单位长度电缆的特性阻抗 length为电缆长度

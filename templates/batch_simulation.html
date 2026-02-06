@@ -250,38 +250,63 @@
                 
                 <!-- 错误类型选择 -->
                 <h3>错误类型选择</h3>
-                <div class="checkbox-group">
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="error0" name="errorTypes" value="0" checked>
-                        <label for="error0">0 - 无故障</label>
+                <div style="margin-bottom: 15px;">
+                    <label for="useCustomProb" style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                        <input type="checkbox" id="useCustomProb" name="useCustomProb" checked onchange="toggleProbabilityInputs()">
+                        开启自选概率值
+                    </label>
+                    <div id="probabilityHint" style="margin-top: 5px; font-size: 14px; color: #666;">
+                        提示：概率值总和应接近100%，系统会自动归一化处理。
                     </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="error1" name="errorTypes" value="1" checked>
-                        <label for="error1">1 - 接收端调谐单元1断路</label>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="error0" name="errorTypes" value="0" checked style="width: auto;">
+                        <label for="error0" style="flex: 1;">0 - 无故障</label>
+                        <input type="number" id="error0Prob" name="errorProb" value="20" min="0" max="100" step="1" style="width: 80px;">
+                        <span style="width: 30px; text-align: right;">%</span>
                     </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="error2" name="errorTypes" value="2" checked>
-                        <label for="error2">2 - 发送端调谐单元1断路</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="error1" name="errorTypes" value="1" checked style="width: auto;">
+                        <label for="error1" style="flex: 1;">1 - 接收端调谐单元1断路</label>
+                        <input type="number" id="error1Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                        <span style="width: 30px; text-align: right;">%</span>
                     </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="error3" name="errorTypes" value="3" checked>
-                        <label for="error3">3 - 接收端空心线圈断路</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="error2" name="errorTypes" value="2" checked style="width: auto;">
+                        <label for="error2" style="flex: 1;">2 - 发送端调谐单元1断路</label>
+                        <input type="number" id="error2Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                        <span style="width: 30px; text-align: right;">%</span>
                     </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="error4" name="errorTypes" value="4" checked>
-                        <label for="error4">4 - 接收端空芯线圈短路</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="error3" name="errorTypes" value="3" checked style="width: auto;">
+                        <label for="error3" style="flex: 1;">3 - 接收端空心线圈断路</label>
+                        <input type="number" id="error3Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                        <span style="width: 30px; text-align: right;">%</span>
                     </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="error5" name="errorTypes" value="5" checked>
-                        <label for="error5">5 - 接收端调谐单元2断路</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="error4" name="errorTypes" value="4" checked style="width: auto;">
+                        <label for="error4" style="flex: 1;">4 - 接收端空芯线圈短路</label>
+                        <input type="number" id="error4Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                        <span style="width: 30px; text-align: right;">%</span>
                     </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="error6" name="errorTypes" value="6" checked>
-                        <label for="error6">6 - 补偿电容3断路</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="error5" name="errorTypes" value="5" checked style="width: auto;">
+                        <label for="error5" style="flex: 1;">5 - 接收端调谐单元2断路</label>
+                        <input type="number" id="error5Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                        <span style="width: 30px; text-align: right;">%</span>
                     </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="error7" name="errorTypes" value="7" checked>
-                        <label for="error7">7 - 补偿电容3短路</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="error6" name="errorTypes" value="6" checked style="width: auto;">
+                        <label for="error6" style="flex: 1;">6 - 补偿电容3断路</label>
+                        <input type="number" id="error6Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                        <span style="width: 30px; text-align: right;">%</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="error7" name="errorTypes" value="7" checked style="width: auto;">
+                        <label for="error7" style="flex: 1;">7 - 补偿电容3短路</label>
+                        <input type="number" id="error7Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                        <span style="width: 30px; text-align: right;">%</span>
                     </div>
                 </div>
             </div>
@@ -456,6 +481,31 @@
             [8, 10]
         ];
         
+        // 根据权重随机选择
+        function weightedRandom(items) {
+            // 计算总权重
+            const totalWeight = items.reduce((sum, item) => sum + item.prob, 0);
+            
+            // 如果总权重为0，返回第一个选项
+            if (totalWeight === 0) {
+                return items[0].errorType;
+            }
+            
+            // 生成随机数
+            let random = Math.random() * totalWeight;
+            
+            // 根据权重选择
+            for (const item of items) {
+                random -= item.prob;
+                if (random <= 0) {
+                    return item.errorType;
+                }
+            }
+            
+            // 兜底返回
+            return items[items.length - 1].errorType;
+        }
+        
         // 随机生成参数
         function generateRandomParams() {
             // 获取选中的轨道区段
@@ -469,15 +519,27 @@
             const randomSectionId = selectedSections[Math.floor(Math.random() * selectedSections.length)];
             const section = railwaySections[randomSectionId];
             
-            // 获取选中的错误类型
-            const selectedErrorTypes = Array.from(document.querySelectorAll('input[name="errorTypes"]:checked')).map(cb => parseInt(cb.value));
-            if (selectedErrorTypes.length === 0) {
+            // 获取选中的错误类型及其概率
+            const useCustomProb = document.getElementById('useCustomProb').checked;
+            const selectedErrorTypesWithProb = Array.from(document.querySelectorAll('input[name="errorTypes"]:checked')).map(cb => {
+                const errorType = parseInt(cb.value);
+                let prob = 1;
+                
+                if (useCustomProb) {
+                    const probInput = document.getElementById(`error${errorType}Prob`);
+                    prob = probInput ? parseFloat(probInput.value) : 1;
+                }
+                
+                return { errorType, prob };
+            });
+            
+            if (selectedErrorTypesWithProb.length === 0) {
                 alert('请至少选择一个错误类型');
                 return null;
             }
             
-            // 随机选择错误类型
-            const randomErrorType = selectedErrorTypes[Math.floor(Math.random() * selectedErrorTypes.length)];
+            // 根据概率随机选择错误类型
+            const randomErrorType = weightedRandom(selectedErrorTypesWithProb);
             
             // 随机生成参数
             const trackLengthMin = parseFloat(document.getElementById('trackLengthMin').value);
@@ -894,6 +956,34 @@
             document.getElementById('resultStats').textContent = '已完成: 0 / 0';
             document.getElementById('downloadBatchBtn').disabled = true;
         }
+        
+        // 切换概率输入框显示/隐藏
+        function toggleProbabilityInputs() {
+            const useCustomProb = document.getElementById('useCustomProb').checked;
+            const probabilityHint = document.getElementById('probabilityHint');
+            
+            // 显示或隐藏概率输入框和提示
+            probabilityHint.style.display = useCustomProb ? 'block' : 'none';
+            
+            // 遍历所有错误类型的概率输入框
+            for (let i = 0; i <= 7; i++) {
+                const probInput = document.getElementById(`error${i}Prob`);
+                const probSpan = probInput ? probInput.nextElementSibling : null;
+                
+                if (probInput) {
+                    probInput.style.display = useCustomProb ? 'inline-block' : 'none';
+                }
+                if (probSpan && probSpan.tagName === 'SPAN') {
+                    probSpan.style.display = useCustomProb ? 'inline-block' : 'none';
+                }
+            }
+        }
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化概率输入框状态
+            toggleProbabilityInputs();
+        });
     </script>
 </body>
 </html>
