@@ -675,6 +675,46 @@
             }
         }
         
+        // 根据频率计算钢轨参数（对应Python中的get_rail_parameters函数）
+        function getRailParameters(frequency) {
+            // 钢轨阻抗和阻抗角查表
+            const railParametersTable = {
+                1700: {
+                    "impedance": 0.18,  // Ω/m
+                    "impedance_angle": 75  // 度
+                },
+                2000: {
+                    "impedance": 0.19,  // Ω/m
+                    "impedance_angle": 76  // 度
+                },
+                2300: {
+                    "impedance": 0.20,  // Ω/m
+                    "impedance_angle": 77  // 度
+                },
+                2600: {
+                    "impedance": 0.21,  // Ω/m
+                    "impedance_angle": 78  // 度
+                }
+            };
+            
+            // 如果频率在表格中，直接使用对应的值
+            if (railParametersTable[frequency]) {
+                const params = railParametersTable[frequency];
+                const impedance = params.impedance;
+                const impedance_angle = params.impedance_angle;
+                const impedance_angle_rad = impedance_angle * Math.PI / 180;
+                
+                // 计算每米电阻和电感
+                const resist_per_meter = impedance * Math.cos(impedance_angle_rad);
+                const induct_per_meter = impedance * Math.sin(impedance_angle_rad) / (2 * Math.PI * frequency);
+                
+                return { resist_per_meter, induct_per_meter };
+            } else {
+                // 兜底返回默认值
+                return { resist_per_meter: 0.1, induct_per_meter: 1.0e-3 };
+            }
+        }
+        
         // 选择区段
         function selectSection(section) {
             // 移除所有活动状态
@@ -692,6 +732,11 @@
             // 根据轨道区段查询载频率并更新输入框
             const frequency = frequencyTable(section.id);
             document.getElementById('frequency').value = frequency;
+            
+            // 根据频率计算钢轨参数并更新输入框
+            const railParams = getRailParameters(frequency);
+            document.getElementById('resistance').value = railParams.resist_per_meter.toFixed(4);
+            document.getElementById('inductance').value = railParams.induct_per_meter.toExponential(4);
             
             // 更新验证信息
             sectionValidation.textContent = '✅ 已选择轨道区段';
