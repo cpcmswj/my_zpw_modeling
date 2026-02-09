@@ -907,7 +907,7 @@
                 batchResults.push(resultData);
                 
                 // 添加结果到UI
-                addResultItem('success', `模拟成功 (${params.section_id}, 错误类型: ${params.error_type}) - 受端轨面电压: ${result.voltage_results.receive_end_track_voltage.toFixed(2)}V`);
+                addResultItem('success', `模拟成功 (${params.section_id}, 错误类型: ${params.error_type}) - 送端轨面电压: ${result.voltage_results.send_end_track_voltage.toFixed(2)}V, 受端轨面电压: ${result.voltage_results.receive_end_track_voltage.toFixed(2)}V, 主轨入电压: ${result.voltage_results.main_track_input_voltage.toFixed(2)}V, 轨出1电压: ${result.voltage_results.main_track_output_voltage_1.toFixed(2)}V`);
             }
             
             // 更新进度

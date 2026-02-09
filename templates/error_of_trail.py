@@ -887,8 +887,8 @@ class Error_Of_Trail:
 
 # 示例用法
 if __name__ == "__main__":
-    # 创建一个无故障的实例
-    error_instance = Error_Of_Trail(trail="test", error_type=0, error_value=0, error_position="69G", length_parameter=100.0, SPT_cable_length=10.0)
+    # 创建一个无故障的实例 - 69G案例，轨道电路长度1200m
+    error_instance = Error_Of_Trail(trail="test", error_type=0, error_value=0, error_position="69G", length_parameter=1200.0, SPT_cable_length=10.0)
     print(error_instance.character())
     print(error_instance.status())
     
@@ -896,8 +896,8 @@ if __name__ == "__main__":
     model_info = error_instance.build_circuit_model()
     print(f"\n模型信息: {model_info}")
     
-    # 创建一个有故障的实例
-    error_instance_fault = Error_Of_Trail(trail="test", error_type=1, error_value=1, error_position="69G", length_parameter=100.0, SPT_cable_length=10.0)
+    # 创建一个有故障的实例 - 69G案例，轨道电路长度1200m
+    error_instance_fault = Error_Of_Trail(trail="test", error_type=1, error_value=1, error_position="69G", length_parameter=1200.0, SPT_cable_length=10.0)
     print(f"\n故障实例: {error_instance_fault.character()}")
     print(error_instance_fault.status())
     

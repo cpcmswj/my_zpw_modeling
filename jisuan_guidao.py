@@ -428,45 +428,33 @@ def get_rail_parameters(frequency):
     返回:
         tuple: (resist_per_meter, induct_per_meter) 钢轨每米电阻(Ω/m)和电感(H/m)
     """
-    # 钢轨阻抗和阻抗角查表
-    # 数据来源：根据铁路信号专业标准和实际测量数据
-    rail_parameters_table = {
-        1700: {
-            "impedance": 0.18,  # Ω/m
-            "impedance_angle": 75  # 度
-        },
-        2000: {
-            "impedance": 0.19,  # Ω/m
-            "impedance_angle": 76  # 度
-        },
-        2300: {
-            "impedance": 0.20,  # Ω/m
-            "impedance_angle": 77  # 度
-        },
-        2600: {
-            "impedance": 0.21,  # Ω/m
-            "impedance_angle": 78  # 度
-        }
-    }
+    # 从频率参数表中构建钢轨参数字典
+    rail_params_dict = {}
+    for row in frequency_parameters_table:
+        freq = row[1]
+        impedance_per_km = row[10]  # 钢轨阻抗，单位为Ω/km
+        impedance_per_meter = impedance_per_km / 1000  # 转换为Ω/m
+        impedance_angle = row[11]  # 钢轨阻抗角，单位为度
+        rail_params_dict[freq] = {"impedance": impedance_per_meter, "impedance_angle": impedance_angle}
     
     # 如果频率在表格中，直接使用对应的值
-    if frequency in rail_parameters_table:
-        params = rail_parameters_table[frequency]
+    if frequency in rail_params_dict:
+        params = rail_params_dict[frequency]
         impedance = params["impedance"]
         impedance_angle = params["impedance_angle"]
     else:
         # 如果频率不在表格中，进行线性插值
         # 获取表格中的所有频率值并排序
-        sorted_frequencies = sorted(rail_parameters_table.keys())
+        sorted_frequencies = sorted(rail_params_dict.keys())
         
         # 如果输入频率小于最小值，使用最小值的参数
         if frequency <= sorted_frequencies[0]:
-            params = rail_parameters_table[sorted_frequencies[0]]
+            params = rail_params_dict[sorted_frequencies[0]]
             impedance = params["impedance"]
             impedance_angle = params["impedance_angle"]
         # 如果输入频率大于最大值，使用最大值的参数
         elif frequency >= sorted_frequencies[-1]:
-            params = rail_parameters_table[sorted_frequencies[-1]]
+            params = rail_params_dict[sorted_frequencies[-1]]
             impedance = params["impedance"]
             impedance_angle = params["impedance_angle"]
         # 否则进行线性插值
@@ -475,11 +463,11 @@ def get_rail_parameters(frequency):
                 if sorted_frequencies[i] <= frequency <= sorted_frequencies[i+1]:
                     # 获取两个端点的值
                     f1 = sorted_frequencies[i]
-                    z1 = rail_parameters_table[f1]["impedance"]
-                    a1 = rail_parameters_table[f1]["impedance_angle"]
+                    z1 = rail_params_dict[f1]["impedance"]
+                    a1 = rail_params_dict[f1]["impedance_angle"]
                     f2 = sorted_frequencies[i+1]
-                    z2 = rail_parameters_table[f2]["impedance"]
-                    a2 = rail_parameters_table[f2]["impedance_angle"]
+                    z2 = rail_params_dict[f2]["impedance"]
+                    a2 = rail_params_dict[f2]["impedance_angle"]
                     
                     # 线性插值
                     slope_z = (z2 - z1) / (f2 - f1)
@@ -489,7 +477,7 @@ def get_rail_parameters(frequency):
                     break
             else:
                 # 兜底返回，使用1700Hz的参数
-                params = rail_parameters_table[1700]
+                params = rail_params_dict[1700]
                 impedance = params["impedance"]
                 impedance_angle = params["impedance_angle"]
     
