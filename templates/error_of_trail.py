@@ -227,18 +227,23 @@ class Error_Of_Trail:
             #不经过补偿电容
             
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
+            
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.length_parameter)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             
             # 调谐区矩阵
-            self.matrix=np.dot(self.matrix,self.tuning_parameters.tuning_zone_matrix())
+            self.matrix=np.dot(np.linalg.inv(self.tuning_parameters.tuning_zone_matrix()),self.matrix)
 
             # 匹配变压器矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             return self.matrix
         elif self.error_type==1:
             # SPT电缆矩阵
@@ -254,7 +259,8 @@ class Error_Of_Trail:
             return self.matrix
         elif self.error_type==2:
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
             #调谐区矩阵
@@ -262,34 +268,42 @@ class Error_Of_Trail:
              # 匹配变压器矩阵
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             return self.matrix
         elif self.error_type==3:
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
             self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             #调谐区矩阵
             self.matrix=np.dot(self.matrix,self.tuning_parameters.tuning_zone_matrix_SVA_1())
              # 匹配变压器矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
 
             return self.matrix
         elif self.error_type==4:
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             #调谐区矩阵
             self.matrix=np.dot(self.matrix,self.tuning_parameters.tuning_zone_matrix_SVA_2())
              # 匹配变压器矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
 
             return self.matrix
         
@@ -305,10 +319,12 @@ class Error_Of_Trail:
             #不经过空芯线圈,不经过小轨道调谐区
             frequency = self.frequency_table(self.error_position)
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             #送端轨面电压
             self.output_voltage_surface1=self.count_output()
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
@@ -317,19 +333,23 @@ class Error_Of_Trail:
             #受端轨面电压
             self.output_voltage_surface2=self.count_output()
             # 匹配变压器矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             #主轨入电压
             self.output_voltage_main=self.count_output()
         elif self.error_type==2:
             # SPT电缆————匹配变压器——调谐单元(断路）——钢轨及补偿电容——调谐单元——匹配变压器——SPT电缆——接收端
             frequency = self.frequency_table(self.error_position)
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             #送端轨面电压
             self.output_voltage_surface1=self.count_output()
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
@@ -340,19 +360,23 @@ class Error_Of_Trail:
             F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
              # 匹配变压器矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             #主轨入电压
             self.output_voltage_main=self.count_output()
         elif self.error_type==5:
             # SPT电缆————匹配变压器——调谐单元——钢轨及补偿电容——调谐单元（断路）——匹配变压器——SPT电缆——接收端
             frequency = self.frequency_table(self.error_position)
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             #调谐单元矩阵
             F=self.find_BA_type(frequency)#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
@@ -363,19 +387,23 @@ class Error_Of_Trail:
             #受端轨面电压
             self.output_voltage_surface2=self.count_output()
              # 匹配变压器矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             #主轨入电压
             self.output_voltage_main=self.count_output()
         elif self.error_type==6:
             #补偿电容断路，视为没有补偿电容
             frequency = self.frequency_table(self.error_position)
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             #调谐单元矩阵
             F=self.find_BA_type_tuning_zone()[0]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
@@ -390,19 +418,23 @@ class Error_Of_Trail:
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
             
              # 匹配变压器矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             #主轨入电压
             self.output_voltage_main=self.count_output()
         elif self.error_type==7:
             #补偿电容短路即视为电容为零
             frequency = self.frequency_table(self.error_position)
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             transformer_ratio = jg.find_transformer_ratio(frequency)
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             #调谐单元矩阵
             F=self.find_BA_type_tuning_zone()[0]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
@@ -416,9 +448,11 @@ class Error_Of_Trail:
             F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
             self.matrix=np.dot(self.matrix,jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F))
              # 匹配变压器矩阵
-            self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
-            self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
+            #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             #主轨入电压
             self.output_voltage_main=self.count_output()
         
@@ -770,7 +804,8 @@ class Error_Of_Trail:
             if self.error_type == 0:
                 print("无故障，使用正常模型")
                 # 构建完整的传输矩阵链
-                total_matrix = np.dot(spt_cable_matrix, transformer_matrix)
+                total_matrix = np.dot(tuning_zone_matrix, transformer_matrix)
+                total_matrix = np.dot(total_matrix, spt_cable_matrix)
                 total_matrix = np.dot(total_matrix, iron_rail_matrix)
                 total_matrix = np.dot(total_matrix, capacitance_matrix)
                 total_matrix = np.dot(total_matrix, iron_rail_matrix)
