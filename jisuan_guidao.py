@@ -494,7 +494,7 @@ def get_rail_parameters(frequency):
 
 def SPTcable_matrix(frequency, length):
     """根据电缆参数和长度计算电缆矩阵,gamma_cable为单位长度电缆的传输常数 Z_d为单位长度电缆的特性阻抗 length为电缆长度
-    输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
+    输入输出关系: [V_in, I_in]^T = T * [V_out, I_out]^T
     其中T为电缆传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
     # 计算电缆的复数阻抗
     gamma_cable = find_SPTcable_parameters(frequency)[0]
@@ -516,7 +516,7 @@ def SPTcable_impedance(frequency, Z_cable_I, Z_cable_o, length):
 
 def attenuation_matrix(r1, r2):
     """根据衰耗盘次级线圈的端子(和接收器门限电路输入端连接)计算衰耗盘四端口等效电路的传输矩阵
-    输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
+    输入输出关系: [V_in, I_in]^T = T * [V_out, I_out]^T
     其中T为衰耗盘传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
     N_rirj = find_attenuation(r1, r2)  # 获取衰耗盘次级线圈匝数
     if N_rirj == 0:
@@ -720,6 +720,17 @@ class Variable:
                 [1 / impedance_complex, 1]
             ])
         return matrix
+    def whole_iron_rail_with_capacitance(self,n,step,R_cb,L_cb,C_b):
+        """计算钢轨等效传输特性矩阵(此为输入端电压电流已知)
+        n为基本补偿单元个数,step为补偿单元步长,R_cb为电容连接线电阻 L_cb为电容连接线电感 C_b为补偿电容电容
+        输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
+        其中T为钢轨传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
+        self.iron_rail_matrix = self.iron_rail(step)
+        self.capacitance_matrix = self.capacitance_matrix(R_cb, L_cb, C_b)
+        self.iron_rail_matrix = np.dot(self.iron_rail_matrix, self.capacitance_matrix)
+        self.iron_rail_matrix = np.linalg.matrix_power(self.iron_rail_matrix, n)
+        self.iron_rail_matrix = np.dot(self.iron_rail_matrix, self.iron_rail(step))
+        return self.iron_rail_matrix
 
     def transformer_matrix_input(self):
         """计算接收端匹配变压器四端口传输特性传输矩阵 n为变压器变比 L_b为变压器补偿电感 C_b为变压器隔直电容
@@ -833,9 +844,16 @@ class tuning_zone_parameters:
         self.Z_FBA = self.Z_Nr1_in
         self.Z_JBA = self.Z_Nr1_in
     
+    def count_input_voltage_railsurface(self, V_in):
+        """计算送端轨面电压,n为基本补偿单元个数"""
+        Z_co=np.sqrt(arr)
+        V_in_rail = V_3 * (np.cosh(n*g)+Z_co*np.sinh(n*g)/Z_js)
+        return V_in_rail
+
+
     def tuning_zone_matrix(self):
         """调谐区四端口网络传输矩阵
-        输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
+        输入输出关系: [V_in, I_in]^T = T * [V_out, I_out]^T
         其中T为调谐区传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
         self.tuning_zone_matrix = np.array([[self.Z_Nr1_out, self.Z_Nr1_in],
                                           [self.Z_Nr2_out, self.Z_Nr2_in]])
