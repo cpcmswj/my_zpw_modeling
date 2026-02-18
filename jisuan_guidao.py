@@ -725,6 +725,10 @@ class Variable:
         n为基本补偿单元个数,step为补偿单元步长,R_cb为电容连接线电阻 L_cb为电容连接线电感 C_b为补偿电容电容
         输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
         其中T为钢轨传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
+        # 确保n为整数，因为np.linalg.matrix_power要求指数必须是整数
+        n = int(round(n))
+        # 确保n至少为1，避免计算错误
+        n = max(1, n)
         self.iron_rail_matrix = self.iron_rail(step)
         self.capacitance_matrix = self.capacitance_matrix(R_cb, L_cb, C_b)
         self.iron_rail_matrix = np.dot(self.iron_rail_matrix, self.capacitance_matrix)

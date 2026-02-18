@@ -523,8 +523,11 @@ class Error_Of_Trail:
             Z_input=Z_input+jg.calculate_parallel_impedance(Z_rail,Z_tuner)
 
             #输入端SPT电缆阻抗
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)
+            Z_input=jg.SPTcable_impedance(frequency,1,Z_input,self.SPT_cable_length)
 
+            # 检查Z_input是否为异常值，如果是则改为400
+            if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
+                Z_input = 400
             # 计算电流
             I=self.input_V/Z_input
             
@@ -545,6 +548,9 @@ class Error_Of_Trail:
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            # 检查Z_input是否为异常值，如果是则改为400
+            if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
+                Z_input = 400
             #计算电流
             I=self.input_V/Z_input
 
@@ -565,7 +571,9 @@ class Error_Of_Trail:
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             #输入端SPT电缆阻抗
             Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)
-            
+            # 检查Z_input是否为异常值，如果是则改为400
+            if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
+                Z_input = 400
             #计算电流
             I=self.input_V/Z_input
 
@@ -583,7 +591,9 @@ class Error_Of_Trail:
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             Z_input=jg.SPTcable_impedance(frequency,1,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
-
+            # 检查Z_input是否为异常值，如果是则改为400
+            if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
+                Z_input = 400
             # 计算电流
             I=self.input_V/Z_input
 
@@ -602,7 +612,9 @@ class Error_Of_Trail:
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
-
+            # 检查Z_input是否为异常值，如果是则改为400
+            if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
+                Z_input = 400
             # 计算电流
             I=self.input_V/Z_input
             return I,Z_input
@@ -621,6 +633,9 @@ class Error_Of_Trail:
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            # 检查Z_input是否为异常值，如果是则改为400
+            if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
+                Z_input = 400
             #计算电流
             I=self.input_V/Z_input
             return I,Z_input
@@ -640,6 +655,9 @@ class Error_Of_Trail:
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            # 检查Z_input是否为异常值，如果是则改为400
+            if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
+                Z_input = 400
             #计算电流
             I=self.input_V/Z_input
             return I,Z_input
@@ -656,6 +674,9 @@ class Error_Of_Trail:
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            # 检查Z_input是否为异常值，如果是则改为400
+            if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
+                Z_input = 400
             #计算电流
             I=self.input_V/Z_input
             return I,Z_input
