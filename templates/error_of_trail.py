@@ -511,12 +511,16 @@ class Error_Of_Trail:
             # 计算钢轨阻抗（使用Variable类的impedance属性）
             Z_c=1j*1/(2*np.pi*frequency*jg.find_capacitance(frequency)*self.length_parameter/jg.find_capacitance_step(frequency))
             Z_rail = self.parameter.impedance_complex+Z_c
+            Z_rail=jg.calculate_parallel_impedance(Z_rail,jg.SPTcable_impedance(frequency,Z_rail,1,self.SPT_cable_length))
+            #调谐区阻抗
+            Z_tuner=self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca+jg.calculate_parallel_impedance(self.tuning_parameters.Z_BA2, jg.find_resist_V1V2(frequency))
+            Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca+1j*self.tuning_parameters.L_SVA*self.tuning_parameters.angular_frequency)+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca
+            Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_BA1)
+            
 
-            # 设置道床漏阻
-            R_b = ballast_resist_per_meter * self.length_parameter  #道床漏阻一般取值为1.0或1.2Ω或1.5/km
-            # 计算组合阻抗
-            Z_combine=Z_rail*R_b/(Z_rail+R_b)
-            Z_input=Z_input+Z_combine
+
+            #组合阻抗
+            Z_input=Z_input+jg.calculate_parallel_impedance(Z_rail,Z_tuner)
 
             #输入端SPT电缆阻抗
             Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)
