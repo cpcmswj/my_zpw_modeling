@@ -1327,6 +1327,18 @@
                 }
                 html += '</div></div>';
                 
+                // 输入阻抗和电流
+                if (result.input_impedance !== undefined && result.input_current !== undefined) {
+                    html += `<div class="result-item"><div class="result-label">输入阻抗:</div><div class="result-value">${result.input_impedance.toFixed(2)} Ω</div></div>`;
+                    html += `<div class="result-item"><div class="result-label">输入电流:</div><div class="result-value">${result.input_current.toFixed(2)} A</div></div>`;
+                }
+                
+                // 主轨道阻抗和调谐区阻抗
+                if (result.Z_rail !== undefined && result.Z_tuner !== undefined) {
+                    html += `<div class="result-item"><div class="result-label">主轨道阻抗:</div><div class="result-value">${result.Z_rail.toFixed(2)} Ω</div></div>`;
+                    html += `<div class="result-item"><div class="result-label">调谐区阻抗:</div><div class="result-value">${result.Z_tuner.toFixed(2)} Ω</div></div>`;
+                }
+                
                 html += '</div>';
                 html += '</div>';
             }
@@ -1381,7 +1393,11 @@
                 '送端轨面电压(V)',
                 '受端轨面电压(V)',
                 '主轨入电压(V)',
-                '轨出1电压(V)'
+                '轨出1电压(V)',
+                '输入阻抗(Ω)',
+                '输入电流(A)',
+                '主轨道阻抗(Ω)',
+                '调谐区阻抗(Ω)'
             ];
             csvContent += headers.join(',') + '\n';
             
@@ -1414,7 +1430,11 @@
                 simulationResult.voltage_results ? simulationResult.voltage_results.send_end_track_voltage.toFixed(2) : '',
                 simulationResult.voltage_results ? simulationResult.voltage_results.receive_end_track_voltage.toFixed(2) : '',
                 simulationResult.voltage_results ? simulationResult.voltage_results.main_track_input_voltage.toFixed(2) : '',
-                simulationResult.voltage_results ? simulationResult.voltage_results.main_track_output_voltage_1.toFixed(2) : ''
+                simulationResult.voltage_results ? simulationResult.voltage_results.main_track_output_voltage_1.toFixed(2) : '',
+                simulationResult.input_impedance ? simulationResult.input_impedance.toFixed(2) : '',
+                simulationResult.input_current ? simulationResult.input_current.toFixed(2) : '',
+                simulationResult.Z_rail ? simulationResult.Z_rail.toFixed(2) : '',
+                simulationResult.Z_tuner ? simulationResult.Z_tuner.toFixed(2) : ''
             ];
             csvContent += dataRow.join(',') + '\n';
             

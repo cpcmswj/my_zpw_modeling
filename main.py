@@ -63,11 +63,6 @@ async def read_fsk_signal_viewer(request: Request):
 async def read_batch_simulation(request: Request):
     return templates.TemplateResponse("batch_simulation.html", {"request": request})
 
-# 开发者调试页面
-@app.get("/developer-debug", response_class=HTMLResponse)
-async def read_developer_debug(request: Request):
-    return templates.TemplateResponse("developer_debug.html", {"request": request})
-
 # 直接返回HTML内容的图片查看器页面
 @app.get("/image-viewer-direct", response_class=HTMLResponse)
 async def read_image_viewer_direct():
@@ -808,7 +803,11 @@ async def calculate_track_circuit_api(
                 "frequency": frequency
             },
             "voltage_results": result["voltage_results"],
-            "matrix": safe_matrix(result["matrix"])  # 处理矩阵中的NaN值
+            "matrix": safe_matrix(result["matrix"]),  # 处理矩阵中的NaN值
+            "input_impedance": result.get("input_impedance", 0.0),
+            "input_current": result.get("input_current", 0.0),
+            "Z_rail": result.get("Z_rail", 0.0),
+            "Z_tuner": result.get("Z_tuner", 0.0)
         }
         
         return JSONResponse(response)

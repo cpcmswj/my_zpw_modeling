@@ -314,6 +314,33 @@ class Error_Of_Trail:
     def call_matrix_main(self):
         """计算传输矩阵，信号流向主轨道,之后需要添加计算补偿电容个数的方式"""
         self.matrix=np.array([[1, 0], [0, 1]])
+        input_VC_matrix=self.count_inputVC()
+        # 计算等效输入阻抗和电流
+        try:
+            input_current, input_impedance, Z_rail, Z_tuner = self.call_input(10.0, 1.0)  # 使用默认输入电压10.0V和道床漏阻1.0
+            # 确保返回值是有效的数值
+            def safe_complex_to_float(value):
+                try:
+                    if isinstance(value, complex):
+                        return float(np.abs(value))
+                    elif isinstance(value, (int, float)):
+                        return float(value)
+                    else:
+                        return 0.0
+                except:
+                    return 0.0
+            
+            input_current_value = safe_complex_to_float(input_current)
+            input_impedance_value = safe_complex_to_float(input_impedance)
+            Z_rail_value = safe_complex_to_float(Z_rail)
+            Z_tuner_value = safe_complex_to_float(Z_tuner)
+        except Exception as e:
+            print(f"计算输入阻抗和电流时出错: {e}")
+            input_current_value = 0.0
+            input_impedance_value = 0.0
+            Z_rail_value = 0.0
+            Z_tuner_value = 0.0
+
         if self.error_type==0 or self.error_type==3 or self.error_type==4 or self.error_type==1:
             #SPT电缆————匹配变压器——补偿电容……——钢轨……——匹配变压器——SPT电缆——接收端
             #不经过空芯线圈,不经过小轨道调谐区
@@ -325,21 +352,33 @@ class Error_Of_Trail:
             transformer_ratio = jg.find_transformer_ratio(frequency)
             self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
             #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
+            
             #送端轨面电压
-            self.output_voltage_surface1=self.count_output()
+            self.output_voltage_surface1=np.dot(self.matrix,input_VC_matrix)
+            #self.output_voltage_surface1=self.count_output()
+            #送端轨面电流需要分流
+            self.output_voltage_surface1[1]=self.output_voltage_surface1[1]*Z_rail_value/(Z_rail_value+Z_tuner_value)
+
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
             #self.matrix=np.dot(self.matrix,self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,jg.find_capacitance(frequency)))
             self.matrix=np.dot(self.matrix,self.parameter.whole_iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,jg.find_capacitance(frequency)))
+            
             #受端轨面电压
-            self.output_voltage_surface2=self.count_output()
+            self.output_voltage_surface2=np.dot(self.parameter.whole_iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,jg.find_capacitance(frequency)),self.output_voltage_surface1)
+            #self.output_voltage_surface2=self.count_output()
+
             # 匹配变压器矩阵
             self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
             #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             # SPT电缆矩阵
             self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
             #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
+            
+            #匹配变压器&SPT电缆
+            self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),np.linalg.inv(self.parameter.transformer_matrix_input()))
             #主轨入电压
-            self.output_voltage_main=self.count_output()
+            self.output_voltage_main=np.dot(self.matrix,self.output_voltage_surface2)
+            #self.output_voltage_main=self.count_output()
         elif self.error_type==2:
             # SPT电缆————匹配变压器——调谐单元(断路）——钢轨及补偿电容——调谐单元——匹配变压器——SPT电缆——接收端
             frequency = self.frequency_table(self.error_position)
@@ -492,10 +531,16 @@ class Error_Of_Trail:
             "main_track_output_voltage_1": safe_voltage_calc(self.output_voltage_main_1)
         }
         
-        # 返回包含矩阵和电压结果的字典
+        
+        
+        # 返回包含矩阵、电压结果、输入阻抗、电流、主轨道阻抗和调谐区阻抗的字典
         return {
             "matrix": self.matrix,
-            "voltage_results": voltage_results
+            "voltage_results": voltage_results,
+            "input_impedance": input_impedance_value,
+            "input_current": input_current_value,
+            "Z_rail": Z_rail_value,
+            "Z_tuner": Z_tuner_value
         }
 
     def call_input(self,input_V,ballast_resist_per_meter):
@@ -531,7 +576,7 @@ class Error_Of_Trail:
             # 计算电流
             I=self.input_V/Z_input
             
-            return I,Z_input
+            return I,Z_input,Z_rail,Z_tuner
         elif self.error_type==1:
             #调谐单元F2断路的情况
             
@@ -554,7 +599,7 @@ class Error_Of_Trail:
             #计算电流
             I=self.input_V/Z_input
 
-            return I,Z_input
+            return I,Z_input,Z_rail,Z_tuner
         elif self.error_type==2:
             #调谐单元F1断路的情况
             #调谐区阻抗为
@@ -577,7 +622,7 @@ class Error_Of_Trail:
             #计算电流
             I=self.input_V/Z_input
 
-            return I,Z_input
+            return I,Z_input,Z_rail,Z_tuner
         elif self.error_type==3:
             #调谐区阻抗为
             
@@ -597,7 +642,7 @@ class Error_Of_Trail:
             # 计算电流
             I=self.input_V/Z_input
 
-            return I,Z_input
+            return I,Z_input,Z_rail,Z_tuner
 
         elif self.error_type==4:
             
@@ -617,7 +662,7 @@ class Error_Of_Trail:
                 Z_input = 400
             # 计算电流
             I=self.input_V/Z_input
-            return I,Z_input
+            return I,Z_input,Z_rail,Z_tuner
         elif self.error_type==5:
             #接收端调谐单元2断路的情况（与error_type==1类似）
             
@@ -638,7 +683,7 @@ class Error_Of_Trail:
                 Z_input = 400
             #计算电流
             I=self.input_V/Z_input
-            return I,Z_input
+            return I,Z_input,Z_rail,Z_tuner
         elif self.error_type==6:
             #补偿电容断路即无补偿电容
             
@@ -660,7 +705,7 @@ class Error_Of_Trail:
                 Z_input = 400
             #计算电流
             I=self.input_V/Z_input
-            return I,Z_input
+            return I,Z_input,Z_rail,Z_tuner
         elif self.error_type==7:
                 
             Z_tuner=self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca+jg.calculate_parallel_impedance(self.tuning_parameters.Z_BA2, jg.find_resist_V1V2(frequency))
@@ -679,9 +724,9 @@ class Error_Of_Trail:
                 Z_input = 400
             #计算电流
             I=self.input_V/Z_input
-            return I,Z_input
+            return I,Z_input,Z_rail,Z_tuner
         else:
-            return 0, 0
+            return 0, 0, 0, 0
     def call_matrix(self):
         """根据故障类型选择合适的传输矩阵"""
         if self.error_type in [0, 1, 2, 3, 4, 5, 6, 7]:
@@ -699,6 +744,44 @@ class Error_Of_Trail:
         else:
             return np.array([[1, 0], [0, 1]])
     
+    def count_inputVC(self):
+        """建立发送器输出端的电压电流矩阵 """
+        if not hasattr(self, 'input_V'):
+            self.input_V = 10.0  # 默认输入电压
+        input_current = self.call_input(self.input_V, 1.0)[0]
+        #后期需要修复道床漏阻
+        # 确保input_current是复数类型
+        if not isinstance(input_current, complex):
+            input_current = complex(input_current)
+        
+        # 检查input_V是否为复数
+        if isinstance(self.input_V, complex):
+            # 如果是复数，使用其实部和虚部
+            voltage_real = self.input_V.real
+            voltage_imag = self.input_V.imag
+        else:
+            # 如果不是复数，使用其值作为实部，虚部为0
+            voltage_real = self.input_V
+            voltage_imag = 0.0
+        
+        # 使用VoltageCurrent类构建输入电压电流向量
+        voltage_current = jg.VoltageCurrent(
+            voltage_real=voltage_real,  # 输入电压实部
+            voltage_imag=voltage_imag,  # 输入电压虚部
+            current_real=input_current.real,  # 电流实部
+            current_imag=input_current.imag   # 电流虚部
+        )
+        
+        # 获取电压电流的矩阵形式（列向量）
+        try:
+            input_VC_matrix = voltage_current.get_matrix_transpose()
+            return input_VC_matrix
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return None
+
+
     def count_output(self):
         """计算输出电压"""
         if not hasattr(self, 'input_V'):

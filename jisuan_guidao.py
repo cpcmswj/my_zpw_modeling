@@ -730,8 +730,9 @@ class Variable:
         # 确保n至少为1，避免计算错误
         n = max(1, n)
         self.iron_rail_matrix = self.iron_rail(step)
-        self.capacitance_matrix = self.capacitance_matrix(R_cb, L_cb, C_b)
-        self.iron_rail_matrix = np.dot(self.iron_rail_matrix, self.capacitance_matrix)
+        # 使用不同的变量名来避免与方法名冲突
+        capacitance_matrix_result = self.capacitance_matrix(R_cb, L_cb, C_b)
+        self.iron_rail_matrix = np.dot(self.iron_rail_matrix, capacitance_matrix_result)
         self.iron_rail_matrix = np.linalg.matrix_power(self.iron_rail_matrix, n)
         self.iron_rail_matrix = np.dot(self.iron_rail_matrix, self.iron_rail(step))
         return self.iron_rail_matrix
