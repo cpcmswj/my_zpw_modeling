@@ -6,6 +6,7 @@ import os
 # 添加父目录到系统路径，以便导入jisuan_guidao模块
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import jisuan_guidao as jg
+import circuit_tool
 
 """
 函数表
@@ -334,12 +335,18 @@ class Error_Of_Trail:
             input_impedance_value = safe_complex_to_float(input_impedance)
             Z_rail_value = safe_complex_to_float(Z_rail)
             Z_tuner_value = safe_complex_to_float(Z_tuner)
+            
+            # 保存复数形式的阻抗，用于电流分配计算
+            self.Z_rail_complex = Z_rail
+            self.Z_tuner_complex = Z_tuner
         except Exception as e:
             print(f"计算输入阻抗和电流时出错: {e}")
             input_current_value = 0.0
             input_impedance_value = 0.0
             Z_rail_value = 0.0
             Z_tuner_value = 0.0
+            self.Z_rail_complex = 0.0
+            self.Z_tuner_complex = 0.0
 
         if self.error_type==0 or self.error_type==3 or self.error_type==4 or self.error_type==1:
             #SPT电缆————匹配变压器——补偿电容……——钢轨……——匹配变压器——SPT电缆——接收端
@@ -356,8 +363,16 @@ class Error_Of_Trail:
             #送端轨面电压
             self.output_voltage_surface1=np.dot(self.matrix,input_VC_matrix)
             #self.output_voltage_surface1=self.count_output()
-            #送端轨面电流需要分流
-            self.output_voltage_surface1[1]=self.output_voltage_surface1[1]*Z_rail_value/(Z_rail_value+Z_tuner_value)
+            #送端轨面电流需要分流，使用circuit_tool中的函数计算电流分配
+            # 获取送端轨面电压（复数形式）
+            voltage_complex = self.output_voltage_surface1[0]
+            
+            # 使用复数形式的阻抗计算电流分配，这样可以得到更准确的结果
+            currents = circuit_tool.calculate_current_distribution(voltage_complex, self.Z_rail_complex, self.Z_tuner_complex)
+            
+            # 使用分配到主轨道的电流
+            if len(currents) > 0:
+                self.output_voltage_surface1[1] = currents[0]
 
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
             #self.matrix=np.dot(self.matrix,self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,jg.find_capacitance(frequency)))

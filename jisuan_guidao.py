@@ -1,4 +1,5 @@
 import numpy as np
+from circuit_tool import calculate_series_impedance, calculate_parallel_impedance
 
 """
 函数表
@@ -497,10 +498,21 @@ def SPTcable_matrix(frequency, length):
     输入输出关系: [V_in, I_in]^T = T * [V_out, I_out]^T
     其中T为电缆传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
     # 计算电缆的复数阻抗
-    gamma_cable = find_SPTcable_parameters(frequency)[0]
+    gamma_cable_dbkm = find_SPTcable_parameters(frequency)[0]
     Z_d = find_SPTcable_parameters(frequency)[1] * np.exp(1j * find_SPTcable_parameters(frequency)[2] * np.pi / 180)
-    Q_cable = np.array([[np.cosh(gamma_cable * length), Z_d * np.sinh(gamma_cable * length)],
-                      [np.sinh(gamma_cable * length) / Z_d, np.cosh(gamma_cable * length)]])
+    
+    # 单位转换：将dB/km转换为Nepers/km (1 Nepers = 8.686 dB)
+    gamma_cable_nepers_km = gamma_cable_dbkm / 8.686
+    
+    # 确保长度单位为km（如果输入是m，转换为km）
+    # 假设输入的length单位是m，因为在其他地方使用的是米
+    length_km = length / 1000
+    
+    # 计算实际的传输常数乘以长度
+    gamma_length = gamma_cable_nepers_km * length_km
+    
+    Q_cable = np.array([[np.cosh(gamma_length), Z_d * np.sinh(gamma_length)],
+                      [np.sinh(gamma_length) / Z_d, np.cosh(gamma_length)]])
     return Q_cable
 
 def SPTcable_impedance(frequency, Z_cable_I, Z_cable_o, length):
@@ -508,10 +520,21 @@ def SPTcable_impedance(frequency, Z_cable_I, Z_cable_o, length):
     if length == 0:
         print("电缆长度为0,需要修正")
         return 1
-    gamma_cable = find_SPTcable_parameters(frequency)[0]
+    gamma_cable_dbkm = find_SPTcable_parameters(frequency)[0]
     Z_d = find_SPTcable_parameters(frequency)[1] * np.exp(1j * find_SPTcable_parameters(frequency)[2] * np.pi / 180)
+    
+    # 单位转换：将dB/km转换为Nepers/km (1 Nepers = 8.686 dB)
+    gamma_cable_nepers_km = gamma_cable_dbkm / 8.686
+    
+    # 确保长度单位为km（如果输入是m，转换为km）
+    # 假设输入的length单位是m，因为在其他地方使用的是米
+    length_km = length / 1000
+    
+    # 计算实际的传输常数乘以长度
+    gamma_length = gamma_cable_nepers_km * length_km
+    
     # 计算电缆的特性阻抗
-    Z_cable = (Z_cable_I * np.cosh(gamma_cable * length) + Z_d * np.sinh(gamma_cable * length)) / (Z_cable_o / Z_d * np.sinh(gamma_cable * length) + np.cosh(gamma_cable * length))
+    Z_cable = (Z_cable_I * np.cosh(gamma_length) + Z_d * np.sinh(gamma_length)) / (Z_cable_o / Z_d * np.sinh(gamma_length) + np.cosh(gamma_length))
     return Z_cable
 
 def attenuation_matrix(r1, r2):
@@ -564,47 +587,7 @@ def calculate_admittance(resist, induct, capacit, angular_frequency=0):
     
     return admittance_mod, admittance_complex
 
-def calculate_series_impedance(*impedances):
-    """计算任意个阻抗的串联
-    
-    Args:
-        *impedances: 复数形式的阻抗列表
-    
-    Returns:
-        complex: 串联后的总阻抗
-    """
-    if not impedances:
-        return 0
-    
-    total_impedance = 0
-    for impedance in impedances:
-        total_impedance += impedance
-    
-    return total_impedance
 
-def calculate_parallel_impedance(*impedances):
-    """计算任意个阻抗的并联
-    
-    Args:
-        *impedances: 复数形式的阻抗列表
-    
-    Returns:
-        complex: 并联后的总阻抗
-    """
-    if not impedances:
-        return 0
-    
-    total_admittance = 0
-    for impedance in impedances:
-        if impedance != 0:
-            total_admittance += 1 / impedance
-        else:
-            return 0  # 如果有任何一个阻抗为0，并联总阻抗为0
-    
-    if total_admittance == 0:
-        return 0
-    
-    return 1 / total_admittance
 
 class Variable:
     """变量结构体类，用于储存和计算各种电气参数"""
@@ -825,8 +808,14 @@ class tuning_zone_parameters:
         self.variable = Variable
         # 获取SPT电缆参数
         spt_params = find_SPTcable_parameters(Variable.frequency)
-        gamma_d = spt_params[0]  # 传输常数
+        gamma_d_dbkm = spt_params[0]  # 传输常数，单位dB/km
         Z_d = spt_params[1] * np.exp(1j * spt_params[2] * np.pi / 180)  # 特性阻抗（复数形式）
+        
+        # 单位转换：将dB/km转换为Nepers/km (1 Nepers = 8.686 dB)
+        gamma_d_nepers_km = gamma_d_dbkm / 8.686
+        
+        # 确保长度单位为km（如果输入是m，转换为km）
+        L_BA_km = L_BA / 1000
         
         # 设置默认的L_SVA值（空芯线圈电感）
         self.L_SVA = 33.5e-6  # 33.5uH
@@ -839,20 +828,53 @@ class tuning_zone_parameters:
         self.Z_BA1 = find_tuning_unit_impedance(self.angular_frequency, BA1_type)
         self.Z_BA2 = find_tuning_unit_impedance(self.angular_frequency, BA2_type)
         self.Z_Nr2_out = self.Z_BA2 + self.Z_ca
-        self.Z_Nr2_in = (self.Z_Nr2_out * np.cosh(gamma_d * L_BA / 2) + Z_d * np.sinh(gamma_d * L_BA / 2)) / (self.Z_Nr2_out / Z_d + np.cosh(gamma_d * L_BA / 2))
+        self.Z_Nr2_in = (self.Z_Nr2_out * np.cosh(gamma_d_nepers_km * L_BA_km / 2) + Z_d * np.sinh(gamma_d_nepers_km * L_BA_km / 2)) / (self.Z_Nr2_out / Z_d + np.cosh(gamma_d_nepers_km * L_BA_km / 2))
 
         self.Z_SVA_out = self.Z_Nr2_in
         self.Z_SVA_in = self.Z_SVA_out / (1 + self.Z_SVA_out / (1j * self.angular_frequency * self.L_SVA + 1j * wL_ca + R_ca))
         
         self.Z_Nr1_out = self.Z_SVA_in
-        self.Z_Nr1_in = (self.Z_Nr1_out * np.cosh(gamma_d * L_BA / 2) + Z_d * np.sinh(gamma_d * L_BA / 2)) / (self.Z_Nr1_out / Z_d + np.cosh(gamma_d * L_BA / 2))
+        self.Z_Nr1_in = (self.Z_Nr1_out * np.cosh(gamma_d_nepers_km * L_BA_km / 2) + Z_d * np.sinh(gamma_d_nepers_km * L_BA_km / 2)) / (self.Z_Nr1_out / Z_d + np.cosh(gamma_d_nepers_km * L_BA_km / 2))
         self.Z_FBA = self.Z_Nr1_in
         self.Z_JBA = self.Z_Nr1_in
     
-    def count_input_voltage_railsurface(self, V_in):
+    def count_input_voltage_railsurface(self, V_in, n, l_nc, R_cb, L_cb, C_cb):
         """计算送端轨面电压,n为基本补偿单元个数"""
-        Z_co=np.sqrt(arr)
-        V_in_rail = V_3 * (np.cosh(n*g)+Z_co*np.sinh(n*g)/Z_js)
+        # 确保n为整数，补偿电容数量必须是整数
+        n = int(round(n))
+        # 确保n至少为1，避免计算错误
+        n = max(1, n)
+        g_0 = n * self.variable.get_gamma_complex(self.variable.length_guidao)
+        
+        # 处理补偿电容为0的情况
+        if C_cb <= 0:
+            # 电容短路，视为电容阻抗为0
+            Z_nc = R_cb + 1j * self.variable.angular_frequency * L_cb
+        else:
+            Z_nc = R_cb + 1j * self.variable.angular_frequency * L_cb + 1 / (1j * self.variable.angular_frequency * C_cb)  # 补偿电容阻抗
+        
+        theta = np.sqrt(self.variable.get_Z_complex(1) * self.variable.get_Y_complex(1)) * l_nc
+        Z_cv = self.variable.get_Z_c_complex(1)
+        
+        # 处理Z_nc为0的情况
+        if Z_nc == 0:
+            b_0 = Z_cv * np.sinh(2 * theta)
+            c_0 = np.sinh(2 * theta) / Z_cv
+        else:
+            b_0 = Z_cv * np.sinh(2 * theta) + (Z_cv ** 2) * (np.sinh(2 * theta) ** 2) / Z_nc
+            c_0 = np.sinh(2 * theta) / Z_cv + (np.cosh(2 * theta) ** 2) / Z_nc
+        
+        # 处理c_0为0的情况
+        if c_0 == 0:
+            Z_co = Z_cv
+        else:
+            Z_co = np.sqrt(b_0 / c_0)
+        
+        Z_js = self.Z_SVA_in * self.Z_BA1 / (self.Z_SVA_in + self.Z_BA1)
+        Z_js = Z_js * self.Z_BA2 / (self.Z_BA2 + Z_js)  # 从接收端看进去的等效阻抗，即BA、SVA、BA
+        
+        # 计算送端轨面电压
+        V_in_rail = V_in * (np.cosh(g_0) + Z_co * np.sinh(g_0) / Z_js)
         return V_in_rail
 
 
