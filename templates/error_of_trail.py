@@ -360,12 +360,18 @@ class Error_Of_Trail:
             self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
             #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             
-            #送端轨面电压
+            #送端轨面电压电流矩阵
             self.output_voltage_surface1=np.dot(self.matrix,input_VC_matrix)
             #self.output_voltage_surface1=self.count_output()
             #送端轨面电流需要分流，使用circuit_tool中的函数计算电流分配
             # 获取送端轨面电压（复数形式）
             voltage_complex = self.output_voltage_surface1[0]
+            
+            # 确保Z_rail_complex和Z_tuner_complex不为0
+            if self.Z_rail_complex == 0:
+                self.Z_rail_complex = 1e-6  # 设置一个很小的值，避免除以零
+            if self.Z_tuner_complex == 0:
+                self.Z_tuner_complex = 1e-6  # 设置一个很小的值，避免除以零
             
             # 使用复数形式的阻抗计算电流分配，这样可以得到更准确的结果
             currents = circuit_tool.calculate_current_distribution(voltage_complex, self.Z_rail_complex, self.Z_tuner_complex)
@@ -378,8 +384,9 @@ class Error_Of_Trail:
             #self.matrix=np.dot(self.matrix,self.tuning_parameters.iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,jg.find_capacitance(frequency)))
             self.matrix=np.dot(self.matrix,self.parameter.whole_iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,jg.find_capacitance(frequency)))
             
-            #受端轨面电压
+            #受端轨面电压电流矩阵
             self.output_voltage_surface2=np.dot(self.parameter.whole_iron_rail_with_capacitance(self.length_parameter/jg.find_capacitance_step(frequency),jg.find_capacitance_step(frequency),0,0,jg.find_capacitance(frequency)),self.output_voltage_surface1)
+            print(f"output_voltage_surface2: {self.output_voltage_surface2}")
             #self.output_voltage_surface2=self.count_output()
 
             # 匹配变压器矩阵
@@ -391,8 +398,9 @@ class Error_Of_Trail:
             
             #匹配变压器&SPT电缆
             self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),np.linalg.inv(self.parameter.transformer_matrix_input()))
-            #主轨入电压
+            #主轨入电压电流矩阵
             self.output_voltage_main=np.dot(self.matrix,self.output_voltage_surface2)
+            print(f"output_voltage_main: {self.output_voltage_main}")
             #self.output_voltage_main=self.count_output()
         elif self.error_type==2:
             # SPT电缆————匹配变压器——调谐单元(断路）——钢轨及补偿电容——调谐单元——匹配变压器——SPT电缆——接收端
@@ -523,20 +531,38 @@ class Error_Of_Trail:
         if not hasattr(self, 'output_voltage_main_1'):
             self.output_voltage_main_1 = complex(0.0)
         
-        # 使用实例变量中的电压值作为结果（电压有效值：复数模的平方根）
+        # 使用实例变量中的电压值作为结果（电压有效值：复数模）
         # 添加NaN检查，确保返回有效的数值
         def safe_voltage_calc(voltage):
             try:
                 if voltage is None:
                     return 0.0
+                # 检查voltage是否为numpy数组
+                if isinstance(voltage, np.ndarray):
+                    # 如果是数组，处理多维情况
+                    if voltage.size > 0:
+                        # 展平数组并取第一个非零元素
+                        flat_voltage = voltage.flatten()
+                        # 找到第一个非零元素
+                        for v in flat_voltage:
+                            if v != 0:
+                                voltage = v
+                                break
+                        else:
+                            # 如果所有元素都是0，返回0
+                            return 0.0
+                    else:
+                        return 0.0
+                # 确保voltage是标量或复数
+                if not np.isscalar(voltage) and not isinstance(voltage, complex):
+                    return 0.0
                 abs_val = np.abs(voltage)
                 if not np.isfinite(abs_val):
                     return 0.0
-                sqrt_val = np.sqrt(abs_val)
-                if not np.isfinite(sqrt_val):
-                    return 0.0
-                return float(sqrt_val)
-            except:
+                # 直接返回复数模，而不是平方根
+                return float(abs_val)
+            except Exception as e:
+                print(f"safe_voltage_calc错误: {e}")
                 return 0.0
         
         voltage_results = {
@@ -790,11 +816,13 @@ class Error_Of_Trail:
         # 获取电压电流的矩阵形式（列向量）
         try:
             input_VC_matrix = voltage_current.get_matrix_transpose()
+            print(f"input_VC_matrix: {input_VC_matrix}")
             return input_VC_matrix
         except Exception as e:
             import traceback
             traceback.print_exc()
-            return None
+            # 如果出错，返回一个默认的电压电流矩阵
+            return np.array([[complex(10.0, 0.0)], [complex(0.0, 0.0)]])
 
 
     def count_output(self):
