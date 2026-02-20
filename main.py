@@ -58,6 +58,11 @@ async def read_comparison_system(request: Request):
 async def read_fsk_signal_viewer(request: Request):
     return templates.TemplateResponse("fsk_signal_viewer.html", {"request": request})
 
+# 交替发送0和1的2FSK信号查看器页面
+@app.get("/alternating-2fsk-viewer", response_class=HTMLResponse)
+async def read_alternating_2fsk_viewer(request: Request):
+    return templates.TemplateResponse("alternating_2fsk_viewer.html", {"request": request})
+
 # 批量故障模拟页面
 @app.get("/batch-simulation", response_class=HTMLResponse)
 async def read_batch_simulation(request: Request):

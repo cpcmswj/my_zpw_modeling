@@ -28,6 +28,7 @@ define_pages = {
     'comparison': 'http://127.0.0.1:8000/comparison-system',
     'batch_simulation': 'http://127.0.0.1:8000/batch-simulation',
     'fsk_signal': 'http://127.0.0.1:8000/fsk-signal-viewer',
+    'alternating_2fsk': 'http://127.0.0.1:8000/alternating-2fsk-viewer',
     'test_image': 'http://127.0.0.1:8000/test-image'
 }
 
@@ -197,6 +198,7 @@ def show_help():
     print("    python start_server.py               # 打开所有页面")
     print("    python start_server.py index         # 只打开首页")
     print("    python start_server.py fsk_signal integrated  # 打开多个页面")
+    print("    python start_server.py alternating_2fsk  # 只打开交替2FSK信号页面")
     print("=" * 50)
 
 def main():
@@ -233,7 +235,8 @@ def main():
         return
     
     # 确定要打开的页面
-    pages_to_open = args.pages if args.pages else list(define_pages.keys())
+    pages_to_open = args.pages if args.pages else [page for page in define_pages.keys() if page not in ['image_viewer', 'section_image', 'test_image']]
+
     
     # 打开页面
     open_pages(pages_to_open)
