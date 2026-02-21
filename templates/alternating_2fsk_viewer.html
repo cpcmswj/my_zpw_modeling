@@ -245,6 +245,8 @@
                             <option value="32">32</option>
                             <option value="64">64</option>
                             <option value="128" selected>128</option>
+                            <option value="256">256</option>
+                            <option value="1024">1024</option>
                         </select>
                     </div>
                 </div>
@@ -258,19 +260,9 @@
         </div>
         
         <!-- 图表容器 -->
-        <div class="chart-row">
-            <div class="chart-col">
-                <div class="chart-container">
-                    <h3>低频信息对应的正弦波</h3>
-                    <canvas id="lowFreqChart" style="height: 400px;"></canvas>
-                </div>
-            </div>
-            <div class="chart-col">
-                <div class="chart-container">
-                    <h3>调制后生成的2FSK波形</h3>
-                    <canvas id="signalChart" style="height: 400px;"></canvas>
-                </div>
-            </div>
+        <div class="chart-container">
+            <h3>信号波形对比</h3>
+            <canvas id="signalChart" style="height: 600px;"></canvas>
         </div>
         
         <!-- 结果显示区域 -->
@@ -379,7 +371,6 @@
         
         // 图表实例
         let signalChart = null;
-        let lowFreqChart = null;
         
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -452,7 +443,7 @@
         function initCharts() {
             console.log('开始初始化图表');
             try {
-                // 初始化2FSK信号图表
+                // 初始化信号图表，包含两个数据集
                 const signalCanvas = document.getElementById('signalChart');
                 if (signalCanvas) {
                     const signalCtx = signalCanvas.getContext('2d');
@@ -469,16 +460,28 @@
                             type: 'line',
                             data: {
                                 labels: defaultTime,
-                                datasets: [{
-                                    label: '2FSK Signal',
-                                    data: defaultSignal,
-                                    borderColor: '#3498db',
-                                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                                    borderWidth: 2,
-                                    fill: true,
-                                    tension: 0.1,
-                                    pointRadius: 0
-                                }]
+                                datasets: [
+                                    {
+                                        label: '2FSK Signal',
+                                        data: defaultSignal,
+                                        borderColor: '#3498db',
+                                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                        borderWidth: 2,
+                                        fill: true,
+                                        tension: 0.1,
+                                        pointRadius: 0
+                                    },
+                                    {
+                                        label: 'Low Frequency Signal',
+                                        data: defaultSignal,
+                                        borderColor: '#e74c3c',
+                                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                                        borderWidth: 2,
+                                        fill: true,
+                                        tension: 0.1,
+                                        pointRadius: 0
+                                    }
+                                ]
                             },
                             options: {
                                 responsive: true,
@@ -502,69 +505,7 @@
                                 plugins: {
                                     title: {
                                         display: true,
-                                        text: '2FSK Signal Waveform'
-                                    },
-                                    legend: {
-                                        display: true,
-                                        position: 'top'
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }
-                
-                // 初始化低频信号图表
-                const lowFreqCanvas = document.getElementById('lowFreqChart');
-                if (lowFreqCanvas) {
-                    const lowFreqCtx = lowFreqCanvas.getContext('2d');
-                    if (lowFreqCtx) {
-                        // 添加一些默认数据，让图表初始时不是空白
-                        const defaultTime = [];
-                        const defaultSignal = [];
-                        for (let i = 0; i < 100; i++) {
-                            defaultTime.push(i / 100);
-                            defaultSignal.push(0);
-                        }
-                        
-                        lowFreqChart = new Chart(lowFreqCtx, {
-                            type: 'line',
-                            data: {
-                                labels: defaultTime,
-                                datasets: [{
-                                    label: 'Low Frequency Signal',
-                                    data: defaultSignal,
-                                    borderColor: '#e74c3c',
-                                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                                    borderWidth: 2,
-                                    fill: true,
-                                    tension: 0.1,
-                                    pointRadius: 0
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                scales: {
-                                    x: {
-                                        title: {
-                                            display: true,
-                                            text: 'Time (s)'
-                                        }
-                                    },
-                                    y: {
-                                        title: {
-                                            display: true,
-                                            text: 'Amplitude'
-                                        },
-                                        min: -1.2,
-                                        max: 1.2
-                                    }
-                                },
-                                plugins: {
-                                    title: {
-                                        display: true,
-                                        text: 'Low Frequency Signal Waveform'
+                                        text: '信号波形对比'
                                     },
                                     legend: {
                                         display: true,
@@ -737,20 +678,13 @@
         function updateCharts(time, signal, lowFreqSignal) {
             console.log('更新图表，时间点数量:', time.length, '信号点数量:', signal.length, '低频信号点数量:', lowFreqSignal.length);
             
-            // 更新2FSK信号图表
+            // 更新信号图表，包含两个数据集
             if (signalChart) {
                 signalChart.data.labels = time;
-                signalChart.data.datasets[0].data = signal;
-                signalChart.options.plugins.title.text = `2FSK Signal (f0=${generatedData.params.f0.toFixed(1)}Hz, f1=${generatedData.params.f1.toFixed(1)}Hz, fs=${generatedData.params.fs.toFixed(0)}Hz)`;
+                signalChart.data.datasets[0].data = signal; // 2FSK信号
+                signalChart.data.datasets[1].data = lowFreqSignal; // 低频信号
+                signalChart.options.plugins.title.text = `信号波形对比 (2FSK: f0=${generatedData.params.f0.toFixed(1)}Hz, f1=${generatedData.params.f1.toFixed(1)}Hz | Low Freq: ${generatedData.params.freqDiff.toFixed(1)}Hz)`;
                 signalChart.update();
-            }
-            
-            // 更新低频信号图表
-            if (lowFreqChart) {
-                lowFreqChart.data.labels = time;
-                lowFreqChart.data.datasets[0].data = lowFreqSignal;
-                lowFreqChart.options.plugins.title.text = `Low Frequency Signal (${generatedData.params.freqDiff.toFixed(1)}Hz)`;
-                lowFreqChart.update();
             }
             
             console.log('图表更新完成');

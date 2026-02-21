@@ -500,6 +500,14 @@
                         </div>
                         <div class="flex-item">
                             <div class="parameter-card">
+                                <h4>SPT电缆参数</h4>
+                                <div id="sptCableParamsContent">
+                                    <p class="loading">请运行模拟以查看参数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-item">
+                            <div class="parameter-card">
                                 <h4>传输矩阵</h4>
                                 <div id="matrixParamsContent">
                                     <p class="loading">请运行模拟以查看参数</p>
@@ -870,6 +878,91 @@
             document.getElementById('voltageResultContent').innerHTML = html;
         }
         
+        // SPT电缆参数表（来自jisuan_guidao.py）
+        const frequencyParametersTable = [
+            [1, 1700, 55, 12, 8.3, 31.4, 36, 0.63, 396, -39, 14.08, 85.2],
+            [2, 2000, 50, 10, 10.1, 35.2, 43.2, 0.68, 367, -38, 16.44, 85.44],
+            [3, 2300, 46, 10, 11.9, 39, 48.6, 0.72, 343, -37, 18.708, 85.62],
+            [4, 2600, 40, 9, 13.6, 42.6, 55, 0.75, 325, -36, 21.147, 85.78]
+        ];
+        
+        // 根据频率查表获取SPT电缆参数
+        function findSPTCableParameters(frequency) {
+            for (const item of frequencyParametersTable) {
+                if (item[1] === frequency) {
+                    return {
+                        gammaCable: item[7], // 传输常数 (dB/km)
+                        impedance: item[8], // 特性阻抗 (Ω)
+                        impedanceAngle: item[9] // 阻抗角 (°)
+                    };
+                }
+            }
+            return {
+                gammaCable: 0.63, // 默认值 (1700Hz)
+                impedance: 396, // 默认值 (1700Hz)
+                impedanceAngle: -39 // 默认值 (1700Hz)
+            };
+        }
+        
+        // 计算SPT电缆参数
+        function calculateSPTCableParams(length, frequency) {
+            // 根据频率查表获取参数
+            const sptParams = findSPTCableParameters(frequency);
+            
+            // 单位长度参数 (根据特性阻抗和阻抗角计算)
+            const impedanceComplex = sptParams.impedance * Math.exp(1j * sptParams.impedanceAngle * Math.PI / 180);
+            
+            // 计算单位长度电阻和电感
+            // 注意：这里使用简化计算，实际计算可能需要更多参数
+            const unitResistance = sptParams.impedance * Math.cos(sptParams.impedanceAngle * Math.PI / 180);
+            const unitInductance = sptParams.impedance * Math.sin(sptParams.impedanceAngle * Math.PI / 180) / (2 * Math.PI * frequency);
+            
+            // 计算总参数
+            return {
+                gammaCable: sptParams.gammaCable, // 传输常数 (dB/km)
+                impedance: sptParams.impedance, // 特性阻抗 (Ω)
+                impedanceAngle: sptParams.impedanceAngle, // 阻抗角 (°)
+                resistance: unitResistance * length, // 总电阻 (Ω)
+                inductance: unitInductance * length, // 总电感 (H)
+                unitResistance: unitResistance, // 单位长度电阻 (Ω/km)
+                unitInductance: unitInductance, // 单位长度电感 (H/km)
+                length: length, // 长度 (km)
+                frequency: frequency // 频率 (Hz)
+            };
+        }
+        
+        // 计算SPT电缆传输矩阵
+        function calculateSPTCableMatrix(frequency, length) {
+            // 根据频率查表获取参数
+            const sptParams = findSPTCableParameters(frequency);
+            
+            // 单位转换：将dB/km转换为Nepers/km (1 Nepers = 8.686 dB)
+            const gammaCableDbKm = sptParams.gammaCable;
+            const gammaCableNepersKm = gammaCableDbKm / 8.686;
+            
+            // 确保长度单位为km
+            const lengthKm = length;
+            
+            // 计算实际的传输常数乘以长度
+            const gammaLength = gammaCableNepersKm * lengthKm;
+            
+            // 计算双曲函数值
+            const coshGamma = Math.cosh(gammaLength);
+            const sinhGamma = Math.sinh(gammaLength);
+            
+            // 由于JavaScript不直接支持复数计算，这里使用实数近似
+            // 实际应用中可能需要使用复数库或后端计算
+            const impedance = sptParams.impedance;
+            
+            // 构建传输矩阵（使用实数近似）
+            const matrix = [
+                [coshGamma, impedance * sinhGamma],
+                [sinhGamma / impedance, coshGamma]
+            ];
+            
+            return matrix;
+        }
+        
         // 显示详细参数
         function displayDetailedParams(result) {
             const inputParams = result.input_params;
@@ -920,6 +1013,56 @@
             
             document.getElementById('electricalParamsContent').innerHTML = electricalHtml;
             
+            // 显示SPT电缆参数
+            const sptLength = inputParams.spt_cable_length || 10; // 默认10km
+            const frequency = inputParams.frequency || 1700; // 默认1700Hz
+            const sptParams = calculateSPTCableParams(sptLength, frequency);
+            
+            let sptHtml = '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">电缆长度:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.length} km</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">传输常数:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.gammaCable} dB/km</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">特性阻抗:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.impedance} Ω</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">阻抗角:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.impedanceAngle} °</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">总电阻:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.resistance.toFixed(4)} Ω</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">总电感:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.inductance.toExponential(4)} H</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">单位长度电阻:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.unitResistance.toFixed(4)} Ω/km</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">单位长度电感:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.unitInductance.toExponential(4)} H/km</span>`;
+            sptHtml += '</div>';
+            
+            // 计算并显示SPT电缆传输矩阵
+            const sptMatrix = calculateSPTCableMatrix(frequency, sptLength);
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">传输矩阵:</span>';
+            sptHtml += '</div>';
+            sptHtml += '<div class="matrix-display">';
+            sptHtml += `[${sptMatrix[0][0].toFixed(4)}, ${sptMatrix[0][1].toFixed(4)}]\n`;
+            sptHtml += `[${sptMatrix[1][0].toFixed(4)}, ${sptMatrix[1][1].toFixed(4)}]`;
+            sptHtml += '</div>';
+            
+            document.getElementById('sptCableParamsContent').innerHTML = sptHtml;
+            
             // 显示矩阵参数
             let matrixHtml = '<div class="parameter-item">';
             matrixHtml += '<span class="parameter-name">传输矩阵:</span>';
@@ -943,6 +1086,7 @@
             debugHtml += `轨道区段: ${sectionInfo.name}\n`;
             debugHtml += `故障类型: ${errorInfo.type} - ${errorInfo.name}\n`;
             debugHtml += `输入参数: ${JSON.stringify(inputParams, null, 2)}\n`;
+            debugHtml += `SPT电缆参数: ${JSON.stringify(sptParams, null, 2)}\n`;
             debugHtml += `电压结果: ${JSON.stringify(result.voltage_results, null, 2)}\n`;
             
             document.getElementById('debugInfoContent').textContent = debugHtml;

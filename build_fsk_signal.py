@@ -840,14 +840,14 @@ def main():
                         print(e)
                 
                 # 选择信号长度
-                valid_lengths = [16, 32, 64, 128]
+                valid_lengths = [16, 32, 64, 128, 256, 1024]
                 print("\n可选的信号长度:")
                 for i, length in enumerate(valid_lengths):
                     print(f"{i+1}. {length}点")
                 
                 while True:
                     try:
-                        choice = int(input("请选择信号长度 (1-4): "))
+                        choice = int(input("请选择信号长度 (1-6): "))
                         if 1 <= choice <= len(valid_lengths):
                             num_points = valid_lengths[choice - 1]
                             break
