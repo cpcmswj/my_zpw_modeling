@@ -255,6 +255,10 @@
                         <input type="checkbox" id="useCustomProb" name="useCustomProb" checked onchange="toggleProbabilityInputs()">
                         开启自选概率值
                     </label>
+                    <label for="randomProbability" style="display: flex; align-items: center; gap: 5px; font-weight: normal; margin-top: 10px;">
+                        <input type="checkbox" id="randomProbability" name="randomProbability" onchange="toggleProbabilityInputs()">
+                        随机决定故障率
+                    </label>
                     <div id="probabilityHint" style="margin-top: 5px; font-size: 14px; color: #666;">
                         提示：概率值总和应接近100%，系统会自动归一化处理。
                     </div>
@@ -563,6 +567,7 @@
             
             // 获取选中的错误类型及其概率
             const useCustomProb = document.getElementById('useCustomProb').checked;
+            const useRandomProb = document.getElementById('randomProbability').checked;
             const selectedErrorTypesWithProb = Array.from(document.querySelectorAll('input[name="errorTypes"]:checked')).map(cb => {
                 const errorType = parseInt(cb.value);
                 let prob = 1;
@@ -570,6 +575,9 @@
                 if (useCustomProb) {
                     const probInput = document.getElementById(`error${errorType}Prob`);
                     prob = probInput ? parseFloat(probInput.value) : 1;
+                } else if (useRandomProb) {
+                    // 为每个选中的错误类型生成随机概率
+                    prob = Math.random() * 100;
                 }
                 
                 return { errorType, prob };
@@ -651,6 +659,46 @@
                 r2: r2
             };
         }
+        
+        // 检查输入值是否大于等于1
+        function checkValueGreaterThanZero(inputElement) {
+            const value = parseInt(inputElement.value) || 0;
+            if (value < 1) {
+                alert('⚠️ 警告：值必须大于等于1！');
+                inputElement.value = 1; // 重置为默认值
+            }
+        }
+        
+        // 检查并发执行数量是否超过批量生成数量
+        function checkConcurrentCount() {
+            const batchSize = parseInt(document.getElementById('batchSize').value) || 0;
+            const concurrentCount = parseInt(document.getElementById('concurrentCount').value) || 0;
+            
+            if (concurrentCount > batchSize && batchSize > 0) {
+                // 显示警告
+                alert('⚠️ 警告：并发执行数量超过批量生成数量！\n\n这可能会导致系统资源过度占用，影响模拟性能。\n\n建议调整并发执行数量不超过批量生成数量。');
+            }
+        }
+        
+        // 为输入框添加事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            const batchSizeInput = document.getElementById('batchSize');
+            const concurrentCountInput = document.getElementById('concurrentCount');
+            
+            // 添加输入事件监听器
+            if (batchSizeInput) {
+                batchSizeInput.addEventListener('change', function() {
+                    checkValueGreaterThanZero(this);
+                    checkConcurrentCount();
+                });
+            }
+            if (concurrentCountInput) {
+                concurrentCountInput.addEventListener('change', function() {
+                    checkValueGreaterThanZero(this);
+                    checkConcurrentCount();
+                });
+            }
+        });
         
         // 开始批量模拟
         async function startBatchSimulation() {
@@ -845,7 +893,7 @@
                             return simulateSingle(newParams, retryCount + 1);
                         }
                     }
-                    throw new Error('请求超时，请检查网络连接或稍后再试');
+                    throw new Error('请求超时，请重启系统再试');
                 }
                 
                 // 检查是否已停止批量模拟
@@ -1079,6 +1127,7 @@
         // 切换概率输入框显示/隐藏
         function toggleProbabilityInputs() {
             const useCustomProb = document.getElementById('useCustomProb').checked;
+            const useRandomProb = document.getElementById('randomProbability').checked;
             const probabilityHint = document.getElementById('probabilityHint');
             
             // 显示或隐藏概率输入框和提示
@@ -1090,11 +1139,17 @@
                 const probSpan = probInput ? probInput.nextElementSibling : null;
                 
                 if (probInput) {
-                    probInput.style.display = useCustomProb ? 'inline-block' : 'none';
+                    probInput.style.display = useCustomProb && !useRandomProb ? 'inline-block' : 'none';
                 }
                 if (probSpan && probSpan.tagName === 'SPAN') {
-                    probSpan.style.display = useCustomProb ? 'inline-block' : 'none';
+                    probSpan.style.display = useCustomProb && !useRandomProb ? 'inline-block' : 'none';
                 }
+            }
+            
+            // 确保两个选项不同时选中
+            if (useCustomProb && useRandomProb) {
+                document.getElementById('useCustomProb').checked = false;
+                toggleProbabilityInputs();
             }
         }
         
