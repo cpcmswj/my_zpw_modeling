@@ -1198,8 +1198,20 @@ class Error_Of_Trail:
             
             # 计算钢轨阻抗（使用Variable类的impedance属性）
             Z_c=1j*1/(2*np.pi*frequency*jg.find_capacitance(frequency)*self.length_parameter/jg.find_capacitance_step(frequency))
-            Z_rail = self.parameter.impedance_complex+Z_c
-            Z_rail=jg.calculate_parallel_impedance(Z_rail,jg.SPTcable_impedance(frequency,Z_rail,1,self.SPT_cable_length))
+            
+            #最后一段主轨道电阻中Z_next为调谐单元输入阻抗
+            Z_next=jg.find_tuning_unit_impedance(2*np.pi*frequency,self.find_BA_type(frequency))
+            Z_rail=Z_next
+            i=0
+            number_of_iron_rails=self.length_parameter/jg.find_capacitance_step(frequency)
+            while i<number_of_iron_rails:
+                Z_rail=self.parameter.get_Z_ironrail_with_capacitance(self.length_parameter,Z_rail,jg.find_capacitance(frequency))
+                i=i+1
+            #下面的部分需要删除
+
+
+            #Z_rail = self.parameter.impedance_complex+Z_c
+            #Z_rail=jg.calculate_parallel_impedance(Z_rail,jg.SPTcable_impedance(frequency,Z_rail,1,self.SPT_cable_length))
             #调谐区阻抗
             Z_tuner=self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca+jg.calculate_parallel_impedance(self.tuning_parameters.Z_BA2, jg.find_resist_V1V2(frequency))
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca+1j*self.tuning_parameters.L_SVA*self.tuning_parameters.angular_frequency)+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca

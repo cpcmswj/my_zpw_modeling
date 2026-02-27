@@ -668,6 +668,16 @@ class Variable:
         """获取轨道特性阻抗"""
         return np.sqrt(self.get_Z_complex(length) / self.get_Y_complex(length))
 
+    def get_Z_ironrail_with_capacitance(self,length,Z_next,capacitance):
+        """获取一段钢轨的等效输入阻抗,Z_next为下一段钢轨的等效输入阻抗
+        漏泄导纳和下一段钢轨阻抗、补偿电容并联，再与轨道阻抗串联"""
+        if Z_next == 0:
+            return self.get_Z_complex(length)+calculate_parallel_impedance(1/self.get_Y_complex(length),1/1j*self.angular_frequency*capacitance)
+        return self.get_Z_complex(length)+calculate_parallel_impedance(1/self.get_Y_complex(length),Z_next,1/1j*self.angular_frequency*capacitance)
+        #return self.Z_c_complex * np.sinh(self.gamma_complex * length) / np.cosh(self.gamma_complex * length) + Z_next
+        
+
+
     def iron_rail(self, length):
         """计算钢轨等效传输特性矩阵(此为输入端电压电流已知)
         输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
