@@ -94,3 +94,10 @@ def calculate_current_from_total(current_total, *impedances):
     
     # 计算每个阻抗上的电流
     return calculate_current_distribution(voltage, *impedances)
+
+def cable_parameter(Z_c,angle,frequency,alpha):
+    """Z_c为特性阻抗模(Ω),angle为阻抗角(°),frequency为工作频率(Hz),alpha为衰减系数(dB)"""
+    R = Z_c * np.cos(np.deg2rad(angle))
+    X = Z_c * np.sin(np.deg2rad(angle))
+    
+    return R,X

@@ -515,7 +515,7 @@ def SPTcable_matrix(frequency, length):
                       [np.sinh(gamma_length) / Z_d, np.cosh(gamma_length)]])
     return Q_cable
 
-def SPTcable_impedance(frequency, Z_cable_I, Z_cable_o, length):
+def SPTcable_impedance(frequency, Z_cable_o, length):
     """根据电缆参数和长度计算电缆特性阻抗,gamma_cable为单位长度电缆的传输常数 Z_d为单位长度电缆的特性阻抗 Z_cable_I为电缆输入端的等效阻抗 Z_cable_o为电缆输出端的等效阻抗 length为电缆长度"""
     if length == 0:
         print("电缆长度为0,需要修正")
@@ -534,7 +534,7 @@ def SPTcable_impedance(frequency, Z_cable_I, Z_cable_o, length):
     gamma_length = gamma_cable_nepers_km * length_km
     
     # 计算电缆的特性阻抗
-    Z_cable = (Z_cable_I * np.cosh(gamma_length) + Z_d * np.sinh(gamma_length)) / (Z_cable_o / Z_d * np.sinh(gamma_length) + np.cosh(gamma_length))
+    Z_cable = (Z_cable_o * np.cosh(gamma_length) + Z_d * np.sinh(gamma_length)) / (Z_cable_o / Z_d * np.sinh(gamma_length) + np.cosh(gamma_length))
     return Z_cable
 
 def attenuation_matrix(r1, r2):
@@ -904,7 +904,7 @@ class tuning_zone_parameters:
     
     def tuning_zone_matrix_f2(self, SPT_length):
         """F2断开时调谐区四端口网络传输矩阵"""
-        Z_trans_js = self.variable.transformer_impedance_input(SPTcable_impedance(self.variable.frequency, 0, 0, SPT_length))  # 从接收端看进去的等效阻抗，即BA、SVA、BA
+        Z_trans_js = self.variable.transformer_impedance_input(SPTcable_impedance(self.variable.frequency,0, SPT_length))  # 从接收端看进去的等效阻抗，即BA、SVA、BA
         self.tuning_zone_matrix_f2 = np.array([[Z_trans_js * self.Z_SVA_in / (self.Z_SVA_out * (self.Z_g + self.Z_SVA_in + self.Z_ca)), 0],
                                           [1 / self.Z_BA1 + 1 / (self.Z_g + self.Z_SVA_in + self.Z_ca), 0]])
         return self.tuning_zone_matrix_f2

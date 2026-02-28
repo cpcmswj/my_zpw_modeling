@@ -1186,8 +1186,25 @@ class Error_Of_Trail:
             "Z_tuner": Z_tuner_value
         }
 
+    def call_input_fake(self):
+        """ 通过查表的方式，假装获取一个输入阻抗（单位：欧姆）和阻抗角（单位：°）"""
+        frequency=self.frequency_table(self.error_position)
+        if frequency==0:
+            return 0,0
+        elif frequency==1700:
+            return 485.09,-21.46
+        elif frequency==2000:
+            return 464.17,-27.29
+        elif frequency==2300:
+            return 430.52,-32.61
+        elif frequency==2600:
+                return 388.36,-37.41
+        else:
+            return 0,0
+
+
     def call_input(self,input_V,ballast_resist_per_meter):
-        """根据故障类型选择需要调用的等效输入阻抗 ballast_resist_per_meter为道床漏阻"""
+        """根据故障类型选择需要调用的等效输入阻抗 ballast_resist_per_meter为钢轨漏阻"""
         Z_input=0#之后要补充查表
         frequency = self.frequency_table(self.error_position)
         
@@ -1223,7 +1240,7 @@ class Error_Of_Trail:
             Z_input=Z_input+jg.calculate_parallel_impedance(Z_rail,Z_tuner)
 
             #输入端SPT电缆阻抗
-            Z_input=jg.SPTcable_impedance(frequency,1,Z_input,self.SPT_cable_length)
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)
 
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
@@ -1241,13 +1258,13 @@ class Error_Of_Trail:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca,self.tuning_parameters.Z_BA1)
             #主轨道阻抗为
             Z_c=1j*1/(2*np.pi*frequency*jg.find_capacitance(frequency)*self.length_parameter/jg.find_capacitance_step(frequency))
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(Z_c,self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(Z_c,self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_resist_V1V2(frequency),self.SPT_cable_length))
             
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1270,7 +1287,7 @@ class Error_Of_Trail:
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             #输入端SPT电缆阻抗
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1290,7 +1307,7 @@ class Error_Of_Trail:
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,1,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1311,7 +1328,7 @@ class Error_Of_Trail:
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1332,7 +1349,7 @@ class Error_Of_Trail:
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1354,7 +1371,7 @@ class Error_Of_Trail:
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1373,7 +1390,7 @@ class Error_Of_Trail:
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
