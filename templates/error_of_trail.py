@@ -1230,7 +1230,7 @@ class Error_Of_Trail:
             #Z_rail = self.parameter.impedance_complex+Z_c
             #Z_rail=jg.calculate_parallel_impedance(Z_rail,jg.SPTcable_impedance(frequency,Z_rail,1,self.SPT_cable_length))
             #调谐区阻抗
-            Z_tuner=self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca+jg.calculate_parallel_impedance(self.tuning_parameters.Z_BA2, jg.find_resist_V1V2(frequency))
+            Z_tuner=self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca+jg.calculate_parallel_impedance(self.tuning_parameters.Z_BA2, jg.SPTcable_impedance(frequency,jg.find_resist_V1V2(frequency),self.SPT_cable_length))
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca+1j*self.tuning_parameters.L_SVA*self.tuning_parameters.angular_frequency)+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_BA1)
             
