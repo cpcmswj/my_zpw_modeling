@@ -586,6 +586,19 @@ def calculate_admittance(resist, induct, capacit, angular_frequency=0):
         admittance_mod = np.abs(admittance_complex)
     
     return admittance_mod, admittance_complex
+def find_mSVA(frequency):
+    """根据频率查找空芯线圈电感"""
+    # 空芯线圈电感与频率的关系（示例）
+    if frequency==1700:
+        return 29.6e-6  # 29.6uH
+    elif frequency==2000:
+        return 28.44e-6  # 28.44uH
+    elif frequency==2300:
+        return 28.32e-6  # 28.32uH
+    elif frequency==2600:
+        return 28.25e-6  # 28.25uH
+    else:
+        return 33.5e-6  # 33.5uH
 
 
 
@@ -682,11 +695,34 @@ class Variable:
         """计算钢轨等效传输特性矩阵(此为输入端电压电流已知)
         输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
         其中T为钢轨传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
-        self.iron_rail_matrix = np.array([
-            [-np.cosh(self.gamma_complex * length), self.Z_c_complex * np.sinh(self.gamma_complex * length)],
-            [np.sinh(self.gamma_complex * length) / self.Z_c_complex, -np.cosh(self.gamma_complex * length)]
-        ])
-        return self.iron_rail_matrix
+        try:
+            # 计算gamma_complex * length
+            gamma_length = self.gamma_complex * length
+            
+            # 计算cosh和sinh值
+            cosh_val = np.cosh(gamma_length)
+            sinh_val = np.sinh(gamma_length)
+            
+            # 检查是否有溢出
+            if np.any(np.isinf(cosh_val)) or np.any(np.isnan(cosh_val)) or \
+               np.any(np.isinf(sinh_val)) or np.any(np.isnan(sinh_val)):
+                print("警告：钢轨传输矩阵计算溢出，使用单位矩阵替代")
+                return np.eye(2)
+            
+            self.iron_rail_matrix = np.array([
+                [-cosh_val, self.Z_c_complex * sinh_val],
+                [sinh_val / self.Z_c_complex, -cosh_val]
+            ])
+            
+            # 检查矩阵元素是否有效
+            if not np.all(np.isfinite(self.iron_rail_matrix)):
+                print("警告：钢轨传输矩阵包含无效值，使用单位矩阵替代")
+                return np.eye(2)
+            
+            return self.iron_rail_matrix
+        except Exception as e:
+            print(f"计算钢轨传输矩阵时出错: {e}")
+            return np.eye(2)
 
     def capacitance_matrix(self, R_cb, L_cb, C_b):
         """计算轨间补偿电容传输矩阵 R_cb为电容连接线电阻 L_cb为电容连接线电感 C_b为补偿电容电容
@@ -811,9 +847,9 @@ class Variable:
 class tuning_zone_parameters:
     """调谐区参数类,为了方便调用一些参数，有补偿电容的主轨道也在这里计算"""
     
-    def __init__(self, Variable, L_BA,BA1_type,BA2_type):
+    def __init__(self, Variable, L_BA,BA1_type,BA2_type,SVA_type):
         # 以本区段为F1频率信号为例，之后要查看论文做F2的版本
-        """L_BA为长度（通常为29m） Nr1/Nr2分别为长度为L_BA/2的钢轨的四端口网络,gamma_d为单位长度电缆的传输常数(参见SPT电缆的查表)"""
+        """L_BA为长度（通常为29m） Nr1/Nr2分别为长度为L_BA/2的钢轨的四端口网络,gamma_d为单位长度电缆的传输常数(参见SPT电缆的查表),SVA_type为绝缘类型，1为机械绝缘，0为电气绝缘"""
         # 存储Variable实例
         self.variable = Variable
         # 获取SPT电缆参数
@@ -828,7 +864,10 @@ class tuning_zone_parameters:
         L_BA_km = L_BA / 1000
         
         # 设置默认的L_SVA值（空芯线圈电感）
-        self.L_SVA = 33.5e-6  # 33.5uH
+        if SVA_type == 1:
+            self.L_SVA = 33.5e-6  # 33.5uH
+        else:
+            self.L_SVA = find_mSVA(Variable.frequency)  # 33.5uH
         
         self.Z_g = Variable.get_Z_complex(L_BA / 2)
         self.angular_frequency = Variable.angular_frequency
