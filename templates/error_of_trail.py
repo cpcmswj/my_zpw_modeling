@@ -556,8 +556,8 @@ class Error_Of_Trail:
                 print(f"计算变压器矩阵时出错: {e}")
                 self.matrix = np.eye(2)
             
-            #送端轨面电压
-            self.output_voltage_surface1=self.count_output()
+            #送端轨面电压和电流
+            self.output_voltage_surface1, self.output_current_surface1 = self.count_output()
             
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
             try:
@@ -578,8 +578,8 @@ class Error_Of_Trail:
                 print(f"计算钢轨等效传输矩阵时出错: {e}")
                 self.matrix = np.eye(2)
             
-            #受端轨面电压
-            self.output_voltage_surface2=self.count_output()
+            #受端轨面电压和电流
+            self.output_voltage_surface2, self.output_current_surface2 = self.count_output()
             
             #调谐单元矩阵
             try:
@@ -637,14 +637,18 @@ class Error_Of_Trail:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
             
-            #主轨入电压
+            #主轨入电压和电流
             try:
-                self.output_voltage_main=self.count_output()
+                self.output_voltage_main, self.output_current_main = self.count_output()
                 # 检查结果是否有效
-                if hasattr(self, 'output_voltage_main') and not np.all(np.isfinite(self.output_voltage_main)):
+                if hasattr(self, 'output_voltage_main') and (not np.isfinite(self.output_voltage_main.real) or not np.isfinite(self.output_voltage_main.imag)):
                     print("警告：主轨入电压计算结果包含无效值")
+                if hasattr(self, 'output_current_main') and (not np.isfinite(self.output_current_main.real) or not np.isfinite(self.output_current_main.imag)):
+                    print("警告：主轨入电流计算结果包含无效值")
             except Exception as e:
-                print(f"计算主轨入电压时出错: {e}")
+                print(f"计算主轨入电压和电流时出错: {e}")
+                self.output_voltage_main = complex(0.0)
+                self.output_current_main = complex(0.0)
         elif self.error_type==5:
             # SPT电缆————匹配变压器——调谐单元——钢轨及补偿电容——调谐单元（断路）——匹配变压器——SPT电缆——接收端
             frequency = self.frequency_table(self.error_position)
@@ -703,14 +707,18 @@ class Error_Of_Trail:
             except Exception as e:
                 print(f"计算调谐单元矩阵时出错: {e}")
                 self.matrix = np.eye(2)
-            #送端轨面电压
+            #送端轨面电压和电流
             try:
-                self.output_voltage_surface1=self.count_output()
+                self.output_voltage_surface1, self.output_current_surface1 = self.count_output()
                 # 检查结果是否有效
-                if not np.all(np.isfinite(self.output_voltage_surface1)):
+                if not np.isfinite(self.output_voltage_surface1.real) or not np.isfinite(self.output_voltage_surface1.imag):
                     print("警告：送端轨面电压计算结果包含无效值")
+                if not np.isfinite(self.output_current_surface1.real) or not np.isfinite(self.output_current_surface1.imag):
+                    print("警告：送端轨面电流计算结果包含无效值")
             except Exception as e:
-                print(f"计算送端轨面电压时出错: {e}")
+                print(f"计算送端轨面电压和电流时出错: {e}")
+                self.output_voltage_surface1 = complex(0.0)
+                self.output_current_surface1 = complex(0.0)
             
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
             try:
@@ -730,14 +738,18 @@ class Error_Of_Trail:
             except Exception as e:
                 print(f"计算钢轨等效传输矩阵时出错: {e}")
                 self.matrix = np.eye(2)
-            #受端轨面电压
+            #受端轨面电压和电流
             try:
-                self.output_voltage_surface2=self.count_output()
+                self.output_voltage_surface2, self.output_current_surface2 = self.count_output()
                 # 检查结果是否有效
-                if not np.all(np.isfinite(self.output_voltage_surface2)):
+                if not np.isfinite(self.output_voltage_surface2.real) or not np.isfinite(self.output_voltage_surface2.imag):
                     print("警告：受端轨面电压计算结果包含无效值")
+                if not np.isfinite(self.output_current_surface2.real) or not np.isfinite(self.output_current_surface2.imag):
+                    print("警告：受端轨面电流计算结果包含无效值")
             except Exception as e:
-                print(f"计算受端轨面电压时出错: {e}")
+                print(f"计算受端轨面电压和电流时出错: {e}")
+                self.output_voltage_surface2 = complex(0.0)
+                self.output_current_surface2 = complex(0.0)
             
             # 匹配变压器矩阵
             try:
@@ -779,14 +791,18 @@ class Error_Of_Trail:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
             
-            #主轨入电压
+            #主轨入电压和电流
             try:
-                self.output_voltage_main=self.count_output()
+                self.output_voltage_main, self.output_current_main = self.count_output()
                 # 检查结果是否有效
-                if hasattr(self, 'output_voltage_main') and not np.all(np.isfinite(self.output_voltage_main)):
+                if hasattr(self, 'output_voltage_main') and (not np.isfinite(self.output_voltage_main.real) or not np.isfinite(self.output_voltage_main.imag)):
                     print("警告：主轨入电压计算结果包含无效值")
+                if hasattr(self, 'output_current_main') and (not np.isfinite(self.output_current_main.real) or not np.isfinite(self.output_current_main.imag)):
+                    print("警告：主轨入电流计算结果包含无效值")
             except Exception as e:
-                print(f"计算主轨入电压时出错: {e}")
+                print(f"计算主轨入电压和电流时出错: {e}")
+                self.output_voltage_main = complex(0.0)
+                self.output_current_main = complex(0.0)
         elif self.error_type==6:
             #补偿电容断路，视为没有补偿电容
             frequency = self.frequency_table(self.error_position)
@@ -846,14 +862,18 @@ class Error_Of_Trail:
                 print(f"计算调谐单元矩阵时出错: {e}")
                 self.matrix = np.eye(2)
             
-            #送端轨面电压
+            #送端轨面电压和电流
             try:
-                self.output_voltage_surface1=self.count_output()
+                self.output_voltage_surface1, self.output_current_surface1 = self.count_output()
                 # 检查结果是否有效
-                if not np.all(np.isfinite(self.output_voltage_surface1)):
+                if not np.isfinite(self.output_voltage_surface1.real) or not np.isfinite(self.output_voltage_surface1.imag):
                     print("警告：送端轨面电压计算结果包含无效值")
+                if not np.isfinite(self.output_current_surface1.real) or not np.isfinite(self.output_current_surface1.imag):
+                    print("警告：送端轨面电流计算结果包含无效值")
             except Exception as e:
-                print(f"计算送端轨面电压时出错: {e}")
+                print(f"计算送端轨面电压和电流时出错: {e}")
+                self.output_voltage_surface1 = complex(0.0)
+                self.output_current_surface1 = complex(0.0)
             
             #钢轨矩阵
             try:
@@ -870,14 +890,18 @@ class Error_Of_Trail:
                 print(f"计算钢轨等效传输矩阵时出错: {e}")
                 self.matrix = np.eye(2)
             
-            #受端轨面电压
+            #受端轨面电压和电流
             try:
-                self.output_voltage_surface2=self.count_output()
+                self.output_voltage_surface2, self.output_current_surface2 = self.count_output()
                 # 检查结果是否有效
-                if not np.all(np.isfinite(self.output_voltage_surface2)):
+                if not np.isfinite(self.output_voltage_surface2.real) or not np.isfinite(self.output_voltage_surface2.imag):
                     print("警告：受端轨面电压计算结果包含无效值")
+                if not np.isfinite(self.output_current_surface2.real) or not np.isfinite(self.output_current_surface2.imag):
+                    print("警告：受端轨面电流计算结果包含无效值")
             except Exception as e:
-                print(f"计算受端轨面电压时出错: {e}")
+                print(f"计算受端轨面电压和电流时出错: {e}")
+                self.output_voltage_surface2 = complex(0.0)
+                self.output_current_surface2 = complex(0.0)
             
             #调谐单元矩阵
             try:
@@ -935,14 +959,18 @@ class Error_Of_Trail:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
             
-            #主轨入电压
+            #主轨入电压和电流
             try:
-                self.output_voltage_main=self.count_output()
+                self.output_voltage_main, self.output_current_main = self.count_output()
                 # 检查结果是否有效
-                if hasattr(self, 'output_voltage_main') and not np.all(np.isfinite(self.output_voltage_main)):
+                if hasattr(self, 'output_voltage_main') and (not np.isfinite(self.output_voltage_main.real) or not np.isfinite(self.output_voltage_main.imag)):
                     print("警告：主轨入电压计算结果包含无效值")
+                if hasattr(self, 'output_current_main') and (not np.isfinite(self.output_current_main.real) or not np.isfinite(self.output_current_main.imag)):
+                    print("警告：主轨入电流计算结果包含无效值")
             except Exception as e:
-                print(f"计算主轨入电压时出错: {e}")
+                print(f"计算主轨入电压和电流时出错: {e}")
+                self.output_voltage_main = complex(0.0)
+                self.output_current_main = complex(0.0)
         elif self.error_type==7:
             #补偿电容短路即视为电容为零
             frequency = self.frequency_table(self.error_position)
@@ -1002,14 +1030,18 @@ class Error_Of_Trail:
                 print(f"计算调谐单元矩阵时出错: {e}")
                 self.matrix = np.eye(2)
             
-            #送端轨面电压
+            #送端轨面电压和电流
             try:
-                self.output_voltage_surface1=self.count_output()
+                self.output_voltage_surface1, self.output_current_surface1 = self.count_output()
                 # 检查结果是否有效
-                if not np.all(np.isfinite(self.output_voltage_surface1)):
+                if not np.isfinite(self.output_voltage_surface1.real) or not np.isfinite(self.output_voltage_surface1.imag):
                     print("警告：送端轨面电压计算结果包含无效值")
+                if not np.isfinite(self.output_current_surface1.real) or not np.isfinite(self.output_current_surface1.imag):
+                    print("警告：送端轨面电流计算结果包含无效值")
             except Exception as e:
-                print(f"计算送端轨面电压时出错: {e}")
+                print(f"计算送端轨面电压和电流时出错: {e}")
+                self.output_voltage_surface1 = complex(0.0)
+                self.output_current_surface1 = complex(0.0)
             
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
             try:
@@ -1030,14 +1062,18 @@ class Error_Of_Trail:
                 print(f"计算钢轨等效传输矩阵时出错: {e}")
                 self.matrix = np.eye(2)
             
-            #受端轨面电压
+            #受端轨面电压和电流
             try:
-                self.output_voltage_surface2=self.count_output()
+                self.output_voltage_surface2, self.output_current_surface2 = self.count_output()
                 # 检查结果是否有效
-                if not np.all(np.isfinite(self.output_voltage_surface2)):
+                if not np.isfinite(self.output_voltage_surface2.real) or not np.isfinite(self.output_voltage_surface2.imag):
                     print("警告：受端轨面电压计算结果包含无效值")
+                if not np.isfinite(self.output_current_surface2.real) or not np.isfinite(self.output_current_surface2.imag):
+                    print("警告：受端轨面电流计算结果包含无效值")
             except Exception as e:
-                print(f"计算受端轨面电压时出错: {e}")
+                print(f"计算受端轨面电压和电流时出错: {e}")
+                self.output_voltage_surface2 = complex(0.0)
+                self.output_current_surface2 = complex(0.0)
             
             #调谐单元矩阵
             try:
@@ -1095,14 +1131,18 @@ class Error_Of_Trail:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
             
-            #主轨入电压
+            #主轨入电压和电流
             try:
-                self.output_voltage_main=self.count_output()
+                self.output_voltage_main, self.output_current_main = self.count_output()
                 # 检查结果是否有效
-                if hasattr(self, 'output_voltage_main') and not np.all(np.isfinite(self.output_voltage_main)):
+                if hasattr(self, 'output_voltage_main') and (not np.isfinite(self.output_voltage_main.real) or not np.isfinite(self.output_voltage_main.imag)):
                     print("警告：主轨入电压计算结果包含无效值")
+                if hasattr(self, 'output_current_main') and (not np.isfinite(self.output_current_main.real) or not np.isfinite(self.output_current_main.imag)):
+                    print("警告：主轨入电流计算结果包含无效值")
             except Exception as e:
-                print(f"计算主轨入电压时出错: {e}")
+                print(f"计算主轨入电压和电流时出错: {e}")
+                self.output_voltage_main = complex(0.0)
+                self.output_current_main = complex(0.0)
         
         # 轨出1电压，经过衰耗盘
         try:
@@ -1116,70 +1156,87 @@ class Error_Of_Trail:
                 print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
                 self.matrix = np.eye(2)
             
-            self.output_voltage_main_1 = self.count_output()
+            self.output_voltage_main_1, self.output_current_main_1 = self.count_output()
             # 检查结果是否有效
-            if hasattr(self, 'output_voltage_main_1') and not np.all(np.isfinite(self.output_voltage_main_1)):
+            if hasattr(self, 'output_voltage_main_1') and (not np.isfinite(self.output_voltage_main_1.real) or not np.isfinite(self.output_voltage_main_1.imag)):
                 print("警告：轨出1电压计算结果包含无效值")
+            if hasattr(self, 'output_current_main_1') and (not np.isfinite(self.output_current_main_1.real) or not np.isfinite(self.output_current_main_1.imag)):
+                print("警告：轨出1电流计算结果包含无效值")
         except Exception as e:
-            print(f"计算轨出1电压时出错: {e}")
+            print(f"计算轨出1电压和电流时出错: {e}")
             self.output_voltage_main_1 = complex(0.0)
-        # 确保所有电压属性都已设置
+            self.output_current_main_1 = complex(0.0)
+        # 确保所有电压和电流属性都已设置
         if not hasattr(self, 'output_voltage_surface1'):
             self.output_voltage_surface1 = complex(0.0)
+        if not hasattr(self, 'output_current_surface1'):
+            self.output_current_surface1 = complex(0.0)
         if not hasattr(self, 'output_voltage_surface2'):
             self.output_voltage_surface2 = complex(0.0)
+        if not hasattr(self, 'output_current_surface2'):
+            self.output_current_surface2 = complex(0.0)
         if not hasattr(self, 'output_voltage_main'):
             self.output_voltage_main = complex(0.0)
+        if not hasattr(self, 'output_current_main'):
+            self.output_current_main = complex(0.0)
         if not hasattr(self, 'output_voltage_main_1'):
             self.output_voltage_main_1 = complex(0.0)
+        if not hasattr(self, 'output_current_main_1'):
+            self.output_current_main_1 = complex(0.0)
         
-        # 使用实例变量中的电压值作为结果（电压有效值：复数模）
+        # 使用实例变量中的电压和电流值作为结果（有效值：复数模）
         # 添加NaN检查，确保返回有效的数值
-        def safe_voltage_calc(voltage):
+        def safe_value_calc(value):
             try:
-                if voltage is None:
+                if value is None:
                     return 0.0
-                # 检查voltage是否为numpy数组
-                if isinstance(voltage, np.ndarray):
+                # 检查value是否为numpy数组
+                if isinstance(value, np.ndarray):
                     # 如果是数组，处理多维情况
-                    if voltage.size > 0:
+                    if value.size > 0:
                         # 展平数组并取第一个非零元素
-                        flat_voltage = voltage.flatten()
+                        flat_value = value.flatten()
                         # 找到第一个非零元素
-                        for v in flat_voltage:
+                        for v in flat_value:
                             if v != 0:
-                                voltage = v
+                                value = v
                                 break
                         else:
                             # 如果所有元素都是0，返回0
                             return 0.0
                     else:
                         return 0.0
-                # 确保voltage是标量或复数
-                if not np.isscalar(voltage) and not isinstance(voltage, complex):
+                # 确保value是标量或复数
+                if not np.isscalar(value) and not isinstance(value, complex):
                     return 0.0
-                abs_val = np.abs(voltage)
+                abs_val = np.abs(value)
                 if not np.isfinite(abs_val):
                     return 0.0
                 # 直接返回复数模，而不是平方根
                 return float(abs_val)
             except Exception as e:
-                print(f"safe_voltage_calc错误: {e}")
+                print(f"safe_value_calc错误: {e}")
                 return 0.0
         
         voltage_results = {
-            "send_end_track_voltage": safe_voltage_calc(self.output_voltage_surface1),
-            "receive_end_track_voltage": safe_voltage_calc(self.output_voltage_surface2),
-            "main_track_input_voltage": safe_voltage_calc(self.output_voltage_main),
-            "main_track_output_voltage_1": safe_voltage_calc(self.output_voltage_main_1)
+            "send_end_track_voltage": safe_value_calc(self.output_voltage_surface1),
+            "receive_end_track_voltage": safe_value_calc(self.output_voltage_surface2),
+            "main_track_input_voltage": safe_value_calc(self.output_voltage_main),
+            "main_track_output_voltage_1": safe_value_calc(self.output_voltage_main_1)
         }
         
+        current_results = {
+            "send_end_track_current": safe_value_calc(self.output_current_surface1),
+            "receive_end_track_current": safe_value_calc(self.output_current_surface2),
+            "main_track_input_current": safe_value_calc(self.output_current_main),
+            "main_track_output_current_1": safe_value_calc(self.output_current_main_1)
+        }
         
-        
-        # 返回包含矩阵、电压结果、输入阻抗、电流、主轨道阻抗和调谐区阻抗的字典
+        # 返回包含矩阵、电压结果、电流结果、输入阻抗、电流、主轨道阻抗和调谐区阻抗的字典
         return {
             "matrix": self.matrix,
             "voltage_results": voltage_results,
+            "current_results": current_results,
             "input_impedance": input_impedance_value,
             "input_current": input_current_value,
             "Z_rail": Z_rail_value,
@@ -1281,7 +1338,7 @@ class Error_Of_Trail:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca+1j*self.tuning_parameters.L_SVA*self.tuning_parameters.angular_frequency)+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca
             
             #主轨道阻抗为
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
@@ -1322,7 +1379,7 @@ class Error_Of_Trail:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca)+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_BA1)
             #主轨道阻抗为
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
 
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
@@ -1343,7 +1400,7 @@ class Error_Of_Trail:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca+1j*self.tuning_parameters.L_SVA*self.tuning_parameters.angular_frequency)
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca,self.tuning_parameters.Z_BA1)
             #主轨道阻抗为
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
 
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
@@ -1364,7 +1421,7 @@ class Error_Of_Trail:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_BA1)
             
             #主轨道阻抗为
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
 
 
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
@@ -1457,7 +1514,7 @@ class Error_Of_Trail:
 
 
     def count_output(self):
-        """计算输出电压"""
+        """计算输出电压和电流"""
         if not hasattr(self, 'input_V'):
             self.input_V = 130.0  # 默认输入电压
         input_current = self.call_input(self.input_V, 1.0)[0]
@@ -1490,19 +1547,22 @@ class Error_Of_Trail:
             transfer_matrix = self.matrix
             # 确保transfer_matrix是有效的矩阵
             if transfer_matrix is None or not isinstance(transfer_matrix, np.ndarray):
-                return complex(0.0)
+                return complex(0.0), complex(0.0)
             # 执行矩阵乘法
             VC_output = np.dot(transfer_matrix, input_VC_matrix)
-            result = VC_output[0][0]
+            voltage = VC_output[0][0]
+            current = VC_output[1][0]
             # 检查结果是否有效（非NaN和非无穷大）
-            if not np.isfinite(result.real) or not np.isfinite(result.imag):
-                return complex(0.0)
-            return result
+            if not np.isfinite(voltage.real) or not np.isfinite(voltage.imag):
+                voltage = complex(0.0)
+            if not np.isfinite(current.real) or not np.isfinite(current.imag):
+                current = complex(0.0)
+            return voltage, current
         except Exception as e:
             import traceback
             traceback.print_exc()
-            print(f"计算输出电压时出错: {e}")
-            return complex(0.0)
+            print(f"计算输出电压和电流时出错: {e}")
+            return complex(0.0), complex(0.0)
     
 
 
@@ -1716,10 +1776,11 @@ class Error_Of_Trail:
             # 计算主轨道传输矩阵
             main_track_result = self.call_matrix_main()
             
-            # 处理返回结果，提取矩阵和电压结果
+            # 处理返回结果，提取矩阵、电压结果和电流结果
             if isinstance(main_track_result, dict):
                 main_track_matrix = main_track_result['matrix']
                 voltage_results = main_track_result['voltage_results']
+                current_results = main_track_result.get('current_results', {})
                 
                 # 输出主轨道传输矩阵
                 print(f"主轨道传输矩阵:\n{main_track_matrix}")
@@ -1729,6 +1790,14 @@ class Error_Of_Trail:
                 print(f"送端轨面电压: {voltage_results['send_end_track_voltage']:.2f} V")
                 print(f"受端轨面电压: {voltage_results['receive_end_track_voltage']:.2f} V")
                 print(f"主轨入电压: {voltage_results['main_track_input_voltage']:.2f} V")
+                print(f"轨出1电压: {voltage_results.get('main_track_output_voltage_1', 0.0):.2f} V")
+                
+                # 输出电流结果
+                print("\n=== 电流计算结果 ===")
+                print(f"送端轨面电流: {current_results.get('send_end_track_current', 0.0):.2f} A")
+                print(f"受端轨面电流: {current_results.get('receive_end_track_current', 0.0):.2f} A")
+                print(f"主轨入电流: {current_results.get('main_track_input_current', 0.0):.2f} A")
+                print(f"轨出1电流: {current_results.get('main_track_output_current_1', 0.0):.2f} A")
             else:
                 # 兼容旧格式
                 main_track_matrix = main_track_result
@@ -1768,6 +1837,7 @@ class Error_Of_Trail:
                     "small_track_matrix": small_track_matrix
                 },
                 "voltage_results": voltage_results,
+                "current_results": current_results,
                 "fault_info": {
                     "error_type": self.error_type,
                     "error_status": self.status(),

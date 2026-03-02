@@ -662,6 +662,18 @@
             initSectionGrid();
             initErrorTypeGrid();
             updateStepUI();
+            
+            // 添加轨道长度输入验证
+            const trackLengthInput = document.getElementById('trackLength');
+            if (trackLengthInput) {
+                trackLengthInput.addEventListener('change', function() {
+                    const value = parseFloat(this.value);
+                    if (isNaN(value)) {
+                        alert('⚠️ 警告：请输入合法的实数值！');
+                        this.value = 300; // 重置为默认值
+                    }
+                });
+            }
         }
         
         // 初始化区段网格
@@ -1147,7 +1159,9 @@
                         capacitive_reactance: capacitive_reactance
                     },
                     voltage_results: faultResponse.voltage_results,
-                    normal_voltage_results: normalResponse.voltage_results  // 使用真实API获取的无故障状态电压结果
+                    current_results: faultResponse.current_results,  // 使用真实API获取的电流结果
+                    normal_voltage_results: normalResponse.voltage_results,  // 使用真实API获取的无故障状态电压结果
+                    normal_current_results: normalResponse.current_results  // 使用真实API获取的无故障状态电流结果
                 };
             } catch (error) {
                 console.error('模拟计算失败:', error);
@@ -1328,10 +1342,32 @@
                 }
                 html += '</div></div>';
                 
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            // 电流计算结果
+            if (result.current_results) {
+                html += '<div class="result-section">';
+                html += '<h4>电流计算结果</h4>';
+                html += '<div class="result-grid">';
+                
+                // 送端轨面电流
+                html += `<div class="result-item"><div class="result-label">送端轨面电流:</div><div class="result-value">${(result.current_results.send_end_track_current || 0).toFixed(4)} A</div></div>`;
+                
+                // 受端轨面电流
+                html += `<div class="result-item"><div class="result-label">受端轨面电流:</div><div class="result-value">${(result.current_results.receive_end_track_current || 0).toFixed(4)} A</div></div>`;
+                
+                // 主轨入电流
+                html += `<div class="result-item"><div class="result-label">主轨入电流:</div><div class="result-value">${(result.current_results.main_track_input_current || 0).toFixed(4)} A</div></div>`;
+                
+                // 轨出1电流
+                html += `<div class="result-item"><div class="result-label">轨出1电流:</div><div class="result-value">${(result.current_results.main_track_output_current_1 || 0).toFixed(4)} A</div></div>`;
+                
                 // 输入阻抗和电流
                 if (result.input_impedance !== undefined && result.input_current !== undefined) {
                     html += `<div class="result-item"><div class="result-label">输入阻抗:</div><div class="result-value">${result.input_impedance.toFixed(2)} Ω</div></div>`;
-                    html += `<div class="result-item"><div class="result-label">输入电流:</div><div class="result-value">${result.input_current.toFixed(2)} A</div></div>`;
+                    html += `<div class="result-item"><div class="result-label">输入电流:</div><div class="result-value">${result.input_current.toFixed(4)} A</div></div>`;
                 }
                 
                 // 主轨道阻抗和调谐区阻抗
@@ -1395,6 +1431,10 @@
                 '受端轨面电压(V)',
                 '主轨入电压(V)',
                 '轨出1电压(V)',
+                '送端轨面电流(A)',
+                '受端轨面电流(A)',
+                '主轨入电流(A)',
+                '轨出1电流(A)',
                 '输入阻抗(Ω)',
                 '输入电流(A)',
                 '主轨道阻抗(Ω)',
@@ -1432,8 +1472,12 @@
                 simulationResult.voltage_results ? simulationResult.voltage_results.receive_end_track_voltage.toFixed(2) : '',
                 simulationResult.voltage_results ? simulationResult.voltage_results.main_track_input_voltage.toFixed(2) : '',
                 simulationResult.voltage_results ? simulationResult.voltage_results.main_track_output_voltage_1.toFixed(2) : '',
+                simulationResult.current_results ? (simulationResult.current_results.send_end_track_current || 0).toFixed(4) : '',
+                simulationResult.current_results ? (simulationResult.current_results.receive_end_track_current || 0).toFixed(4) : '',
+                simulationResult.current_results ? (simulationResult.current_results.main_track_input_current || 0).toFixed(4) : '',
+                simulationResult.current_results ? (simulationResult.current_results.main_track_output_current_1 || 0).toFixed(4) : '',
                 simulationResult.input_impedance ? simulationResult.input_impedance.toFixed(2) : '',
-                simulationResult.input_current ? simulationResult.input_current.toFixed(2) : '',
+                simulationResult.input_current ? simulationResult.input_current.toFixed(4) : '',
                 simulationResult.Z_rail ? simulationResult.Z_rail.toFixed(2) : '',
                 simulationResult.Z_tuner ? simulationResult.Z_tuner.toFixed(2) : ''
             ];

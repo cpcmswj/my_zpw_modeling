@@ -723,6 +723,63 @@ async def observe_error_api(
             status_code=400
         )
 
+# SPT电缆参数计算API端点
+@app.post("/api/calculate/spt-cable")
+async def calculate_spt_cable_api(
+    length: float = Form(...),
+    frequency: float = Form(...)
+):
+    try:
+        # 导入jisuan_guidao模块
+        import jisuan_guidao as jg
+        
+        # 获取SPT电缆参数
+        spt_params = jg.find_SPTcable_parameters(frequency)
+        gamma_cable_dbkm = spt_params[0]
+        impedance = spt_params[1]
+        impedance_angle = spt_params[2]
+        
+        # 计算单位长度电阻和电感
+        impedance_angle_rad = impedance_angle * np.pi / 180
+        unit_resistance = impedance * np.cos(impedance_angle_rad)
+        unit_inductance = impedance * np.sin(impedance_angle_rad) / (2 * np.pi * frequency)
+        
+        # 计算总参数
+        total_resistance = unit_resistance * length
+        total_inductance = unit_inductance * length
+        
+        # 计算传输矩阵
+        cable_matrix = jg.SPTcable_matrix(frequency, length)
+        
+        # 构建响应
+        response = {
+            "status": "success",
+            "data": {
+                "gamma_cable": gamma_cable_dbkm,
+                "impedance": impedance,
+                "impedance_angle": impedance_angle,
+                "resistance": total_resistance,
+                "inductance": total_inductance,
+                "unit_resistance": unit_resistance,
+                "unit_inductance": unit_inductance,
+                "length": length,
+                "frequency": frequency,
+                "matrix": {
+                    "a": cable_matrix[0][0].real,
+                    "b": cable_matrix[0][1].real,
+                    "c": cable_matrix[1][0].real,
+                    "d": cable_matrix[1][1].real
+                }
+            }
+        }
+        
+        return response
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
 # 轨道电路故障模拟计算API端点
 @app.post("/api/calculate/track-circuit")
 async def calculate_track_circuit_api(
@@ -808,6 +865,7 @@ async def calculate_track_circuit_api(
                 "frequency": frequency
             },
             "voltage_results": result["voltage_results"],
+            "current_results": result.get("current_results", {}),
             "matrix": safe_matrix(result["matrix"]),  # 处理矩阵中的NaN值
             "input_impedance": result.get("input_impedance", 0.0),
             "input_current": result.get("input_current", 0.0),

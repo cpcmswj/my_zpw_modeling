@@ -831,10 +831,13 @@
             // 显示电压结果
             displayVoltageResults(result);
             
+            // 显示电流结果
+            displayCurrentResults(result);
+            
             updateProgress(70, '正在显示详细参数...');
             
             // 显示详细参数
-            displayDetailedParams(result);
+            await displayDetailedParams(result);
             
             updateProgress(80, '正在构建时间线...');
             
@@ -878,6 +881,48 @@
             document.getElementById('voltageResultContent').innerHTML = html;
         }
         
+        // 显示电流结果
+        function displayCurrentResults(result) {
+            const currentResults = result.current_results || {};
+            
+            let html = '<div class="parameter-grid">';
+            html += '<div class="parameter-card">';
+            html += '<h4>电流结果</h4>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">送端轨面电流:</span>';
+            html += `<span class="parameter-value">${(currentResults.send_end_track_current || 0).toFixed(4)} A</span>`;
+            html += '</div>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">受端轨面电流:</span>';
+            html += `<span class="parameter-value">${(currentResults.receive_end_track_current || 0).toFixed(4)} A</span>`;
+            html += '</div>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">主轨入电流:</span>';
+            html += `<span class="parameter-value">${(currentResults.main_track_input_current || 0).toFixed(4)} A</span>`;
+            html += '</div>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">轨出1电流:</span>';
+            html += `<span class="parameter-value">${(currentResults.main_track_output_current_1 || 0).toFixed(4)} A</span>`;
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            
+            // 检查是否存在currentResultContent元素，如果不存在则创建
+            const currentResultContent = document.getElementById('currentResultContent');
+            if (currentResultContent) {
+                currentResultContent.innerHTML = html;
+            } else {
+                // 创建新的结果容器
+                const voltageResultContent = document.getElementById('voltageResultContent');
+                if (voltageResultContent) {
+                    const newDiv = document.createElement('div');
+                    newDiv.id = 'currentResultContent';
+                    newDiv.innerHTML = html;
+                    voltageResultContent.parentNode.insertBefore(newDiv, voltageResultContent.nextSibling);
+                }
+            }
+        }
+        
         // SPT电缆参数表（来自jisuan_guidao.py）
         const frequencyParametersTable = [
             [1, 1700, 55, 12, 8.3, 31.4, 36, 0.63, 396, -39, 14.08, 85.2],
@@ -904,67 +949,74 @@
             };
         }
         
-        // 计算SPT电缆参数
-        function calculateSPTCableParams(length, frequency) {
-            // 根据频率查表获取参数
-            const sptParams = findSPTCableParameters(frequency);
-            
-            // 单位长度参数 (根据特性阻抗和阻抗角计算)
-            const impedanceComplex = sptParams.impedance * Math.exp(1j * sptParams.impedanceAngle * Math.PI / 180);
-            
-            // 计算单位长度电阻和电感
-            // 注意：这里使用简化计算，实际计算可能需要更多参数
-            const unitResistance = sptParams.impedance * Math.cos(sptParams.impedanceAngle * Math.PI / 180);
-            const unitInductance = sptParams.impedance * Math.sin(sptParams.impedanceAngle * Math.PI / 180) / (2 * Math.PI * frequency);
-            
-            // 计算总参数
-            return {
-                gammaCable: sptParams.gammaCable, // 传输常数 (dB/km)
-                impedance: sptParams.impedance, // 特性阻抗 (Ω)
-                impedanceAngle: sptParams.impedanceAngle, // 阻抗角 (°)
-                resistance: unitResistance * length, // 总电阻 (Ω)
-                inductance: unitInductance * length, // 总电感 (H)
-                unitResistance: unitResistance, // 单位长度电阻 (Ω/km)
-                unitInductance: unitInductance, // 单位长度电感 (H/km)
-                length: length, // 长度 (km)
-                frequency: frequency // 频率 (Hz)
-            };
+        // 计算SPT电缆参数（调用后端API）
+        async function calculateSPTCableParams(length, frequency) {
+            try {
+                // 构建表单数据
+                const formData = new FormData();
+                formData.append('length', length);
+                formData.append('frequency', frequency);
+                
+                // 发送API请求
+                const response = await fetch('/api/calculate/spt-cable', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status !== 'success') {
+                    throw new Error(result.message || '计算失败');
+                }
+                
+                const data = result.data;
+                
+                // 构建返回对象
+                return {
+                    gammaCable: data.gamma_cable, // 传输常数 (dB/km)
+                    impedance: data.impedance, // 特性阻抗 (Ω)
+                    impedanceAngle: data.impedance_angle, // 阻抗角 (°)
+                    resistance: data.resistance, // 总电阻 (Ω)
+                    inductance: data.inductance, // 总电感 (H)
+                    unitResistance: data.unit_resistance, // 单位长度电阻 (Ω/km)
+                    unitInductance: data.unit_inductance, // 单位长度电感 (H/km)
+                    length: data.length, // 长度 (km)
+                    frequency: data.frequency, // 频率 (Hz)
+                    matrix: [
+                        [data.matrix.a, data.matrix.b],
+                        [data.matrix.c, data.matrix.d]
+                    ] // 传输矩阵
+                };
+            } catch (error) {
+                console.error('计算SPT电缆参数失败:', error);
+                // 失败时返回默认值
+                return {
+                    gammaCable: 0.63, // 默认值 (1700Hz)
+                    impedance: 396, // 默认值 (1700Hz)
+                    impedanceAngle: -39, // 默认值 (1700Hz)
+                    resistance: 0, // 默认值
+                    inductance: 0, // 默认值
+                    unitResistance: 0, // 默认值
+                    unitInductance: 0, // 默认值
+                    length: length, // 长度 (km)
+                    frequency: frequency, // 频率 (Hz)
+                    matrix: [[1, 0], [0, 1]] // 单位矩阵
+                };
+            }
         }
         
-        // 计算SPT电缆传输矩阵
-        function calculateSPTCableMatrix(frequency, length) {
-            // 根据频率查表获取参数
-            const sptParams = findSPTCableParameters(frequency);
-            
-            // 单位转换：将dB/km转换为Nepers/km (1 Nepers = 8.686 dB)
-            const gammaCableDbKm = sptParams.gammaCable;
-            const gammaCableNepersKm = gammaCableDbKm / 8.686;
-            
-            // 确保长度单位为km
-            const lengthKm = length;
-            
-            // 计算实际的传输常数乘以长度
-            const gammaLength = gammaCableNepersKm * lengthKm;
-            
-            // 计算双曲函数值
-            const coshGamma = Math.cosh(gammaLength);
-            const sinhGamma = Math.sinh(gammaLength);
-            
-            // 由于JavaScript不直接支持复数计算，这里使用实数近似
-            // 实际应用中可能需要使用复数库或后端计算
-            const impedance = sptParams.impedance;
-            
-            // 构建传输矩阵（使用实数近似）
-            const matrix = [
-                [coshGamma, impedance * sinhGamma],
-                [sinhGamma / impedance, coshGamma]
-            ];
-            
-            return matrix;
+        // 计算SPT电缆传输矩阵（使用API返回的结果）
+        async function calculateSPTCableMatrix(frequency, length) {
+            const sptParams = await calculateSPTCableParams(length, frequency);
+            return sptParams.matrix;
         }
         
         // 显示详细参数
-        function displayDetailedParams(result) {
+        async function displayDetailedParams(result) {
             const inputParams = result.input_params;
             const sectionInfo = result.section_info;
             const errorInfo = result.error_info;
@@ -1016,7 +1068,7 @@
             // 显示SPT电缆参数
             const sptLength = inputParams.spt_cable_length || 10; // 默认10km
             const frequency = inputParams.frequency || 1700; // 默认1700Hz
-            const sptParams = calculateSPTCableParams(sptLength, frequency);
+            const sptParams = await calculateSPTCableParams(sptLength, frequency);
             
             let sptHtml = '<div class="parameter-item">';
             sptHtml += '<span class="parameter-name">电缆长度:</span>';
@@ -1051,14 +1103,13 @@
             sptHtml += `<span class="parameter-value">${sptParams.unitInductance.toExponential(4)} H/km</span>`;
             sptHtml += '</div>';
             
-            // 计算并显示SPT电缆传输矩阵
-            const sptMatrix = calculateSPTCableMatrix(frequency, sptLength);
+            // 显示SPT电缆传输矩阵
             sptHtml += '<div class="parameter-item">';
             sptHtml += '<span class="parameter-name">传输矩阵:</span>';
             sptHtml += '</div>';
             sptHtml += '<div class="matrix-display">';
-            sptHtml += `[${sptMatrix[0][0].toFixed(4)}, ${sptMatrix[0][1].toFixed(4)}]\n`;
-            sptHtml += `[${sptMatrix[1][0].toFixed(4)}, ${sptMatrix[1][1].toFixed(4)}]`;
+            sptHtml += `[${sptParams.matrix[0][0].toFixed(4)}, ${sptParams.matrix[0][1].toFixed(4)}]\n`;
+            sptHtml += `[${sptParams.matrix[1][0].toFixed(4)}, ${sptParams.matrix[1][1].toFixed(4)}]`;
             sptHtml += '</div>';
             
             document.getElementById('sptCableParamsContent').innerHTML = sptHtml;
@@ -1257,6 +1308,18 @@
             
             // 添加故障位置选择事件监听器
             document.getElementById('errorPosition').addEventListener('change', updateParametersByErrorPosition);
+            
+            // 添加轨道长度输入验证
+            const trackLengthInput = document.getElementById('trackLength');
+            if (trackLengthInput) {
+                trackLengthInput.addEventListener('change', function() {
+                    const value = parseFloat(this.value);
+                    if (isNaN(value)) {
+                        alert('⚠️ 警告：请输入合法的实数值！');
+                        this.value = 100; // 重置为默认值
+                    }
+                });
+            }
             
             // 初始化时根据默认故障位置更新参数
             updateParametersByErrorPosition();

@@ -688,6 +688,18 @@
             // 添加输入事件监听器
             if (batchSizeInput) {
                 batchSizeInput.addEventListener('change', function() {
+                    // 检查是否为整数
+                    const value = parseFloat(this.value);
+                    if (!Number.isInteger(value)) {
+                        alert('⚠️ 警告：请输入合法的整数值！');
+                        this.value = Math.round(value);
+                    }
+                    
+                    // 检查是否大于10
+                    if (value > 10) {
+                        alert('⚠️ 警告：批量生成数量大于10可能引发未知错误，无法生成足够数据！');
+                    }
+                    
                     checkValueGreaterThanZero(this);
                     checkConcurrentCount();
                 });
@@ -949,6 +961,10 @@
                     receive_end_track_voltage: result.voltage_results.receive_end_track_voltage,
                     main_track_input_voltage: result.voltage_results.main_track_input_voltage,
                     main_track_output_voltage_1: result.voltage_results.main_track_output_voltage_1,
+                    send_end_track_current: result.current_results ? (result.current_results.send_end_track_current || 0) : 0,
+                    receive_end_track_current: result.current_results ? (result.current_results.receive_end_track_current || 0) : 0,
+                    main_track_input_current: result.current_results ? (result.current_results.main_track_input_current || 0) : 0,
+                    main_track_output_current_1: result.current_results ? (result.current_results.main_track_output_current_1 || 0) : 0,
                     input_impedance: result.input_impedance || 0,
                     input_current: result.input_current || 0,
                     Z_rail: result.Z_rail || 0,
@@ -959,7 +975,11 @@
                 batchResults.push(resultData);
                 
                 // 添加结果到UI
-                addResultItem('success', `模拟成功 (${params.section_id}, 错误类型: ${params.error_type}) - 送端轨面电压: ${result.voltage_results.send_end_track_voltage.toFixed(2)}V, 受端轨面电压: ${result.voltage_results.receive_end_track_voltage.toFixed(2)}V, 主轨入电压: ${result.voltage_results.main_track_input_voltage.toFixed(2)}V, 轨出1电压: ${result.voltage_results.main_track_output_voltage_1.toFixed(2)}V, 输入阻抗: ${(result.input_impedance || 0).toFixed(2)}Ω, 输入电流: ${(result.input_current || 0).toFixed(2)}A`);
+                const sendEndCurrent = result.current_results ? (result.current_results.send_end_track_current || 0).toFixed(4) : '0.0000';
+                const receiveEndCurrent = result.current_results ? (result.current_results.receive_end_track_current || 0).toFixed(4) : '0.0000';
+                const mainTrackInputCurrent = result.current_results ? (result.current_results.main_track_input_current || 0).toFixed(4) : '0.0000';
+                const mainTrackOutputCurrent = result.current_results ? (result.current_results.main_track_output_current_1 || 0).toFixed(4) : '0.0000';
+                addResultItem('success', `模拟成功 (${params.section_id}, 错误类型: ${params.error_type}) - 送端轨面电压: ${result.voltage_results.send_end_track_voltage.toFixed(2)}V, 受端轨面电压: ${result.voltage_results.receive_end_track_voltage.toFixed(2)}V, 主轨入电压: ${result.voltage_results.main_track_input_voltage.toFixed(2)}V, 轨出1电压: ${result.voltage_results.main_track_output_voltage_1.toFixed(2)}V, 送端轨面电流: ${sendEndCurrent}A, 受端轨面电流: ${receiveEndCurrent}A, 主轨入电流: ${mainTrackInputCurrent}A, 轨出1电流: ${mainTrackOutputCurrent}A, 输入阻抗: ${(result.input_impedance || 0).toFixed(2)}Ω, 输入电流: ${(result.input_current || 0).toFixed(4)}A`);
             }
             
             // 更新进度
@@ -1055,6 +1075,10 @@
                 '受端轨面电压(V)',
                 '主轨入电压(V)',
                 '轨出1电压(V)',
+                '送端轨面电流(A)',
+                '受端轨面电流(A)',
+                '主轨入电流(A)',
+                '轨出1电流(A)',
                 '输入阻抗(Ω)',
                 '输入电流(A)',
                 '主轨道阻抗(Ω)',
@@ -1084,8 +1108,12 @@
                     data.receive_end_track_voltage.toFixed(2),
                     data.main_track_input_voltage.toFixed(2),
                     data.main_track_output_voltage_1.toFixed(2),
+                    data.send_end_track_current.toFixed(4),
+                    data.receive_end_track_current.toFixed(4),
+                    data.main_track_input_current.toFixed(4),
+                    data.main_track_output_current_1.toFixed(4),
                     data.input_impedance.toFixed(2),
-                    data.input_current.toFixed(2),
+                    data.input_current.toFixed(4),
                     data.Z_rail.toFixed(2),
                     data.Z_tuner.toFixed(2)
                 ];
