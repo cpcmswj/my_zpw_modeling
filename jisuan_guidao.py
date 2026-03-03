@@ -326,13 +326,13 @@ def find_track_circuit_length(ballast_resist, cable_length, frequency):
 def find_resist_V1V2(frequency):
     """V1V2端即接收端输入变压器的输入阻抗"""
     if frequency == 1700:
-        return 36.0
+        return 1j*36.0
     elif frequency == 2000:
-        return 43.2
+        return 1j*43.2
     elif frequency == 2300:
-        return 48.6
+        return 1j*48.6
     elif frequency == 2600:
-        return 55.0
+        return 1j*55.0
     else:
         print("未找到该接收端输入变压器参数/频率错误")
         return 0

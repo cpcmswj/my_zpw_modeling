@@ -62,7 +62,7 @@ def create_and_test_instance():
             error_value=0,
             error_position="69G",  # 对应 1700Hz
             length_parameter=1000,  # 轨道电路长度 1000m
-            SPT_cable_length=100  # SPT电缆长度
+            SPT_cable_length=1000  # SPT电缆长度
         )
         print("✓ 实例创建成功!")
         print(f"  实际使用的频率: {instance.frequency_table()} Hz")

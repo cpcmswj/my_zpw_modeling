@@ -133,7 +133,8 @@ class Error_Of_Trail_Amplitude_Phase:
             Variable=self.parameter,
             L_BA=self.length_parameter,
             BA1_type=self.find_BA_type_tuning_zone()[0],
-            BA2_type=self.find_BA_type_tuning_zone()[1]
+            BA2_type=self.find_BA_type_tuning_zone()[1],
+            SVA_type=self.find_SVA_type(self.error_position)
         )
     def character(self):
         return f"故障类型：{self.error_type}，故障值：{self.error_value}，故障位置：{self.error_position}"
@@ -202,6 +203,11 @@ class Error_Of_Trail_Amplitude_Phase:
         else:
             BA2=self.find_BA_type(self.frequency_table(self.find_neibour_zone()))
         return BA1,BA2
+    
+    def find_SVA_type(self, zone):
+        """根据故障位置查询SVA类型，1为机械绝缘，0为电气绝缘"""
+        # 默认使用机械绝缘
+        return 1
 
 
     def reinitialize_parameters(self, error_type=None, error_value=None, error_position=None,
@@ -262,7 +268,8 @@ class Error_Of_Trail_Amplitude_Phase:
             Variable=self.parameter,
             L_BA=self.length_parameter,
             BA1_type=BA_types[0],
-            BA2_type=BA_types[1]
+            BA2_type=BA_types[1],
+            SVA_type=self.find_SVA_type(self.error_position)
         )
         
         print(f"重新初始化参数成功")
@@ -1268,7 +1275,7 @@ class Error_Of_Trail_Amplitude_Phase:
             Z_rail_complex = rail_impedance_complex + cap_reactance_complex
             
             # 计算SPT电缆阻抗
-            spt_cable_impedance_complex = jg.SPTcable_impedance(frequency, Z_rail_complex, 1, self.SPT_cable_length)
+            spt_cable_impedance_complex = jg.SPTcable_impedance(frequency, Z_rail_complex, self.SPT_cable_length)
             
             # 计算并联阻抗
             Z_rail = jg.calculate_parallel_impedance(Z_rail_complex, spt_cable_impedance_complex)
@@ -1293,15 +1300,15 @@ class Error_Of_Trail_Amplitude_Phase:
             
             # 计算调谐区总阻抗
             # 这里使用复数计算以保持与原算法一致
-            Z_tuner_complex = self.tuning_parameters.Z_g + self.tuning_parameters.Z_ca + jg.calculate_parallel_impedance(self.tuning_parameters.Z_BA2, resist_V1V2_complex)
+            Z_tuner_complex = self.tuning_parameters.Z_g + self.tuning_parameters.Z_ca + jg.calculate_parallel_impedance(self.tuning_parameters.Z_BA2, self.parameter.transformer_impedance_input(jg.SPTcable_impedance(frequency,resist_V1V2_complex,self.SPT_cable_length)))
             Z_tuner_complex = jg.calculate_parallel_impedance(Z_tuner_complex, self.tuning_parameters.Z_ca + 1j * sva_impedance_amplitude) + self.tuning_parameters.Z_g + self.tuning_parameters.Z_ca
             Z_tuner = jg.calculate_parallel_impedance(Z_tuner_complex, self.tuning_parameters.Z_BA1)
             
             # 组合阻抗
             Z_input_complex = jg.calculate_parallel_impedance(Z_rail, Z_tuner)
-            
+            Z_input_complex=self.parameter.transformer_impedance_output(Z_input_complex)
             # 输入端SPT电缆阻抗
-            Z_input = jg.SPTcable_impedance(frequency, 1, Z_input_complex, self.SPT_cable_length)
+            Z_input = jg.SPTcable_impedance(frequency, Z_input_complex, self.SPT_cable_length)
             
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
@@ -1320,13 +1327,13 @@ class Error_Of_Trail_Amplitude_Phase:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca,self.tuning_parameters.Z_BA1)
             #主轨道阻抗为
             Z_c=1j*1/(2*np.pi*frequency*jg.find_capacitance(frequency)*self.length_parameter/jg.find_capacitance_step(frequency))
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(Z_c,self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(Z_c,self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
             
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1343,13 +1350,13 @@ class Error_Of_Trail_Amplitude_Phase:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca+1j*self.tuning_parameters.L_SVA*self.tuning_parameters.angular_frequency)+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca
             
             #主轨道阻抗为
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
             #输入端SPT电缆阻抗
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1363,13 +1370,13 @@ class Error_Of_Trail_Amplitude_Phase:
             Z_tuner=jg.calculate_series_impedance(self.tuning_parameters.Z_g,2*self.tuning_parameters.Z_ca,jg.calculate_parallel_impedance(self.tuning_parameters.Z_BA2, 100))
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_BA1)
            #主轨道阻抗为
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
 
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,1,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1384,13 +1391,13 @@ class Error_Of_Trail_Amplitude_Phase:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca)+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_BA1)
             #主轨道阻抗为
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
 
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1405,13 +1412,13 @@ class Error_Of_Trail_Amplitude_Phase:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca+1j*self.tuning_parameters.L_SVA*self.tuning_parameters.angular_frequency)
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca,self.tuning_parameters.Z_BA1)
             #主轨道阻抗为
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
 
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1426,14 +1433,14 @@ class Error_Of_Trail_Amplitude_Phase:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_BA1)
             
             #主轨道阻抗为
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
 
 
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
@@ -1446,13 +1453,13 @@ class Error_Of_Trail_Amplitude_Phase:
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_ca+1j*self.tuning_parameters.L_SVA*self.tuning_parameters.angular_frequency)+self.tuning_parameters.Z_g+self.tuning_parameters.Z_ca
             Z_tuner=jg.calculate_parallel_impedance(Z_tuner,self.tuning_parameters.Z_BA1)
            #主轨道阻抗为
-            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),jg.find_resist_V1V2(frequency),self.SPT_cable_length))
+            Z_rail=self.parameter.impedance_complex+jg.calculate_parallel_impedance(self.parameter.Y_complex,self.tuning_parameters.Z_ca+jg.SPTcable_impedance(frequency,jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency,self.find_BA_type(frequency)),self.SPT_cable_length))
 
             #发送端匹配变压器后的总阻抗为前两个阻抗并联
             Z_send=jg.calculate_parallel_impedance(Z_tuner,Z_rail)
             #发送端匹配变压器的输入阻抗中Z_gfs为Z_send
             Z_input=self.parameter.transformer_impedance_output(Z_send)
-            Z_input=jg.SPTcable_impedance(frequency,0,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
+            Z_input=jg.SPTcable_impedance(frequency,Z_input,self.SPT_cable_length)#SPT电缆长度和输入阻抗后续需要修改
             # 检查Z_input是否为异常值，如果是则改为400
             if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
                 Z_input = 400
