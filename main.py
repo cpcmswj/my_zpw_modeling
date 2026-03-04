@@ -806,6 +806,7 @@ async def calculate_track_circuit_api(
             error_position=error_position,
             length_parameter=track_length,
             SPT_cable_length=spt_cable_length,  # 使用前端传递的SPT电缆长度
+            input_V=130.0,  # 默认输入电压130V
             r1=r1,  # 传递衰耗盘端子1
             r2=r2   # 传递衰耗盘端子2
         )
@@ -817,6 +818,7 @@ async def calculate_track_circuit_api(
             error_position=error_position,
             length_parameter=track_length,
             SPT_cable_length=spt_cable_length,
+            input_V=130.0,  # 默认输入电压130V
             resist_per_meter=resist_per_meter,
             induct_per_meter=induct_per_meter,
             capacit_per_meter=capacit_per_meter,

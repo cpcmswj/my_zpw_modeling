@@ -57,7 +57,7 @@ def find_SVA_type(zone):
 
 
 class Error_Of_Trail:
-    def __init__(self,trail,error_type,error_value,error_position,length_parameter,SPT_cable_length,r1=1,r2=1):
+    def __init__(self,trail,error_type,error_value,error_position,length_parameter,SPT_cable_length,input_V=10.0,r1=1,r2=1):
         self.trail=trail
         self.error_type=error_type
         self.error_value=error_value
@@ -67,6 +67,8 @@ class Error_Of_Trail:
         self.length_parameter = length_parameter
         # SPT电缆长度
         self.SPT_cable_length = SPT_cable_length
+        # 发送端输入电压
+        self.input_V = input_V
         # 衰耗盘端子
         self.r1 = r1
         self.r2 = r2
@@ -162,7 +164,7 @@ class Error_Of_Trail:
             BA2=self.find_BA_type(self.frequency_table(self.find_neibour_zone()))
         return BA1,BA2
     
-    def find_SVA_type(zone):
+    def find_SVA_type(self,zone):
         """根据轨道区段查找绝缘节类型,0为机械绝缘节,1为电气绝缘节,3为无效"""
         if zone in ["X1LQG", "3DG", "IG1"]:
             return 0
@@ -174,7 +176,7 @@ class Error_Of_Trail:
 
 
     def reinitialize_parameters(self, error_type=None, error_value=None, error_position=None,
-                                length_parameter=None, SPT_cable_length=None, resist_per_meter=None, induct_per_meter=None,
+                                length_parameter=None, SPT_cable_length=None, input_V=None, resist_per_meter=None, induct_per_meter=None,
                                 capacit_per_meter=None, conduct_per_meter=None, r1=None, r2=None):
         """
         根据用户输入的参数重新初始化Variable和tuning_zone_parameters
@@ -185,6 +187,7 @@ class Error_Of_Trail:
             error_position (str, optional): 故障位置
             length_parameter (float, optional): 长度参数
             SPT_cable_length (float, optional): SPT电缆长度
+            input_V (float, optional): 发送端输入电压
             resist_per_meter (float, optional): 每米电阻
             induct_per_meter (float, optional): 每米电感
             capacit_per_meter (float, optional): 每米电容
@@ -203,6 +206,8 @@ class Error_Of_Trail:
             self.length_parameter = length_parameter
         if SPT_cable_length is not None:
             self.SPT_cable_length = SPT_cable_length
+        if input_V is not None:
+            self.input_V = input_V
         if r1 is not None:
             self.r1 = r1
         if r2 is not None:
@@ -339,7 +344,7 @@ class Error_Of_Trail:
         input_VC_matrix=self.count_inputVC()
         # 计算等效输入阻抗和电流
         try:
-            input_current, input_impedance, Z_rail, Z_tuner = self.call_input(10.0, 1.0)  # 使用默认输入电压10.0V和道床漏阻1.0
+            input_current, input_impedance, Z_rail, Z_tuner = self.call_input(self.input_V, 1.0)  # 使用初始化的输入电压和道床漏阻1.0
             # 确保返回值是有效的数值
             def safe_complex_to_float(value):
                 try:
@@ -448,6 +453,11 @@ class Error_Of_Trail:
                 self.matrix = np.eye(2)
                 self.output_voltage_surface2 = np.array([[0.0], [0.0]])
             #self.output_voltage_surface2=self.count_output()
+
+            #如果是电气绝缘，此处有调谐单元矩阵
+            if self.find_SVA_type(frequency)==1:
+                self.matrix=np.dot(self.matrix,self.parameter.tuning_unit_matrix(self.find_BA_type(frequency)))
+            
 
             # 匹配变压器矩阵
             try:
@@ -1509,8 +1519,6 @@ class Error_Of_Trail:
     
     def count_inputVC(self):
         """建立发送器输出端的电压电流矩阵 """
-        if not hasattr(self, 'input_V'):
-            self.input_V = 130.0  # 默认输入电压
         input_current = self.call_input(self.input_V, 1.0)[0]
         #后期需要修复道床漏阻
         # 确保input_current是复数类型
@@ -1549,8 +1557,6 @@ class Error_Of_Trail:
 
     def count_output(self):
         """计算输出电压和电流"""
-        if not hasattr(self, 'input_V'):
-            self.input_V = 130.0  # 默认输入电压
         input_current = self.call_input(self.input_V, 1.0)[0]
         
         # 确保input_current是复数类型

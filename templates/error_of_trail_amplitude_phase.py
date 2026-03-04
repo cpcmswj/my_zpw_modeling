@@ -99,7 +99,7 @@ def divide_amplitude_phase(a1, p1, a2, p2):
 
 
 class Error_Of_Trail_Amplitude_Phase:
-    def __init__(self,trail,error_type,error_value,error_position,length_parameter,SPT_cable_length,r1=1,r2=1):
+    def __init__(self,trail,error_type,error_value,error_position,length_parameter,SPT_cable_length,input_V=10.0,r1=1,r2=1):
         self.trail=trail
         self.error_type=error_type
         self.error_value=error_value
@@ -109,6 +109,8 @@ class Error_Of_Trail_Amplitude_Phase:
         self.length_parameter = length_parameter
         # SPT电缆长度
         self.SPT_cable_length = SPT_cable_length
+        # 发送端输入电压
+        self.input_V = input_V
         # 衰耗盘端子
         self.r1 = r1
         self.r2 = r2
