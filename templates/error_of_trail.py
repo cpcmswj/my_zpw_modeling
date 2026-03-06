@@ -8,6 +8,40 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import jisuan_guidao as jg
 import circuit_tool
 
+def check_matrix_validity(matrix, matrix_name="matrix"):
+    """
+    检查矩阵是否包含无效值（NaN或无穷大）
+    
+    参数：
+        matrix: 要检查的矩阵
+        matrix_name: 矩阵的名称，用于错误信息
+    
+    返回：
+        tuple: (is_valid, valid_matrix)
+            is_valid: 布尔值，表示矩阵是否有效
+            valid_matrix: 如果矩阵有效，返回原矩阵；否则返回单位矩阵
+    """
+    try:
+        # 检查矩阵是否为None
+        if matrix is None:
+            print(f"警告：{matrix_name}为None，使用单位矩阵替代")
+            return False, np.eye(2)
+        
+        # 检查矩阵是否为numpy数组
+        if not isinstance(matrix, np.ndarray):
+            print(f"警告：{matrix_name}不是numpy数组，使用单位矩阵替代")
+            return False, np.eye(2)
+        
+        # 检查矩阵是否包含无效值
+        if not np.all(np.isfinite(matrix)):
+            print(f"警告：{matrix_name}包含无效值，使用单位矩阵替代")
+            return False, np.eye(2)
+        
+        return True, matrix
+    except Exception as e:
+        print(f"检查{matrix_name}时出错: {e}")
+        return False, np.eye(2)
+
 """
 函数表
 ======
@@ -417,25 +451,19 @@ class Error_Of_Trail:
                 )
                 
                 # 检查矩阵是否包含无效值
-                if not np.all(np.isfinite(iron_rail_matrix)):
-                    print("警告：钢轨传输矩阵包含无效值，使用单位矩阵替代")
-                    iron_rail_matrix = np.eye(2)
+                _, iron_rail_matrix = check_matrix_validity(iron_rail_matrix, "钢轨传输矩阵")
                 
                 # 执行矩阵乘法
                 self.matrix = np.dot(self.matrix, iron_rail_matrix)
                 
                 # 检查结果是否有效
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
                 
                 # 受端轨面电压电流矩阵
                 try:
                     iron_rail_inv_matrix = np.linalg.inv(iron_rail_matrix)
                     # 检查逆矩阵是否包含无效值
-                    if not np.all(np.isfinite(iron_rail_inv_matrix)):
-                        print("警告：钢轨传输矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                        iron_rail_inv_matrix = np.eye(2)
+                    _, iron_rail_inv_matrix = check_matrix_validity(iron_rail_inv_matrix, "钢轨传输矩阵的逆矩阵")
                     
                     self.output_voltage_surface2 = np.dot(iron_rail_inv_matrix, self.output_voltage_surface1)
                     # 检查结果是否有效
@@ -463,21 +491,15 @@ class Error_Of_Trail:
             try:
                 transformer_matrix = self.parameter.transformer_matrix_input()
                 # 检查矩阵是否包含无效值
-                if not np.all(np.isfinite(transformer_matrix)):
-                    print("警告：变压器矩阵包含无效值，使用单位矩阵替代")
-                    transformer_matrix = np.eye(2)
+                _, transformer_matrix = check_matrix_validity(transformer_matrix, "变压器矩阵")
                 
                 transformer_inv_matrix = np.linalg.inv(transformer_matrix)
                 # 检查逆矩阵是否包含无效值
-                if not np.all(np.isfinite(transformer_inv_matrix)):
-                    print("警告：变压器矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    transformer_inv_matrix = np.eye(2)
+                _, transformer_inv_matrix = check_matrix_validity(transformer_inv_matrix, "变压器矩阵的逆矩阵")
                 
                 self.matrix = np.dot(transformer_inv_matrix, self.matrix)
                 # 检查结果是否有效
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算变压器矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -486,21 +508,15 @@ class Error_Of_Trail:
             try:
                 spt_cable_matrix = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
                 # 检查矩阵是否包含无效值
-                if not np.all(np.isfinite(spt_cable_matrix)):
-                    print("警告：SPT电缆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_matrix = np.eye(2)
+                _, spt_cable_matrix = check_matrix_validity(spt_cable_matrix, "SPT电缆矩阵")
                 
                 spt_cable_inv_matrix = np.linalg.inv(spt_cable_matrix)
                 # 检查逆矩阵是否包含无效值
-                if not np.all(np.isfinite(spt_cable_inv_matrix)):
-                    print("警告：SPT电缆矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_inv_matrix = np.eye(2)
+                _, spt_cable_inv_matrix = check_matrix_validity(spt_cable_inv_matrix, "SPT电缆矩阵的逆矩阵")
                 
                 self.matrix = np.dot(spt_cable_inv_matrix, self.matrix)
                 # 检查结果是否有效
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -509,26 +525,20 @@ class Error_Of_Trail:
             try:
                 # 重新计算矩阵，确保使用有效的矩阵
                 transformer_matrix = self.parameter.transformer_matrix_input()
-                if not np.all(np.isfinite(transformer_matrix)):
-                    transformer_matrix = np.eye(2)
+                _, transformer_matrix = check_matrix_validity(transformer_matrix, "变压器矩阵")
                 
                 transformer_inv_matrix = np.linalg.inv(transformer_matrix)
-                if not np.all(np.isfinite(transformer_inv_matrix)):
-                    transformer_inv_matrix = np.eye(2)
+                _, transformer_inv_matrix = check_matrix_validity(transformer_inv_matrix, "变压器矩阵的逆矩阵")
                 
                 spt_cable_matrix = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
-                if not np.all(np.isfinite(spt_cable_matrix)):
-                    spt_cable_matrix = np.eye(2)
+                _, spt_cable_matrix = check_matrix_validity(spt_cable_matrix, "SPT电缆矩阵")
                 
                 spt_cable_inv_matrix = np.linalg.inv(spt_cable_matrix)
-                if not np.all(np.isfinite(spt_cable_inv_matrix)):
-                    spt_cable_inv_matrix = np.eye(2)
+                _, spt_cable_inv_matrix = check_matrix_validity(spt_cable_inv_matrix, "SPT电缆矩阵的逆矩阵")
                 
                 self.matrix = np.dot(spt_cable_inv_matrix, transformer_inv_matrix)
                 # 检查结果是否有效
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算匹配变压器&SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -561,19 +571,13 @@ class Error_Of_Trail:
             # SPT电缆矩阵
             try:
                 spt_cable_matrix = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
-                if not np.all(np.isfinite(spt_cable_matrix)):
-                    print("警告：SPT电缆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_matrix = np.eye(2)
+                _, spt_cable_matrix = check_matrix_validity(spt_cable_matrix, "SPT电缆矩阵")
                 
                 spt_cable_inv_matrix = np.linalg.inv(spt_cable_matrix)
-                if not np.all(np.isfinite(spt_cable_inv_matrix)):
-                    print("警告：SPT电缆矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_inv_matrix = np.eye(2)
+                _, spt_cable_inv_matrix = check_matrix_validity(spt_cable_inv_matrix, "SPT电缆矩阵的逆矩阵")
                 
                 self.matrix = np.dot(spt_cable_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -581,19 +585,13 @@ class Error_Of_Trail:
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             try:
                 transformer_matrix = self.parameter.transformer_matrix_input()
-                if not np.all(np.isfinite(transformer_matrix)):
-                    print("警告：变压器矩阵包含无效值，使用单位矩阵替代")
-                    transformer_matrix = np.eye(2)
+                _, transformer_matrix = check_matrix_validity(transformer_matrix, "变压器矩阵")
                 
                 transformer_inv_matrix = np.linalg.inv(transformer_matrix)
-                if not np.all(np.isfinite(transformer_inv_matrix)):
-                    print("警告：变压器矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    transformer_inv_matrix = np.eye(2)
+                _, transformer_inv_matrix = check_matrix_validity(transformer_inv_matrix, "变压器矩阵的逆矩阵")
                 
                 self.matrix = np.dot(transformer_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算变压器矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -608,14 +606,10 @@ class Error_Of_Trail:
                     jg.find_capacitance_step(frequency),
                     0, 0, jg.find_capacitance(frequency)
                 )
-                if not np.all(np.isfinite(iron_rail_matrix)):
-                    print("警告：钢轨传输矩阵包含无效值，使用单位矩阵替代")
-                    iron_rail_matrix = np.eye(2)
+                _, iron_rail_matrix = check_matrix_validity(iron_rail_matrix, "钢轨传输矩阵")
                 
                 self.matrix = np.dot(self.matrix, iron_rail_matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算钢轨等效传输矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -627,14 +621,10 @@ class Error_Of_Trail:
             try:
                 F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
                 tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
-                if not np.all(np.isfinite(tuning_unit_matrix)):
-                    print("警告：调谐单元矩阵包含无效值，使用单位矩阵替代")
-                    tuning_unit_matrix = np.eye(2)
+                _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
                 
                 self.matrix = np.dot(self.matrix, tuning_unit_matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算调谐单元矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -642,19 +632,13 @@ class Error_Of_Trail:
             # 匹配变压器矩阵
             try:
                 transformer_matrix = self.parameter.transformer_matrix_input()
-                if not np.all(np.isfinite(transformer_matrix)):
-                    print("警告：变压器矩阵包含无效值，使用单位矩阵替代")
-                    transformer_matrix = np.eye(2)
+                _, transformer_matrix = check_matrix_validity(transformer_matrix, "变压器矩阵")
                 
                 transformer_inv_matrix = np.linalg.inv(transformer_matrix)
-                if not np.all(np.isfinite(transformer_inv_matrix)):
-                    print("警告：变压器矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    transformer_inv_matrix = np.eye(2)
+                _, transformer_inv_matrix = check_matrix_validity(transformer_inv_matrix, "变压器矩阵的逆矩阵")
                 
                 self.matrix = np.dot(transformer_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算变压器矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -662,19 +646,13 @@ class Error_Of_Trail:
             # SPT电缆矩阵
             try:
                 spt_cable_matrix = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
-                if not np.all(np.isfinite(spt_cable_matrix)):
-                    print("警告：SPT电缆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_matrix = np.eye(2)
+                _, spt_cable_matrix = check_matrix_validity(spt_cable_matrix, "SPT电缆矩阵")
                 
                 spt_cable_inv_matrix = np.linalg.inv(spt_cable_matrix)
-                if not np.all(np.isfinite(spt_cable_inv_matrix)):
-                    print("警告：SPT电缆矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_inv_matrix = np.eye(2)
+                _, spt_cable_inv_matrix = check_matrix_validity(spt_cable_inv_matrix, "SPT电缆矩阵的逆矩阵")
                 
                 self.matrix = np.dot(spt_cable_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -697,19 +675,13 @@ class Error_Of_Trail:
             # SPT电缆矩阵
             try:
                 spt_cable_matrix = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
-                if not np.all(np.isfinite(spt_cable_matrix)):
-                    print("警告：SPT电缆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_matrix = np.eye(2)
+                _, spt_cable_matrix = check_matrix_validity(spt_cable_matrix, "SPT电缆矩阵")
                 
                 spt_cable_inv_matrix = np.linalg.inv(spt_cable_matrix)
-                if not np.all(np.isfinite(spt_cable_inv_matrix)):
-                    print("警告：SPT电缆矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_inv_matrix = np.eye(2)
+                _, spt_cable_inv_matrix = check_matrix_validity(spt_cable_inv_matrix, "SPT电缆矩阵的逆矩阵")
                 
                 self.matrix = np.dot(spt_cable_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -717,19 +689,13 @@ class Error_Of_Trail:
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             try:
                 transformer_matrix = self.parameter.transformer_matrix_input()
-                if not np.all(np.isfinite(transformer_matrix)):
-                    print("警告：变压器矩阵包含无效值，使用单位矩阵替代")
-                    transformer_matrix = np.eye(2)
+                _, transformer_matrix = check_matrix_validity(transformer_matrix, "变压器矩阵")
                 
                 transformer_inv_matrix = np.linalg.inv(transformer_matrix)
-                if not np.all(np.isfinite(transformer_inv_matrix)):
-                    print("警告：变压器矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    transformer_inv_matrix = np.eye(2)
+                _, transformer_inv_matrix = check_matrix_validity(transformer_inv_matrix, "变压器矩阵的逆矩阵")
                 
                 self.matrix = np.dot(transformer_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算变压器矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -738,14 +704,10 @@ class Error_Of_Trail:
             try:
                 F=self.find_BA_type(frequency)#调谐单元类型，之后要改
                 tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
-                if not np.all(np.isfinite(tuning_unit_matrix)):
-                    print("警告：调谐单元矩阵包含无效值，使用单位矩阵替代")
-                    tuning_unit_matrix = np.eye(2)
+                _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
                 
                 self.matrix = np.dot(self.matrix, tuning_unit_matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算调谐单元矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -769,14 +731,10 @@ class Error_Of_Trail:
                     jg.find_capacitance_step(frequency),
                     0, 0, jg.find_capacitance(frequency)
                 )
-                if not np.all(np.isfinite(iron_rail_matrix)):
-                    print("警告：钢轨传输矩阵包含无效值，使用单位矩阵替代")
-                    iron_rail_matrix = np.eye(2)
+                _, iron_rail_matrix = check_matrix_validity(iron_rail_matrix, "钢轨传输矩阵")
                 
                 self.matrix = np.dot(self.matrix, iron_rail_matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算钢轨等效传输矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -796,19 +754,13 @@ class Error_Of_Trail:
             # 匹配变压器矩阵
             try:
                 transformer_matrix = self.parameter.transformer_matrix_input()
-                if not np.all(np.isfinite(transformer_matrix)):
-                    print("警告：变压器矩阵包含无效值，使用单位矩阵替代")
-                    transformer_matrix = np.eye(2)
+                _, transformer_matrix = check_matrix_validity(transformer_matrix, "变压器矩阵")
                 
                 transformer_inv_matrix = np.linalg.inv(transformer_matrix)
-                if not np.all(np.isfinite(transformer_inv_matrix)):
-                    print("警告：变压器矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    transformer_inv_matrix = np.eye(2)
+                _, transformer_inv_matrix = check_matrix_validity(transformer_inv_matrix, "变压器矩阵的逆矩阵")
                 
                 self.matrix = np.dot(transformer_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算变压器矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -816,19 +768,13 @@ class Error_Of_Trail:
             # SPT电缆矩阵
             try:
                 spt_cable_matrix = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
-                if not np.all(np.isfinite(spt_cable_matrix)):
-                    print("警告：SPT电缆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_matrix = np.eye(2)
+                _, spt_cable_matrix = check_matrix_validity(spt_cable_matrix, "SPT电缆矩阵")
                 
                 spt_cable_inv_matrix = np.linalg.inv(spt_cable_matrix)
-                if not np.all(np.isfinite(spt_cable_inv_matrix)):
-                    print("警告：SPT电缆矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_inv_matrix = np.eye(2)
+                _, spt_cable_inv_matrix = check_matrix_validity(spt_cable_inv_matrix, "SPT电缆矩阵的逆矩阵")
                 
                 self.matrix = np.dot(spt_cable_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -851,19 +797,13 @@ class Error_Of_Trail:
             # SPT电缆矩阵
             try:
                 spt_cable_matrix = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
-                if not np.all(np.isfinite(spt_cable_matrix)):
-                    print("警告：SPT电缆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_matrix = np.eye(2)
+                _, spt_cable_matrix = check_matrix_validity(spt_cable_matrix, "SPT电缆矩阵")
                 
                 spt_cable_inv_matrix = np.linalg.inv(spt_cable_matrix)
-                if not np.all(np.isfinite(spt_cable_inv_matrix)):
-                    print("警告：SPT电缆矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_inv_matrix = np.eye(2)
+                _, spt_cable_inv_matrix = check_matrix_validity(spt_cable_inv_matrix, "SPT电缆矩阵的逆矩阵")
                 
                 self.matrix = np.dot(spt_cable_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -871,19 +811,13 @@ class Error_Of_Trail:
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             try:
                 transformer_matrix = self.parameter.transformer_matrix_input()
-                if not np.all(np.isfinite(transformer_matrix)):
-                    print("警告：变压器矩阵包含无效值，使用单位矩阵替代")
-                    transformer_matrix = np.eye(2)
+                _, transformer_matrix = check_matrix_validity(transformer_matrix, "变压器矩阵")
                 
                 transformer_inv_matrix = np.linalg.inv(transformer_matrix)
-                if not np.all(np.isfinite(transformer_inv_matrix)):
-                    print("警告：变压器矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    transformer_inv_matrix = np.eye(2)
+                _, transformer_inv_matrix = check_matrix_validity(transformer_inv_matrix, "变压器矩阵的逆矩阵")
                 
                 self.matrix = np.dot(transformer_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算变压器矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -892,14 +826,10 @@ class Error_Of_Trail:
             try:
                 F=self.find_BA_type_tuning_zone()[0]#调谐单元类型，之后要改
                 tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
-                if not np.all(np.isfinite(tuning_unit_matrix)):
-                    print("警告：调谐单元矩阵包含无效值，使用单位矩阵替代")
-                    tuning_unit_matrix = np.eye(2)
+                _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
                 
                 self.matrix = np.dot(self.matrix, tuning_unit_matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算调谐单元矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -920,14 +850,10 @@ class Error_Of_Trail:
             #钢轨矩阵
             try:
                 iron_rail_matrix = self.parameter.iron_rail(self.length_parameter)
-                if not np.all(np.isfinite(iron_rail_matrix)):
-                    print("警告：钢轨传输矩阵包含无效值，使用单位矩阵替代")
-                    iron_rail_matrix = np.eye(2)
+                _, iron_rail_matrix = check_matrix_validity(iron_rail_matrix, "钢轨传输矩阵")
                 
                 self.matrix = np.dot(self.matrix, iron_rail_matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算钢轨等效传输矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -949,14 +875,10 @@ class Error_Of_Trail:
             try:
                 F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
                 tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
-                if not np.all(np.isfinite(tuning_unit_matrix)):
-                    print("警告：调谐单元矩阵包含无效值，使用单位矩阵替代")
-                    tuning_unit_matrix = np.eye(2)
+                _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
                 
                 self.matrix = np.dot(self.matrix, tuning_unit_matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算调谐单元矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -964,19 +886,13 @@ class Error_Of_Trail:
             # 匹配变压器矩阵
             try:
                 transformer_matrix = self.parameter.transformer_matrix_input()
-                if not np.all(np.isfinite(transformer_matrix)):
-                    print("警告：变压器矩阵包含无效值，使用单位矩阵替代")
-                    transformer_matrix = np.eye(2)
+                _, transformer_matrix = check_matrix_validity(transformer_matrix, "变压器矩阵")
                 
                 transformer_inv_matrix = np.linalg.inv(transformer_matrix)
-                if not np.all(np.isfinite(transformer_inv_matrix)):
-                    print("警告：变压器矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    transformer_inv_matrix = np.eye(2)
+                _, transformer_inv_matrix = check_matrix_validity(transformer_inv_matrix, "变压器矩阵的逆矩阵")
                 
                 self.matrix = np.dot(transformer_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算变压器矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -984,19 +900,13 @@ class Error_Of_Trail:
             # SPT电缆矩阵
             try:
                 spt_cable_matrix = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
-                if not np.all(np.isfinite(spt_cable_matrix)):
-                    print("警告：SPT电缆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_matrix = np.eye(2)
+                _, spt_cable_matrix = check_matrix_validity(spt_cable_matrix, "SPT电缆矩阵")
                 
                 spt_cable_inv_matrix = np.linalg.inv(spt_cable_matrix)
-                if not np.all(np.isfinite(spt_cable_inv_matrix)):
-                    print("警告：SPT电缆矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_inv_matrix = np.eye(2)
+                _, spt_cable_inv_matrix = check_matrix_validity(spt_cable_inv_matrix, "SPT电缆矩阵的逆矩阵")
                 
                 self.matrix = np.dot(spt_cable_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -1019,19 +929,13 @@ class Error_Of_Trail:
             # SPT电缆矩阵
             try:
                 spt_cable_matrix = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
-                if not np.all(np.isfinite(spt_cable_matrix)):
-                    print("警告：SPT电缆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_matrix = np.eye(2)
+                _, spt_cable_matrix = check_matrix_validity(spt_cable_matrix, "SPT电缆矩阵")
                 
                 spt_cable_inv_matrix = np.linalg.inv(spt_cable_matrix)
-                if not np.all(np.isfinite(spt_cable_inv_matrix)):
-                    print("警告：SPT电缆矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_inv_matrix = np.eye(2)
+                _, spt_cable_inv_matrix = check_matrix_validity(spt_cable_inv_matrix, "SPT电缆矩阵的逆矩阵")
                 
                 self.matrix = np.dot(spt_cable_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -1039,19 +943,13 @@ class Error_Of_Trail:
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
             try:
                 transformer_matrix = self.parameter.transformer_matrix_input()
-                if not np.all(np.isfinite(transformer_matrix)):
-                    print("警告：变压器矩阵包含无效值，使用单位矩阵替代")
-                    transformer_matrix = np.eye(2)
+                _, transformer_matrix = check_matrix_validity(transformer_matrix, "变压器矩阵")
                 
                 transformer_inv_matrix = np.linalg.inv(transformer_matrix)
-                if not np.all(np.isfinite(transformer_inv_matrix)):
-                    print("警告：变压器矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    transformer_inv_matrix = np.eye(2)
+                _, transformer_inv_matrix = check_matrix_validity(transformer_inv_matrix, "变压器矩阵的逆矩阵")
                 
                 self.matrix = np.dot(transformer_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算变压器矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -1060,14 +958,10 @@ class Error_Of_Trail:
             try:
                 F=self.find_BA_type_tuning_zone()[0]#调谐单元类型，之后要改
                 tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
-                if not np.all(np.isfinite(tuning_unit_matrix)):
-                    print("警告：调谐单元矩阵包含无效值，使用单位矩阵替代")
-                    tuning_unit_matrix = np.eye(2)
+                _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
                 
                 self.matrix = np.dot(self.matrix, tuning_unit_matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算调谐单元矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -1092,14 +986,10 @@ class Error_Of_Trail:
                     jg.find_capacitance_step(frequency),
                     0, 0, 0
                 )
-                if not np.all(np.isfinite(iron_rail_matrix)):
-                    print("警告：钢轨传输矩阵包含无效值，使用单位矩阵替代")
-                    iron_rail_matrix = np.eye(2)
+                _, iron_rail_matrix = check_matrix_validity(iron_rail_matrix, "钢轨传输矩阵")
                 
                 self.matrix = np.dot(self.matrix, iron_rail_matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算钢轨等效传输矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -1121,14 +1011,10 @@ class Error_Of_Trail:
             try:
                 F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
                 tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
-                if not np.all(np.isfinite(tuning_unit_matrix)):
-                    print("警告：调谐单元矩阵包含无效值，使用单位矩阵替代")
-                    tuning_unit_matrix = np.eye(2)
+                _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
                 
                 self.matrix = np.dot(self.matrix, tuning_unit_matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算调谐单元矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -1136,19 +1022,13 @@ class Error_Of_Trail:
             # 匹配变压器矩阵
             try:
                 transformer_matrix = self.parameter.transformer_matrix_input()
-                if not np.all(np.isfinite(transformer_matrix)):
-                    print("警告：变压器矩阵包含无效值，使用单位矩阵替代")
-                    transformer_matrix = np.eye(2)
+                _, transformer_matrix = check_matrix_validity(transformer_matrix, "变压器矩阵")
                 
                 transformer_inv_matrix = np.linalg.inv(transformer_matrix)
-                if not np.all(np.isfinite(transformer_inv_matrix)):
-                    print("警告：变压器矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    transformer_inv_matrix = np.eye(2)
+                _, transformer_inv_matrix = check_matrix_validity(transformer_inv_matrix, "变压器矩阵的逆矩阵")
                 
                 self.matrix = np.dot(transformer_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算变压器矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -1156,19 +1036,13 @@ class Error_Of_Trail:
             # SPT电缆矩阵
             try:
                 spt_cable_matrix = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
-                if not np.all(np.isfinite(spt_cable_matrix)):
-                    print("警告：SPT电缆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_matrix = np.eye(2)
+                _, spt_cable_matrix = check_matrix_validity(spt_cable_matrix, "SPT电缆矩阵")
                 
                 spt_cable_inv_matrix = np.linalg.inv(spt_cable_matrix)
-                if not np.all(np.isfinite(spt_cable_inv_matrix)):
-                    print("警告：SPT电缆矩阵的逆矩阵包含无效值，使用单位矩阵替代")
-                    spt_cable_inv_matrix = np.eye(2)
+                _, spt_cable_inv_matrix = check_matrix_validity(spt_cable_inv_matrix, "SPT电缆矩阵的逆矩阵")
                 
                 self.matrix = np.dot(spt_cable_inv_matrix, self.matrix)
-                if not np.all(np.isfinite(self.matrix)):
-                    print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                    self.matrix = np.eye(2)
+                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             except Exception as e:
                 print(f"计算SPT电缆矩阵时出错: {e}")
                 self.matrix = np.eye(2)
@@ -1189,14 +1063,10 @@ class Error_Of_Trail:
         # 轨出1电压，经过衰耗盘
         try:
             attenuation_matrix = jg.attenuation_matrix(self.r1, self.r2)
-            if not np.all(np.isfinite(attenuation_matrix)):
-                print("警告：衰耗盘矩阵包含无效值，使用单位矩阵替代")
-                attenuation_matrix = np.eye(2)
+            _, attenuation_matrix = check_matrix_validity(attenuation_matrix, "衰耗盘矩阵")
             
             self.matrix = np.dot(self.matrix, attenuation_matrix)
-            if not np.all(np.isfinite(self.matrix)):
-                print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                self.matrix = np.eye(2)
+            _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             
             self.output_voltage_main_1, self.output_current_main_1 = self.count_output()
             # 检查结果是否有效
@@ -1700,56 +1570,25 @@ class Error_Of_Trail:
                 # 构建完整的传输矩阵链，添加溢出检查
                 try:
                     # 检查矩阵是否包含无效值
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
                     matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
-                    for i, mat in enumerate(matrices):
-                        if not np.all(np.isfinite(mat)):
-                            print(f"警告：矩阵 {i} 包含无效值:")
-                            print(mat)
-                            # 替换为单位矩阵
-                            matrices[i] = np.eye(2)
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        _, matrices[i] = check_matrix_validity(mat, name)
                     
                     # 执行矩阵乘法，添加溢出检查
-                    try:
-                        total_matrix = np.dot(matrices[0], matrices[1])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[2])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[3])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[4])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[5])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[6])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[7])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[8])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                    except Exception as e:
-                        print(f"矩阵乘法出错: {e}")
-                        # 出错时使用单位矩阵
-                        total_matrix = np.eye(2)
-                    
-                    # 检查结果是否有效
-                    if not np.all(np.isfinite(total_matrix)):
-                        print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                        total_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            _, total_matrix = check_matrix_validity(total_matrix, "矩阵乘法结果")
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
                     
                     print("完整传输矩阵:")
                     print(total_matrix)
@@ -1763,58 +1602,28 @@ class Error_Of_Trail:
                 try:
                     tuning_zone_matrix = tuning_params.tuning_zone_matrix_f2(self.length_parameter)
                     # 检查矩阵是否包含无效值
-                    if not np.all(np.isfinite(tuning_zone_matrix)):
-                        print("警告：调谐区传输矩阵包含无效值，使用单位矩阵替代")
-                        tuning_zone_matrix = np.eye(2)
+                    _, tuning_zone_matrix = check_matrix_validity(tuning_zone_matrix, "调谐区传输矩阵")
                     
                     # 构建完整的传输矩阵链
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
                     matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
-                    for i, mat in enumerate(matrices):
-                        if not np.all(np.isfinite(mat)):
-                            print(f"警告：矩阵 {i} 包含无效值，使用单位矩阵替代")
-                            matrices[i] = np.eye(2)
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        _, matrices[i] = check_matrix_validity(mat, name)
                     
                     # 执行矩阵乘法，添加溢出检查
-                    try:
-                        total_matrix = np.dot(matrices[0], matrices[1])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[2])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[3])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[4])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[5])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[6])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[7])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[8])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                    except Exception as e:
-                        print(f"矩阵乘法出错: {e}")
-                        # 出错时使用单位矩阵
-                        total_matrix = np.eye(2)
-                    
-                    if not np.all(np.isfinite(total_matrix)):
-                        print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                        total_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            _, total_matrix = check_matrix_validity(total_matrix, "矩阵乘法结果")
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
                     
                     print("完整传输矩阵:")
                     print(total_matrix)
@@ -1828,58 +1637,28 @@ class Error_Of_Trail:
                 try:
                     tuning_zone_matrix = tuning_params.tuning_zone_matrix_f1()
                     # 检查矩阵是否包含无效值
-                    if not np.all(np.isfinite(tuning_zone_matrix)):
-                        print("警告：调谐区传输矩阵包含无效值，使用单位矩阵替代")
-                        tuning_zone_matrix = np.eye(2)
+                    _, tuning_zone_matrix = check_matrix_validity(tuning_zone_matrix, "调谐区传输矩阵")
                     
                     # 构建完整的传输矩阵链
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
                     matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
-                    for i, mat in enumerate(matrices):
-                        if not np.all(np.isfinite(mat)):
-                            print(f"警告：矩阵 {i} 包含无效值，使用单位矩阵替代")
-                            matrices[i] = np.eye(2)
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        _, matrices[i] = check_matrix_validity(mat, name)
                     
                     # 执行矩阵乘法，添加溢出检查
-                    try:
-                        total_matrix = np.dot(matrices[0], matrices[1])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[2])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[3])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[4])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[5])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[6])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[7])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[8])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                    except Exception as e:
-                        print(f"矩阵乘法出错: {e}")
-                        # 出错时使用单位矩阵
-                        total_matrix = np.eye(2)
-                    
-                    if not np.all(np.isfinite(total_matrix)):
-                        print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                        total_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            _, total_matrix = check_matrix_validity(total_matrix, "矩阵乘法结果")
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
                     
                     print("完整传输矩阵:")
                     print(total_matrix)
@@ -1893,58 +1672,28 @@ class Error_Of_Trail:
                 try:
                     tuning_zone_matrix = tuning_params.tuning_zone_matrix_SVA_1()
                     # 检查矩阵是否包含无效值
-                    if not np.all(np.isfinite(tuning_zone_matrix)):
-                        print("警告：调谐区传输矩阵包含无效值，使用单位矩阵替代")
-                        tuning_zone_matrix = np.eye(2)
+                    _, tuning_zone_matrix = check_matrix_validity(tuning_zone_matrix, "调谐区传输矩阵")
                     
                     # 构建完整的传输矩阵链
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
                     matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
-                    for i, mat in enumerate(matrices):
-                        if not np.all(np.isfinite(mat)):
-                            print(f"警告：矩阵 {i} 包含无效值，使用单位矩阵替代")
-                            matrices[i] = np.eye(2)
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        _, matrices[i] = check_matrix_validity(mat, name)
                     
                     # 执行矩阵乘法，添加溢出检查
-                    try:
-                        total_matrix = np.dot(matrices[0], matrices[1])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[2])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[3])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[4])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[5])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[6])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[7])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[8])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                    except Exception as e:
-                        print(f"矩阵乘法出错: {e}")
-                        # 出错时使用单位矩阵
-                        total_matrix = np.eye(2)
-                    
-                    if not np.all(np.isfinite(total_matrix)):
-                        print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                        total_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            _, total_matrix = check_matrix_validity(total_matrix, "矩阵乘法结果")
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
                     
                     print("完整传输矩阵:")
                     print(total_matrix)
@@ -1958,58 +1707,28 @@ class Error_Of_Trail:
                 try:
                     tuning_zone_matrix = tuning_params.tuning_zone_matrix_SVA_2()
                     # 检查矩阵是否包含无效值
-                    if not np.all(np.isfinite(tuning_zone_matrix)):
-                        print("警告：调谐区传输矩阵包含无效值，使用单位矩阵替代")
-                        tuning_zone_matrix = np.eye(2)
+                    _, tuning_zone_matrix = check_matrix_validity(tuning_zone_matrix, "调谐区传输矩阵")
                     
                     # 构建完整的传输矩阵链
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
                     matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
-                    for i, mat in enumerate(matrices):
-                        if not np.all(np.isfinite(mat)):
-                            print(f"警告：矩阵 {i} 包含无效值，使用单位矩阵替代")
-                            matrices[i] = np.eye(2)
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        _, matrices[i] = check_matrix_validity(mat, name)
                     
                     # 执行矩阵乘法，添加溢出检查
-                    try:
-                        total_matrix = np.dot(matrices[0], matrices[1])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[2])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[3])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[4])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[5])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[6])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[7])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[8])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                    except Exception as e:
-                        print(f"矩阵乘法出错: {e}")
-                        # 出错时使用单位矩阵
-                        total_matrix = np.eye(2)
-                    
-                    if not np.all(np.isfinite(total_matrix)):
-                        print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                        total_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            _, total_matrix = check_matrix_validity(total_matrix, "矩阵乘法结果")
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
                     
                     print("完整传输矩阵:")
                     print(total_matrix)
@@ -2023,58 +1742,28 @@ class Error_Of_Trail:
                 try:
                     tuning_zone_matrix = tuning_params.tuning_zone_matrix_f2(self.length_parameter)
                     # 检查矩阵是否包含无效值
-                    if not np.all(np.isfinite(tuning_zone_matrix)):
-                        print("警告：调谐区传输矩阵包含无效值，使用单位矩阵替代")
-                        tuning_zone_matrix = np.eye(2)
+                    _, tuning_zone_matrix = check_matrix_validity(tuning_zone_matrix, "调谐区传输矩阵")
                     
                     # 构建完整的传输矩阵链
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
                     matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
-                    for i, mat in enumerate(matrices):
-                        if not np.all(np.isfinite(mat)):
-                            print(f"警告：矩阵 {i} 包含无效值，使用单位矩阵替代")
-                            matrices[i] = np.eye(2)
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        _, matrices[i] = check_matrix_validity(mat, name)
                     
                     # 执行矩阵乘法，添加溢出检查
-                    try:
-                        total_matrix = np.dot(matrices[0], matrices[1])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[2])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[3])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[4])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[5])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[6])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[7])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[8])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                    except Exception as e:
-                        print(f"矩阵乘法出错: {e}")
-                        # 出错时使用单位矩阵
-                        total_matrix = np.eye(2)
-                    
-                    if not np.all(np.isfinite(total_matrix)):
-                        print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                        total_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            _, total_matrix = check_matrix_validity(total_matrix, "矩阵乘法结果")
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
                     
                     print("完整传输矩阵:")
                     print(total_matrix)
@@ -2088,29 +1777,29 @@ class Error_Of_Trail:
                 try:
                     iron_rail_matrix_no_cap = variable.iron_rail(self.length_parameter)
                     # 检查矩阵是否包含无效值
-                    if not np.all(np.isfinite(iron_rail_matrix_no_cap)):
-                        print("警告：无补偿电容钢轨传输矩阵包含无效值，使用单位矩阵替代")
-                        iron_rail_matrix_no_cap = np.eye(2)
+                    _, iron_rail_matrix_no_cap = check_matrix_validity(iron_rail_matrix_no_cap, "无补偿电容钢轨传输矩阵")
                     print(f"无补偿电容钢轨传输矩阵:\n{iron_rail_matrix_no_cap}")
                     
                     # 构建完整的传输矩阵链，使用无补偿电容的钢轨传输矩阵
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "无补偿电容钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
                     matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix_no_cap, transformer_matrix, spt_cable_matrix, attenuation_mat]
-                    for i, mat in enumerate(matrices):
-                        if not np.all(np.isfinite(mat)):
-                            print(f"警告：矩阵 {i} 包含无效值，使用单位矩阵替代")
-                            matrices[i] = np.eye(2)
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        _, matrices[i] = check_matrix_validity(mat, name)
                     
                     # 执行矩阵乘法
-                    total_matrix = np.dot(matrices[0], matrices[1])
-                    total_matrix = np.dot(total_matrix, matrices[2])
-                    total_matrix = np.dot(total_matrix, matrices[3])
-                    total_matrix = np.dot(total_matrix, matrices[4])
-                    total_matrix = np.dot(total_matrix, matrices[5])
-                    total_matrix = np.dot(total_matrix, matrices[6])
-                    
-                    if not np.all(np.isfinite(total_matrix)):
-                        print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                        total_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            _, total_matrix = check_matrix_validity(total_matrix, "矩阵乘法结果")
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
                     
                     print("完整传输矩阵:")
                     print(total_matrix)
@@ -2124,59 +1813,29 @@ class Error_Of_Trail:
                 try:
                     capacitance_short_matrix = variable.capacitance_matrix(R_cb=0.1, L_cb=1.0e-6, C_b=0)
                     # 检查矩阵是否包含无效值
-                    if not np.all(np.isfinite(capacitance_short_matrix)):
-                        print("警告：短路补偿电容传输矩阵包含无效值，使用单位矩阵替代")
-                        capacitance_short_matrix = np.eye(2)
+                    _, capacitance_short_matrix = check_matrix_validity(capacitance_short_matrix, "短路补偿电容传输矩阵")
                     print(f"短路补偿电容传输矩阵:\n{capacitance_short_matrix}")
                     
                     # 构建完整的传输矩阵链，使用短路电容的传输矩阵
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "短路补偿电容传输矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
                     matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_short_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
-                    for i, mat in enumerate(matrices):
-                        if not np.all(np.isfinite(mat)):
-                            print(f"警告：矩阵 {i} 包含无效值，使用单位矩阵替代")
-                            matrices[i] = np.eye(2)
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        _, matrices[i] = check_matrix_validity(mat, name)
                     
                     # 执行矩阵乘法，添加溢出检查
-                    try:
-                        total_matrix = np.dot(matrices[0], matrices[1])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[2])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[3])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[4])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[5])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[6])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[7])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                        
-                        total_matrix = np.dot(total_matrix, matrices[8])
-                        if not np.all(np.isfinite(total_matrix)):
-                            raise ValueError("矩阵乘法结果包含无效值")
-                    except Exception as e:
-                        print(f"矩阵乘法出错: {e}")
-                        # 出错时使用单位矩阵
-                        total_matrix = np.eye(2)
-                    
-                    if not np.all(np.isfinite(total_matrix)):
-                        print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
-                        total_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            _, total_matrix = check_matrix_validity(total_matrix, "矩阵乘法结果")
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
                     
                     print("完整传输矩阵:")
                     print(total_matrix)

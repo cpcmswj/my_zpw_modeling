@@ -697,7 +697,7 @@ class Variable:
         其中T为钢轨传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
         try:
             # 计算gamma_complex * length
-            gamma_length = self.gamma_complex * length
+            gamma_length = self.get_gamma_complex(length)
             
             # 计算cosh和sinh值
             cosh_val = np.cosh(gamma_length)
