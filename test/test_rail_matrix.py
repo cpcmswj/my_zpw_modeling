@@ -144,11 +144,55 @@ def test_edge_cases():
     except Exception as e:
         print(f"✗ 出错: {e}")
 
+def test_rail_input_impedance():
+    """
+    测试轨道输入阻抗计算方法
+    """
+    print("\n=== 测试轨道输入阻抗计算 ===")
+    
+    # 创建Variable实例
+    variable = Variable(
+        name="track_circuit",
+        value=1.0,
+        length_guidao=1000.0,
+        resist_per_meter=0.1,
+        induct_per_meter=1.0e-3,
+        capacit_per_meter=1.0e-9,
+        conduct_per_meter=1.0e-6,
+        frequency=1700
+    )
+    
+    # 测试不同参数的轨道输入阻抗
+    test_cases = [
+        # (长度, 下一段阻抗, 补偿电容)
+        (100, 50, 5.5e-6),   # 100m, 下一段阻抗50Ω, 补偿电容55μF
+        (500, 100, 5.5e-6),  # 500m, 下一段阻抗100Ω, 补偿电容55μF
+        (1000, 200, 5.5e-6), # 1000m, 下一段阻抗200Ω, 补偿电容55μF
+        (100, 0, 5.5e-6),     # 100m, 下一段阻抗0Ω(短路), 补偿电容55μF
+    ]
+    
+    for i, (length, Z_next, capacitance) in enumerate(test_cases):
+        try:
+            impedance = variable.get_Z_ironrail_with_capacitance(length, Z_next, capacitance)
+            print(f"测试用例 {i+1}: 长度={length}m, 下一段阻抗={Z_next}Ω, 补偿电容={capacitance}F")
+            print(f"输入阻抗: {impedance}")
+            print(f"输入阻抗模: {np.abs(impedance):.2f}Ω")
+            
+            # 检查结果是否有效
+            if np.isfinite(impedance):
+                print(f"✓ 阻抗计算有效")
+            else:
+                print(f"✗ 阻抗计算结果无效")
+                
+        except Exception as e:
+            print(f"✗ 计算测试用例 {i+1} 时出错: {e}")
+
 if __name__ == "__main__":
     print("开始测试钢轨传输矩阵相关方法...")
     
     test_iron_rail_method()
     test_whole_iron_rail_with_capacitance_method()
+    test_rail_input_impedance()
     test_edge_cases()
     
     print("\n测试完成!")

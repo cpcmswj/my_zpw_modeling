@@ -81,12 +81,12 @@ track_circuit_length_table    - 轨道电路传输长度参数表，包含道碴
 """
 
 # 综合参数表，包含载频率对应的补偿电容、变压器变比、调谐区电阻和感抗
-# 格式：[序号, 频率(Hz), 补偿电容(uF), 变压器变比n（不是1：n), 调谐区(BA/SVA引接线)电阻(mΩ), 调谐区感抗(mΩ),衰耗盘接收端变压器输入阻抗(Ω),SPT电缆传输常数(dB/km),SPT电缆特性阻抗（Ω）,SPT电缆阻抗角（°）,钢轨阻抗（Ω/km），钢轨阻抗角(°)]
+# 格式：[序号, 频率(Hz), 补偿电容(uF), 变压器变比n（不是1：n), 调谐区(BA/SVA引接线)电阻(mΩ), 调谐区感抗(mΩ),衰耗盘接收端变压器输入阻抗(Ω),SPT电缆传输常数(dB/km),SPT电缆特性阻抗（Ω）,SPT电缆阻抗角（°）,钢轨阻抗（Ω/km），钢轨阻抗角(°),机械绝缘节空芯线圈电感(uH),机械绝缘节空芯线圈电阻（mΩ）]
 frequency_parameters_table = [
-    [1, 1700, 55, 12, 8.3, 31.4, 36, 0.63, 396, -39,14.08,85.2],
-    [2, 2000, 50, 10, 10.1, 35.2, 43.2, 0.68, 367, -38,16.44,85.44],
-    [3, 2300, 46, 10, 11.9, 39, 48.6, 0.72, 343, -37,18.708,85.62],
-    [4, 2600, 40, 9, 13.6, 42.6, 55, 0.75, 325, -36,21.147,85.78]
+    [1, 1700, 55, 12, 8.3, 31.4, 36, 0.63, 396, -39,14.08,85.2,29.6,29.6],
+    [2, 2000, 50, 10, 10.1, 35.2, 43.2, 0.68, 367, -38,16.44,85.44,28.44,33.58],
+    [3, 2300, 46, 10, 11.9, 39, 48.6, 0.72, 343, -37,18.708,85.62,28.32,33.75],
+    [4, 2600, 40, 9, 13.6, 42.6, 55, 0.75, 325, -36,21.147,85.78,28.25,35.7]
 ]
 #SPT电缆的参数有区间，上表中取中间值
 
@@ -167,6 +167,20 @@ def find_transformer_input_impedance(frequency):
         if item[1] == frequency:
             return item[6]
     return 0
+
+def find_mechanical_insulation_SVA_parameters(frequency):
+    """根据载频率查表获取机械绝缘节空芯线圈参数
+    
+    参数：
+        frequency: int, 载频率(Hz)
+    
+    返回：
+        tuple: (空芯线圈电阻(Ω), 空芯线圈电感(mH))
+    """
+    for item in frequency_parameters_table:
+        if item[1] == frequency:
+            return item[12], item[13]
+    return 0, 0
 
 def find_SPTcable_parameters(frequency, randomize=False, variation=0.1):
     """根据载频率获取单节SPT电缆的参数(传输常数gamma_cable和特性阻抗Z_d和阻抗角phi)
@@ -681,15 +695,22 @@ class Variable:
         """获取轨道特性阻抗"""
         return np.sqrt(self.get_Z_complex(length) / self.get_Y_complex(length))
 
+    def get_Z_capacitance(self,capacitance,Z_out):
+        """获取补偿电容的等效输入阻抗,Z_out为输出端负载"""
+        return Z_out/(1+Z_out/(1j*self.angular_frequency*capacitance))
+
     def get_Z_ironrail_with_capacitance(self,length,Z_next,capacitance):
         """获取一段钢轨的等效输入阻抗,Z_next为下一段钢轨的等效输入阻抗
         漏泄导纳和下一段钢轨阻抗、补偿电容并联，再与轨道阻抗串联"""
-        if Z_next == 0:
-            return self.get_Z_complex(length)+calculate_parallel_impedance(1/self.get_Y_complex(length),1/1j*self.angular_frequency*capacitance)
-        return self.get_Z_complex(length)+calculate_parallel_impedance(1/self.get_Y_complex(length),Z_next,1/1j*self.angular_frequency*capacitance)
+        #if Z_next == 0:
+        #    return self.get_Z_complex(length)+calculate_parallel_impedance(1/self.get_Y_complex(length),1/1j*self.angular_frequency*capacitance)
+        #return self.get_Z_complex(length)+calculate_parallel_impedance(1/self.get_Y_complex(length),Z_next,1/1j*self.angular_frequency*capacitance)
         #return self.Z_c_complex * np.sinh(self.gamma_complex * length) / np.cosh(self.gamma_complex * length) + Z_next
-        
-
+        gamma_length = self.get_gamma_complex(1)*length
+        Z_guidao = self.get_Z_c_complex(1)
+        Z_input=(-Z_next*np.cosh(gamma_length)+Z_guidao*np.sinh(gamma_length))/(Z_next*np.sinh(gamma_length)/Z_guidao-np.cosh(gamma_length))
+        return self.get_Z_capacitance(capacitance,Z_input)
+    
 
     def iron_rail(self, length):
         """计算钢轨等效传输特性矩阵(此为输入端电压电流已知)
@@ -697,7 +718,7 @@ class Variable:
         其中T为钢轨传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
         try:
             # 计算gamma_complex * length
-            gamma_length = self.get_gamma_complex(length)
+            gamma_length = self.get_gamma_complex(1)*length
             
             # 计算cosh和sinh值
             cosh_val = np.cosh(gamma_length)
@@ -820,11 +841,14 @@ class Variable:
                           [(2 * Z1 + Z2) / Z1 ** 2, Z1 + Z2 / Z1]])
         return Q_cable
     
-    def SVA_matrix(self, L_SVA, R_ca):
+    def SVA_matrix(self, L_SVA, R_ca,SVA_type):
         """空芯线圈四端口网络传输矩阵 L_SVA为SVA网络的电感参数 L_ca和R_ca为调谐区参数(查表)
         输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
         其中T为空芯线圈传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
-        R_ca, wL_ca = find_tuner_parameters(self.frequency)
+        if SVA_type==1:
+            R_ca, wL_ca = find_tuner_parameters(self.frequency)
+        elif SVA_type==2:
+            R_ca, wL_ca = find_tuner_parameters(self.frequency)
         Q_SVA = np.array([[1, 0],
                         [1 / (1j * self.angular_frequency * L_SVA + 1j * wL_ca + R_ca), 1]])
         return Q_SVA
@@ -839,7 +863,8 @@ class Variable:
         Z_3 = self.get_Z_complex(self.length_guidao / 2)
         Z_jif = (Z_ca + Z_z0 + Z_3) * (Z_ca + Z_SVA) / (Z_ca + Z_z0 + Z_3 + Z_ca + Z_SVA) + Z_3
         Z_R6 = Z_jif * Z_R5 / (Z_jif + Z_R5)
-        Z_ca = R_ca + 1j * self.angular_frequency * L_ca  # 钢包铜引接线的等效阻抗
+        R_ca, wL_ca = find_tuner_parameters(self.frequency)
+        Z_ca = R_ca + wL_ca  # 钢包铜引接线的等效阻抗
         Q_tuning_unit = np.array([[(Z_R6 + Z_ca) / Z_R6, 0],
                                 [1 / Z_R6, 0]])
         return Q_tuning_unit

@@ -482,10 +482,11 @@ class Error_Of_Trail:
                 self.output_voltage_surface2 = np.array([[0.0], [0.0]])
             #self.output_voltage_surface2=self.count_output()
 
-            #如果是电气绝缘，此处有调谐单元矩阵
-            if self.find_SVA_type(frequency)==1:
-                self.matrix=np.dot(self.matrix,self.parameter.tuning_unit_matrix(self.find_BA_type(frequency)))
-            
+            #如果是电气绝缘，此处有调谐单元矩阵;机械绝缘则有空芯线圈矩阵
+            if self.find_SVA_type(self.error_position)==1:
+                self.matrix=np.dot(self.matrix,self.parameter.tuning_unit_matrix(self.find_BA_type(self.error_position)))
+            elif self.find_SVA_type(self.error_position)==2:
+                self.matrix=np.dot(self.matrix,self.parameter.tuning_unit_matrix(self.find_BA_type(self.error_position)))
 
             # 匹配变压器矩阵
             try:
@@ -1187,6 +1188,7 @@ class Error_Of_Trail:
             
             #最后一段主轨道电阻中Z_next为调谐单元输入阻抗
             Z_next=jg.find_tuning_unit_impedance(2*np.pi*frequency,self.find_BA_type(frequency))
+            
             Z_rail=Z_next
             i=0
             number_of_iron_rails=self.length_parameter/jg.find_capacitance_step(frequency)
