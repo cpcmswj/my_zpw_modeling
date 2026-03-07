@@ -483,10 +483,13 @@ class Error_Of_Trail:
             #self.output_voltage_surface2=self.count_output()
 
             #如果是电气绝缘，此处有调谐单元矩阵;机械绝缘则有空芯线圈矩阵
-            if self.find_SVA_type(self.error_position)==1:
-                self.matrix=np.dot(self.matrix,self.parameter.tuning_unit_matrix(self.find_BA_type(self.error_position)))
-            elif self.find_SVA_type(self.error_position)==2:
-                self.matrix=np.dot(self.matrix,self.parameter.tuning_unit_matrix(self.find_BA_type(self.error_position)))
+            if self.find_SVA_type(self.error_position)==0:
+                resistance, inductance = jg.find_mechanical_insulation_SVA_parameters(frequency)
+                Z_SVA = resistance + 1j * 2 * np.pi * frequency * inductance
+                inv_matrix = np.linalg.inv(self.parameter.SVA_matrix(Z_SVA))
+                self.matrix = np.dot(self.matrix, inv_matrix)
+            elif self.find_SVA_type(self.error_position)==1:
+                self.matrix=np.dot(self.matrix,self.parameter.tuning_unit_matrix(self.find_BA_type(frequency)))
 
             # 匹配变压器矩阵
             try:
@@ -618,17 +621,23 @@ class Error_Of_Trail:
             #受端轨面电压和电流
             self.output_voltage_surface2, self.output_current_surface2 = self.count_output()
             
-            #调谐单元矩阵
-            try:
-                F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
-                tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
-                _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
+            #调谐单元矩阵,如果采用机械绝缘则改为SVA矩阵
+            if self.find_SVA_type(self.error_position)==0:
+                resistance, inductance = jg.find_mechanical_insulation_SVA_parameters(frequency)
+                Z_SVA = resistance + 1j * 2 * np.pi * frequency * inductance
+                inv_matrix = np.linalg.inv(self.parameter.SVA_matrix(Z_SVA))
+                self.matrix = np.dot(self.matrix, inv_matrix)
+            elif self.find_SVA_type(self.error_position)==1:
+                try:
+                    F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
+                    tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
+                    _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
                 
-                self.matrix = np.dot(self.matrix, tuning_unit_matrix)
-                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
-            except Exception as e:
-                print(f"计算调谐单元矩阵时出错: {e}")
-                self.matrix = np.eye(2)
+                    self.matrix = np.dot(self.matrix, tuning_unit_matrix)
+                    _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
+                except Exception as e:
+                    print(f"计算调谐单元矩阵时出错: {e}")
+                    self.matrix = np.eye(2)
             
             # 匹配变压器矩阵
             try:
@@ -872,17 +881,23 @@ class Error_Of_Trail:
                 self.output_voltage_surface2 = complex(0.0)
                 self.output_current_surface2 = complex(0.0)
             
-            #调谐单元矩阵
-            try:
-                F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
-                tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
-                _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
+            #调谐单元矩阵,如果是机械绝缘节，这里改为SVA矩阵
+            if self.find_SVA_type(self.error_position)==0:
+                resistance, inductance = jg.find_mechanical_insulation_SVA_parameters(frequency)
+                Z_SVA = resistance + 1j * 2 * np.pi * frequency * inductance
+                inv_matrix = np.linalg.inv(self.parameter.SVA_matrix(Z_SVA))
+                self.matrix = np.dot(self.matrix, inv_matrix)
+            elif self.find_SVA_type(self.error_position)==1:
+                try:
+                    F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
+                    tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
+                    _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
                 
-                self.matrix = np.dot(self.matrix, tuning_unit_matrix)
-                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
-            except Exception as e:
-                print(f"计算调谐单元矩阵时出错: {e}")
-                self.matrix = np.eye(2)
+                    self.matrix = np.dot(self.matrix, tuning_unit_matrix)
+                    _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
+                except Exception as e:
+                    print(f"计算调谐单元矩阵时出错: {e}")
+                    self.matrix = np.eye(2)
             
             # 匹配变压器矩阵
             try:
@@ -1008,17 +1023,24 @@ class Error_Of_Trail:
                 self.output_voltage_surface2 = complex(0.0)
                 self.output_current_surface2 = complex(0.0)
             
-            #调谐单元矩阵
-            try:
-                F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
-                tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
-                _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
+            #调谐单元矩阵，
+            #如果是机械绝缘节，这里改为SVA矩阵
+            if self.find_SVA_type(self.error_position)==0:
+                resistance, inductance = jg.find_mechanical_insulation_SVA_parameters(frequency)
+                Z_SVA = resistance + 1j * 2 * np.pi * frequency * inductance
+                inv_matrix = np.linalg.inv(self.parameter.SVA_matrix(Z_SVA))
+                self.matrix = np.dot(self.matrix, inv_matrix)
+            elif self.find_SVA_type(self.error_position)==1:
+                try:
+                    F=self.find_BA_type_tuning_zone()[1]#调谐单元类型，之后要改
+                    tuning_unit_matrix = jg.find_tuning_unit_impedance_matrix(2*np.pi*frequency,F)
+                    _, tuning_unit_matrix = check_matrix_validity(tuning_unit_matrix, "调谐单元矩阵")
                 
-                self.matrix = np.dot(self.matrix, tuning_unit_matrix)
-                _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
-            except Exception as e:
-                print(f"计算调谐单元矩阵时出错: {e}")
-                self.matrix = np.eye(2)
+                    self.matrix = np.dot(self.matrix, tuning_unit_matrix)
+                    _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
+                except Exception as e:
+                    print(f"计算调谐单元矩阵时出错: {e}")
+                    self.matrix = np.eye(2)
             
             # 匹配变压器矩阵
             try:

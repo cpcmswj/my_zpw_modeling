@@ -224,29 +224,31 @@ def find_tuning_unit_parameters(f, unit, randomize=False, variation=0.05):
         variation: float, 随机变化范围，默认为5%
     
     返回：
-        float: 调谐单元元件参数值
+        float: 调谐单元元件参数值，电感单位为H，电容单位为F
     """
     if randomize:
         # 使用随机生成的参数
         try:
             from random_parameters import generate_random_tuning_unit_params
-            return generate_random_tuning_unit_params(f, unit, variation)
+            # 假设generate_random_tuning_unit_params返回的是uH和uF，需要转换为H和F
+            value = generate_random_tuning_unit_params(f, unit, variation)
+            return value * 1e-6
         except ImportError:
             print("无法导入random_parameters模块，使用原始查表值")
     
     # 使用原始查表值
     if f == 1:  # F1
-        if unit == 1:  # L1,单位uH
-            return 37.145
-        elif unit == 2:  # C1,单位uF
-            return 128.91
+        if unit == 1:  # L1,单位H (转换自uH)
+            return 37.145e-6
+        elif unit == 2:  # C1,单位F (转换自uF)
+            return 128.91e-6
     elif f == 2:  # F2
-        if unit == 1:  # L2,单位uH
-            return 97.387
-        elif unit == 2:  # C2,单位uF
-            return 90.0
-        elif unit == 3:  # C3,单位uF
-            return 236.604
+        if unit == 1:  # L2,单位H (转换自uH)
+            return 97.387e-6
+        elif unit == 2:  # C2,单位F (转换自uF)
+            return 90.0e-6
+        elif unit == 3:  # C3,单位F (转换自uF)
+            return 236.604e-6
     print("未找到该调谐单元参数")
     return 0
 
@@ -345,7 +347,7 @@ def find_track_circuit_length(ballast_resist, cable_length, frequency):
     return track_circuit_length_table[ballast_index][cable_index][frequency_index]
 
 def find_resist_V1V2(frequency):
-    """V1V2端即接收端输入变压器的输入阻抗"""
+    """V1V2端即接收端输入变压器的输入阻抗,单位为Ω"""
     if frequency == 1700:
         return 1j*36.0
     elif frequency == 2000:
@@ -515,7 +517,7 @@ def get_rail_parameters(frequency):
     return resist_per_meter, induct_per_meter
 
 def SPTcable_matrix(frequency, length):
-    """根据电缆参数和长度计算电缆矩阵,gamma_cable为单位长度电缆的传输常数 Z_d为单位长度电缆的特性阻抗 length为电缆长度
+    """根据电缆参数和长度计算电缆矩阵,gamma_cable为单位长度电缆的传输常数 Z_d为单位长度电缆的特性阻抗 length为电缆长度(单位:米)
     输入输出关系: [V_in, I_in]^T = T * [V_out, I_out]^T
     其中T为电缆传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
     # 计算电缆的复数阻抗
@@ -607,19 +609,7 @@ def calculate_admittance(resist, induct, capacit, angular_frequency=0):
         admittance_mod = np.abs(admittance_complex)
     
     return admittance_mod, admittance_complex
-def find_mSVA(frequency):
-    """根据频率查找空芯线圈电感"""
-    # 空芯线圈电感与频率的关系（示例）
-    if frequency==1700:
-        return 29.6e-6  # 29.6uH
-    elif frequency==2000:
-        return 28.44e-6  # 28.44uH
-    elif frequency==2300:
-        return 28.32e-6  # 28.32uH
-    elif frequency==2600:
-        return 28.25e-6  # 28.25uH
-    else:
-        return 33.5e-6  # 33.5uH
+
 
 
 
@@ -848,16 +838,14 @@ class Variable:
                           [(2 * Z1 + Z2) / Z1 ** 2, Z1 + Z2 / Z1]])
         return Q_cable
     
-    def SVA_matrix(self, L_SVA, R_ca,SVA_type):
+    def SVA_matrix(self, Z_SVA):
         """空芯线圈四端口网络传输矩阵 L_SVA为SVA网络的电感参数 L_ca和R_ca为调谐区参数(查表)
         输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
         其中T为空芯线圈传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
-        if SVA_type==1:
-            R_ca, wL_ca = find_tuner_parameters(self.frequency)
-        elif SVA_type==2:
-            R_ca, wL_ca = find_tuner_parameters(self.frequency)
+        
+        R_ca, wL_ca = find_tuner_parameters(self.frequency)
         Q_SVA = np.array([[1, 0],
-                        [1 / (1j * self.angular_frequency * L_SVA + 1j * wL_ca + R_ca), 1]])
+                        [1 / (Z_SVA + 1j * wL_ca + R_ca), 1]])
         return Q_SVA
     
     def tuning_unit_matrix(self, F):
@@ -865,15 +853,15 @@ class Variable:
         输入输出关系: [V_out, I_out]^T = T * [V_in, I_in]^T
         其中T为调谐单元传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
         # Z_z0为调谐单元的零阻抗
-        Z_R5 = 1  # 之后再来补充
         Z_z0 = find_tuning_unit_impedance(self.angular_frequency, F)
-        Z_3 = self.get_Z_complex(self.length_guidao / 2)
-        Z_jif = (Z_ca + Z_z0 + Z_3) * (Z_ca + Z_SVA) / (Z_ca + Z_z0 + Z_3 + Z_ca + Z_SVA) + Z_3
-        Z_R6 = Z_jif * Z_R5 / (Z_jif + Z_R5)
-        R_ca, wL_ca = find_tuner_parameters(self.frequency)
-        Z_ca = R_ca + wL_ca  # 钢包铜引接线的等效阻抗
-        Q_tuning_unit = np.array([[(Z_R6 + Z_ca) / Z_R6, 0],
-                                [1 / Z_R6, 0]])
+        
+        # 处理Z_z0为0的情况，避免除以零错误
+        if Z_z0 == 0 or np.isclose(Z_z0, 0):
+            print("警告：调谐单元阻抗为零，使用单位矩阵替代")
+            return np.eye(2)
+        
+        Q_tuning_unit = np.array([[1, 0],
+                                [-1 / Z_z0, 1]])
         return Q_tuning_unit
 
 class tuning_zone_parameters:
@@ -899,7 +887,7 @@ class tuning_zone_parameters:
         if SVA_type == 1:
             self.L_SVA = 33.5e-6  # 33.5uH
         else:
-            self.L_SVA = find_mSVA(Variable.frequency)  # 33.5uH
+            self.L_SVA = find_mechanical_insulation_SVA_parameters(Variable.frequency)[1]
         
         self.Z_g = Variable.get_Z_complex(L_BA / 2)
         self.angular_frequency = Variable.angular_frequency
