@@ -141,7 +141,7 @@ def find_capacitance_step(frequency):
         return 0
 
 def find_capacitance(frequency):
-    """根据载频率查表获取补偿电容值"""
+    """根据载频率查表获取补偿电容值，单位为F"""
     for item in frequency_parameters_table:
         if item[1] == frequency:
             return item[2]
@@ -539,7 +539,7 @@ def SPTcable_matrix(frequency, length):
     return Q_cable
 
 def SPTcable_impedance(frequency, Z_cable_o, length):
-    """根据电缆参数和长度计算电缆特性阻抗,gamma_cable为单位长度电缆的传输常数 Z_d为单位长度电缆的特性阻抗 Z_cable_I为电缆输入端的等效阻抗 Z_cable_o为电缆输出端的等效阻抗 length为电缆长度"""
+    """根据电缆参数和长度计算电缆特性阻抗,gamma_cable为单位长度电缆的传输常数 Z_d为单位长度电缆的特性阻抗 Z_cable_I为电缆输入端的等效阻抗 Z_cable_o为电缆输出端的等效阻抗 length为电缆长度（m）"""
     if length == 0:
         print("电缆长度为0,需要修正")
         return 1

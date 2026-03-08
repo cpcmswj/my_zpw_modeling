@@ -330,6 +330,67 @@
                 align-items: stretch;
             }
         }
+        
+        /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        @keyframes modalFadeIn {
+            from {opacity: 0; transform: translateY(-20px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            margin-top: 20px;
+        }
+        
+        .modal-body h3 {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .modal-body p {
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -570,6 +631,20 @@
                     <button id="resetBtn" class="btn secondary" onclick="resetSystem()">重置</button>
                     <button id="nextBtn" class="btn" onclick="nextStep()">下一步</button>
                     <button id="simulateBtn" class="btn" onclick="startSimulation()" style="display: none;">开始模拟</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 警告弹窗 -->
+    <div id="warningModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeWarningModal()">&times;</span>
+            <div class="modal-body">
+                <h3 id="warningTitle">警告</h3>
+                <p id="warningMessage">请选择一个铁路区段</p>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn" onclick="closeWarningModal()">确定</button>
                 </div>
             </div>
         </div>
@@ -864,6 +939,26 @@
             }
         }
         
+        // 显示警告弹窗
+        function showWarningModal(title, message) {
+            document.getElementById('warningTitle').textContent = title;
+            document.getElementById('warningMessage').textContent = message;
+            document.getElementById('warningModal').style.display = 'block';
+        }
+        
+        // 关闭警告弹窗
+        function closeWarningModal() {
+            document.getElementById('warningModal').style.display = 'none';
+        }
+        
+        // 点击弹窗外部关闭
+        window.onclick = function(event) {
+            const warningModal = document.getElementById('warningModal');
+            if (event.target == warningModal) {
+                closeWarningModal();
+            }
+        }
+        
         // 验证当前步骤
         function validateCurrentStep() {
             let isValid = true;
@@ -875,9 +970,7 @@
             switch (currentStep) {
                 case 1:
                     if (!selectedSection) {
-                        sectionValidation.textContent = '❌ 请选择一个铁路区段';
-                        sectionValidation.className = 'validation-message error';
-                        sectionValidation.style.display = 'block';
+                        showWarningModal('警告', '请选择一个铁路区段');
                         isValid = false;
                     } else {
                         sectionValidation.textContent = '✅ 已选择轨道区段';
@@ -888,9 +981,7 @@
                 case 2:
                     // 当selectedErrorType为0（无故障）时，验证也应该通过
                     if (selectedErrorType === null || selectedErrorType === undefined) {
-                        errorTypeValidation.textContent = '❌ 请选择一个错误类型';
-                        errorTypeValidation.className = 'validation-message error';
-                        errorTypeValidation.style.display = 'block';
+                        showWarningModal('警告', '请选择一个错误类型');
                         isValid = false;
                     } else {
                         errorTypeValidation.textContent = '✅ 已选择错误类型';
@@ -920,9 +1011,7 @@
                     const isTerminalValid = validCombinations.some(comb => comb[0] === r1 && comb[1] === r2);
                     
                     if (!isTerminalValid) {
-                        validationElement.textContent = '❌ 衰耗盘端子组合无效，请选择正确的端子组合';
-                        validationElement.className = 'validation-message error';
-                        validationElement.style.display = 'block';
+                        showWarningModal('警告', '衰耗盘端子组合无效，请选择正确的端子组合');
                         isValid = false;
                     } else {
                         validationElement.textContent = '✅ 衰耗盘端子选择正确';
