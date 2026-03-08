@@ -91,7 +91,7 @@ def find_SVA_type(zone):
 
 
 class Error_Of_Trail:
-    def __init__(self,trail,error_type,error_value,error_position,length_parameter,SPT_cable_length,input_V=10.0,r1=1,r2=1):
+    def __init__(self,trail,error_type,error_value,error_position,length_parameter,SPT_cable_length,input_V=130.0,r1=1,r2=1):
         self.trail=trail
         self.error_type=error_type
         self.error_value=error_value
@@ -292,7 +292,7 @@ class Error_Of_Trail:
             self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.length_parameter)),self.matrix)
             #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.length_parameter))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
-            transformer_ratio = jg.find_transformer_ratio(frequency)
+            
             self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
             #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             
@@ -310,7 +310,7 @@ class Error_Of_Trail:
             # SPT电缆矩阵
             self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
             # 匹配变压器矩阵（使用transformer_matrix_input方法）
-            transformer_ratio = jg.find_transformer_ratio(frequency)
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
             #调谐区矩阵
             self.matrix=np.dot(self.matrix,self.tuning_parameters.tuning_zone_matrix_f2(10))
              # 匹配变压器矩阵
@@ -415,9 +415,9 @@ class Error_Of_Trail:
             # SPT电缆矩阵
             self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
             #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
-            # 匹配变压器矩阵（使用transformer_matrix_input方法）
-            transformer_ratio = jg.find_transformer_ratio(frequency)
-            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_input()),self.matrix)
+            # 发送端匹配变压器矩阵
+            
+            self.matrix=np.dot(np.linalg.inv(self.parameter.transformer_matrix_output()),self.matrix)
             #self.matrix=np.dot(self.matrix,self.parameter.transformer_matrix_input())
             
             #送端轨面电压电流矩阵
@@ -491,7 +491,7 @@ class Error_Of_Trail:
             elif self.find_SVA_type(self.error_position)==1:
                 self.matrix=np.dot(self.matrix,self.parameter.tuning_unit_matrix(self.find_BA_type(frequency)))
 
-            # 匹配变压器矩阵
+            # 接收端匹配变压器矩阵
             try:
                 transformer_matrix = self.parameter.transformer_matrix_input()
                 # 检查矩阵是否包含无效值
@@ -1201,7 +1201,7 @@ class Error_Of_Trail:
         frequency = self.frequency_table(self.error_position)
         
         #从输入端出发，经过SPT电缆和匹配变压器，之后抵达钢轨后视为主轨道和小轨道两边的等效电阻并联？
-        self.input_V=input_V
+        #self.input_V=input_V
         if self.error_type==0:
             #SPT电缆————匹配变压器——调谐单元——空芯线圈——调谐单元——匹配变压器——SPT电缆——接收端
             
