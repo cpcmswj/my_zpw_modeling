@@ -235,7 +235,7 @@ def main():
         return
     
     # 确定要打开的页面
-    pages_to_open = args.pages if args.pages else [page for page in define_pages.keys() if page not in ['image_viewer', 'section_image', 'test_image']]
+    pages_to_open = args.pages if args.pages else ['integrated', 'batch_simulation']
 
     
     # 打开页面

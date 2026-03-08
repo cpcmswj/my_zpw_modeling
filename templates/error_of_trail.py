@@ -454,8 +454,8 @@ class Error_Of_Trail:
                 _, iron_rail_matrix = check_matrix_validity(iron_rail_matrix, "钢轨传输矩阵")
                 
                 # 执行矩阵乘法
-                self.matrix = np.dot(self.matrix, iron_rail_matrix)
-                
+                #self.matrix = np.dot(self.matrix, iron_rail_matrix)
+                self.matrix = np.dot(np.linalg.inv(iron_rail_matrix),self.matrix)
                 # 检查结果是否有效
                 _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
                 

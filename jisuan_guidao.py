@@ -527,12 +527,10 @@ def SPTcable_matrix(frequency, length):
     # 单位转换：将dB/km转换为Nepers/km (1 Nepers = 8.686 dB)
     gamma_cable_nepers_km = gamma_cable_dbkm / 8.686
     
-    # 确保长度单位为km（如果输入是m，转换为km）
-    # 假设输入的length单位是m，因为在其他地方使用的是米
-    length_km = length / 1000
+    #长度单位为km,无需换算
     
     # 计算实际的传输常数乘以长度
-    gamma_length = gamma_cable_nepers_km * length_km
+    gamma_length = gamma_cable_nepers_km * length
     
     Q_cable = np.array([[np.cosh(gamma_length), Z_d * np.sinh(gamma_length)],
                       [np.sinh(gamma_length) / Z_d, np.cosh(gamma_length)]])
