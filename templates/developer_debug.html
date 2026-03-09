@@ -469,6 +469,7 @@
                     <button class="tab-button" onclick="openTab(event, 'detailedParams')">详细参数</button>
                     <button class="tab-button" onclick="openTab(event, 'debugInfo')">调试信息</button>
                     <button class="tab-button" onclick="openTab(event, 'timelineView')">时间线视图</button>
+                    <button class="tab-button" onclick="openTab(event, 'parameterTables')">参数表格</button>
                 </div>
                 
                 <div id="voltageResults" class="tab-content active">
@@ -531,6 +532,43 @@
                         <p class="loading">请运行模拟以查看时间线</p>
                     </div>
                 </div>
+                
+                <div id="parameterTables" class="tab-content">
+                    <div class="result-container">
+                        <div class="result-title">参数表格</div>
+                        <div class="result-content">
+                            <h3>综合参数表 (frequency_parameters_table)</h3>
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                <thead>
+                                    <tr style="background-color: #3498db; color: white;">
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">序号</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">频率(Hz)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">补偿电容(F)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">变压器变比</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">调谐区电阻(Ω)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">调谐区感抗(Ω)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">变压器输入阻抗(Ω)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">SPT传输常数(dB/km)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">SPT特性阻抗(Ω)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">SPT阻抗角(°)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">钢轨阻抗(Ω/km)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">钢轨阻抗角(°)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">机械绝缘节电感(uH)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">机械绝缘节电阻(mΩ)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="frequencyParametersTableBody">
+                                    <!-- 表格内容将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                            
+                            <h3>轨道电路传输长度参数表 (track_circuit_length_table)</h3>
+                            <div id="trackCircuitLengthTableContainer">
+                                <!-- 表格内容将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- 步骤详情区域 -->
@@ -538,6 +576,37 @@
                 <h2>🔍 步骤详情</h2>
                 <div id="stepsContent">
                     <p class="loading">请运行模拟以查看步骤详情</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 调整表图片展示 -->
+        <div class="section">
+            <h2>📋 调整表图片</h2>
+            <div style="display: flex; flex-direction: column; gap: 40px; margin-top: 20px;">
+                <div class="image-card" style="background-color: white; border: 1px solid #ddd; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h4 style="text-align: center; margin-bottom: 20px; color: #3498db; font-size: 18px;">1700hz调整表</h4>
+                    <div style="display: flex; justify-content: center;">
+                        <img src="/static/images/1700hz调整表.png" alt="1700hz调整表" style="max-width: 100%; max-height: 600px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; padding: 15px; background-color: #f9f9f9;">
+                    </div>
+                </div>
+                <div class="image-card" style="background-color: white; border: 1px solid #ddd; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h4 style="text-align: center; margin-bottom: 20px; color: #3498db; font-size: 18px;">2000hz调整表</h4>
+                    <div style="display: flex; justify-content: center;">
+                        <img src="/static/images/2000hz调整表.png" alt="2000hz调整表" style="max-width: 100%; max-height: 600px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; padding: 15px; background-color: #f9f9f9;">
+                    </div>
+                </div>
+                <div class="image-card" style="background-color: white; border: 1px solid #ddd; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h4 style="text-align: center; margin-bottom: 20px; color: #3498db; font-size: 18px;">2300hz调整表</h4>
+                    <div style="display: flex; justify-content: center;">
+                        <img src="/static/images/2300hz调整表.png" alt="2300hz调整表" style="max-width: 100%; max-height: 600px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; padding: 15px; background-color: #f9f9f9;">
+                    </div>
+                </div>
+                <div class="image-card" style="background-color: white; border: 1px solid #ddd; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h4 style="text-align: center; margin-bottom: 20px; color: #3498db; font-size: 18px;">2600hz调整表</h4>
+                    <div style="display: flex; justify-content: center;">
+                        <img src="/static/images/2600hz调整表.png" alt="2600hz调整表" style="max-width: 100%; max-height: 600px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; padding: 15px; background-color: #f9f9f9;">
+                    </div>
                 </div>
             </div>
         </div>
@@ -923,13 +992,124 @@
             }
         }
         
-        // SPT电缆参数表（来自jisuan_guidao.py）
+        // 综合参数表（来自jisuan_guidao.py）
         const frequencyParametersTable = [
-            [1, 1700, 55, 12, 8.3, 31.4, 36, 0.63, 396, -39, 14.08, 85.2],
-            [2, 2000, 50, 10, 10.1, 35.2, 43.2, 0.68, 367, -38, 16.44, 85.44],
-            [3, 2300, 46, 10, 11.9, 39, 48.6, 0.72, 343, -37, 18.708, 85.62],
-            [4, 2600, 40, 9, 13.6, 42.6, 55, 0.75, 325, -36, 21.147, 85.78]
+            [1, 1700, 55e-6, 12, 8.3e-3, 31.4e-3, 36, 0.63, 396, -39, 14.08, 85.2, 29.6, 29.6],
+            [2, 2000, 50e-6, 10, 10.1e-3, 35.2e-3, 43.2, 0.68, 367, -38, 16.44, 85.44, 28.44, 33.58],
+            [3, 2300, 46e-6, 10, 11.9e-3, 39e-3, 48.6, 0.72, 343, -37, 18.708, 85.62, 28.32, 33.75],
+            [4, 2600, 40e-6, 9, 13.6e-3, 42.6e-3, 55, 0.75, 325, -36, 21.147, 85.78, 28.25, 35.7]
         ];
+        
+        // 轨道电路传输长度参数表（来自jisuan_guidao.py）
+        const trackCircuitLengthTable = [
+            // 道碴电阻=1.0Ω·km
+            [
+                // 电缆长度=10km
+                [1.5, 1.5, 1.5, 1.46],
+                // 电缆长度=12.5km
+                [1.5, 1.4, 1.4, 1.3],
+                // 电缆长度=15km
+                [1.4, 1.4, 1.3, 1.3]
+            ],
+            // 道碴电阻=1.2Ω·km
+            [
+                // 电缆长度=10km
+                [1.75, 1.7, 1.65, 1.6],
+                // 电缆长度=12.5km
+                [1.6, 1.6, 1.6, 1.5],
+                // 电缆长度=15km
+                [1.5, 1.5, 1.4, 1.4]
+            ],
+            // 道碴电阻=1.5Ω·km
+            [
+                // 电缆长度=10km
+                [1.9, 1.9, 1.8, 1.8],
+                // 电缆长度=12.5km
+                [1.8, 1.8, 1.8, 1.7],
+                // 电缆长度=15km
+                [1.7, 1.6, 1.6, 1.5]
+            ]
+        ];
+        
+        // 填充综合参数表
+        function populateFrequencyParametersTable() {
+            const tableBody = document.getElementById('frequencyParametersTableBody');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = '';
+            
+            frequencyParametersTable.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[0]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[1]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[2].toExponential(2)}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[3]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[4].toExponential(2)}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[5].toExponential(2)}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[6]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[7]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[8]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[9]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[10]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[11]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[12]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[13]}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+        
+        // 填充轨道电路传输长度参数表
+        function populateTrackCircuitLengthTable() {
+            const container = document.getElementById('trackCircuitLengthTableContainer');
+            if (!container) return;
+            
+            const ballastResistances = [1.0, 1.2, 1.5];
+            const cableLengths = [10, 12.5, 15];
+            const frequencies = [1700, 2000, 2300, 2600];
+            
+            let html = '';
+            
+            ballastResistances.forEach((ballastResist, brIndex) => {
+                html += `<h4>道碴电阻: ${ballastResist} Ω·km</h4>`;
+                html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">`;
+                html += `<thead>`;
+                html += `<tr style="background-color: #3498db; color: white;">`;
+                html += `<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">电缆长度 (km)</th>`;
+                frequencies.forEach(freq => {
+                    html += `<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${freq} Hz</th>`;
+                });
+                html += `</tr>`;
+                html += `</thead>`;
+                html += `<tbody>`;
+                
+                cableLengths.forEach((cableLength, clIndex) => {
+                    html += `<tr>`;
+                    html += `<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${cableLength}</td>`;
+                    frequencies.forEach((freq, fIndex) => {
+                        html += `<td style="border: 1px solid #ddd; padding: 8px;">${trackCircuitLengthTable[brIndex][clIndex][fIndex]}</td>`;
+                    });
+                    html += `</tr>`;
+                });
+                
+                html += `</tbody>`;
+                html += `</table>`;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 初始化参数表格
+        function initParameterTables() {
+            populateFrequencyParametersTable();
+            populateTrackCircuitLengthTable();
+        }
+        
+        // 页面加载完成后初始化参数表格
+        document.addEventListener('DOMContentLoaded', function() {
+            initParameterTables();
+        });
         
         // 根据频率查表获取SPT电缆参数
         function findSPTCableParameters(frequency) {

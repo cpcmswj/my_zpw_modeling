@@ -29,7 +29,8 @@ define_pages = {
     'batch_simulation': 'http://127.0.0.1:8000/batch-simulation',
     'fsk_signal': 'http://127.0.0.1:8000/fsk-signal-viewer',
     'alternating_2fsk': 'http://127.0.0.1:8000/alternating-2fsk-viewer',
-    'test_image': 'http://127.0.0.1:8000/test-image'
+    'test_image': 'http://127.0.0.1:8000/test-image',
+    'developer_debug': 'http://127.0.0.1:8000/developer-debug'
 }
 
 def is_port_in_use(port):
@@ -235,7 +236,7 @@ def main():
         return
     
     # 确定要打开的页面
-    pages_to_open = args.pages if args.pages else ['integrated', 'batch_simulation']
+    pages_to_open = args.pages if args.pages else ['integrated', 'batch_simulation', 'developer_debug']
 
     
     # 打开页面
