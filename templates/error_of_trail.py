@@ -91,7 +91,7 @@ def find_SVA_type(zone):
 
 
 class Error_Of_Trail:
-    def __init__(self,trail,error_type,error_value,error_position,length_parameter,SPT_cable_length,input_V=130.0,r1=1,r2=1):
+    def __init__(self,trail,error_type,error_value,error_position,length_parameter,SPT_cable_length,input_V=130.0,r1=1,r2=1,r3=1,r4=1):
         self.trail=trail
         self.error_type=error_type
         self.error_value=error_value
@@ -106,7 +106,10 @@ class Error_Of_Trail:
         # 衰耗盘端子
         self.r1 = r1
         self.r2 = r2
-
+        # 衰耗盘端子
+        self.r3 = r3
+        self.r4 = r4
+        
         # 计算频率
         frequency = self.frequency_table(self.error_position)
         # 根据频率获取钢轨参数
@@ -211,7 +214,7 @@ class Error_Of_Trail:
 
     def reinitialize_parameters(self, error_type=None, error_value=None, error_position=None,
                                 length_parameter=None, SPT_cable_length=None, input_V=None, resist_per_meter=None, induct_per_meter=None,
-                                capacit_per_meter=None, conduct_per_meter=None, r1=None, r2=None):
+                                capacit_per_meter=None, conduct_per_meter=None, r1=None, r2=None, r3=None, r4=None):
         """
         根据用户输入的参数重新初始化Variable和tuning_zone_parameters
         
@@ -226,8 +229,10 @@ class Error_Of_Trail:
             induct_per_meter (float, optional): 每米电感
             capacit_per_meter (float, optional): 每米电容
             conduct_per_meter (float, optional): 每米电导
-            r1 (int, optional): 衰耗盘端子1
+            r1 (int, optional): 衰耗盘端子1(主轨道)
             r2 (int, optional): 衰耗盘端子2
+            r3 (int, optional): 衰耗盘端子3（小轨道）
+            r4 (int, optional): 衰耗盘端子4
         """
         # 使用现有值作为默认值
         if error_type is not None:
@@ -246,6 +251,10 @@ class Error_Of_Trail:
             self.r1 = r1
         if r2 is not None:
             self.r2 = r2
+        if r3 is not None:
+            self.r3 = r3
+        if r4 is not None:
+            self.r4 = r4
         
         # 计算频率
         frequency = self.frequency_table(self.error_position)
@@ -366,11 +375,30 @@ class Error_Of_Trail:
             self.matrix=np.dot(np.linalg.inv(jg.SPTcable_matrix(frequency, self.SPT_cable_length)),self.matrix)
             #self.matrix=np.dot(self.matrix,jg.SPTcable_matrix(frequency, self.SPT_cable_length))
 
-            return self.matrix
-        
-        
+            
         else:
             return "未知故障类型"
+         # 轨出2电压，经过衰耗盘
+        try:
+            attenuation_matrix = jg.attenuation_matrix(self.r3, self.r4)
+            _, attenuation_matrix = check_matrix_validity(attenuation_matrix, "衰耗盘矩阵")
+            
+            self.matrix = np.dot(self.matrix, attenuation_matrix)
+            _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
+            
+            self.output_voltage_main_2, self.output_current_main_2 = self.count_output()
+            # 检查结果是否有效
+            if hasattr(self, 'output_voltage_main_1') and (not np.isfinite(self.output_voltage_main_1.real) or not np.isfinite(self.output_voltage_main_1.imag)):
+                print("警告：轨出2电压计算结果包含无效值")
+            if hasattr(self, 'output_current_main_1') and (not np.isfinite(self.output_current_main_1.real) or not np.isfinite(self.output_current_main_1.imag)):
+                print("警告：轨出2电流计算结果包含无效值")
+        except Exception as e:
+            print(f"计算轨出2电压和电流时出错: {e}")        
+        
+        return {"matrix": self.matrix,
+                "output_voltage_main_2": self.output_voltage_main_2,
+                "output_current_main_2": self.output_current_main_2}
+        
 
     def call_matrix_main(self):
         """计算传输矩阵，信号流向主轨道,之后需要添加计算补偿电容个数的方式"""
