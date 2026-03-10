@@ -21,7 +21,7 @@ import sys
 
 # 定义页面映射
 define_pages = {
-    'index': 'http://127.0.0.1:8000/integrated-system',
+    'index': 'http://127.0.0.1:8000/',
     'image_viewer': 'http://127.0.0.1:8000/image-viewer',
     'section_image': 'http://127.0.0.1:8000/section-image-viewer',
     'integrated': 'http://127.0.0.1:8000/integrated-system',
@@ -236,7 +236,7 @@ def main():
         return
     
     # 确定要打开的页面
-    pages_to_open = args.pages if args.pages else ['integrated', 'batch_simulation', 'developer_debug']
+    pages_to_open = args.pages if args.pages else ['index']
 
     
     # 打开页面

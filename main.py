@@ -23,10 +23,10 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# 根路径，返回集成系统页面
+# 根路径，返回新的首页
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("integrated_system.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request})
 
 # 图片查看器页面 - 使用模板引擎
 @app.get("/image-viewer", response_class=HTMLResponse)
