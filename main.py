@@ -73,6 +73,11 @@ async def read_batch_simulation(request: Request):
 async def read_developer_debug(request: Request):
     return templates.TemplateResponse("developer_debug.html", {"request": request})
 
+# 正弦波波形生成器页面
+@app.get("/sine-wave-generator", response_class=HTMLResponse)
+async def read_sine_wave_generator(request: Request):
+    return templates.TemplateResponse("sine_wave_generator.html", {"request": request})
+
 # 直接返回HTML内容的图片查看器页面
 @app.get("/image-viewer-direct", response_class=HTMLResponse)
 async def read_image_viewer_direct():

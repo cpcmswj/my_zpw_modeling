@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正弦波波形生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h2 {
+            color: #3498db;
+            margin: 20px 0 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn.secondary {
+            background-color: #95a5a6;
+        }
+        .btn.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .form-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .wave-display {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .data-display {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            min-height: 100px;
+            border: 1px solid #ddd;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .loading { color: #7f8c8d; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>正弦波波形生成器</h1>
+        <div style="margin-bottom: 20px; text-align: center;">
+            <a href="/" class="btn">返回首页</a>
+        </div>
+        
+        <h2>参数输入</h2>
+        <form id="waveForm" onsubmit="event.preventDefault(); generateWave();">
+            <h3>初始参数</h3>
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="amplitude1">幅值 (V):</label>
+                    <input type="number" id="amplitude1" value="1.0" step="0.1" min="0.1">
+                </div>
+                <div class="form-col">
+                    <label for="frequency1">频率 (Hz):</label>
+                    <input type="number" id="frequency1" value="1.0" step="0.1" min="0.1">
+                </div>
+                <div class="form-col">
+                    <label for="phase1">相角 (度):</label>
+                    <input type="number" id="phase1" value="0" step="1" min="-360" max="360">
+                </div>
+            </div>
+            
+            <h3>变换参数</h3>
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="changeTime">变换时刻 (秒):</label>
+                    <input type="number" id="changeTime" value="1.0" step="0.1" min="0.1" max="9.9">
+                </div>
+                <div class="form-col">
+                    <label for="amplitude2">幅值 (V):</label>
+                    <input type="number" id="amplitude2" value="2.0" step="0.1" min="0.1">
+                </div>
+                <div class="form-col">
+                    <label for="frequency2">频率 (Hz):</label>
+                    <input type="number" id="frequency2" value="2.0" step="0.1" min="0.1">
+                </div>
+                <div class="form-col">
+                    <label for="phase2">相角 (度):</label>
+                    <input type="number" id="phase2" value="0" step="1" min="-360" max="360">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="duration">总时长 (秒):</label>
+                    <input type="number" id="duration" value="2" step="0.1" min="0.1" max="10">
+                </div>
+                <div class="form-col">
+                    <label for="samples">采样点数:</label>
+                    <input type="number" id="samples" value="500" step="100" min="100" max="2000">
+                </div>
+            </div>
+            <button type="submit" class="btn">生成波形</button>
+            <button type="button" class="btn secondary" onclick="clearForm()">重置</button>
+        </form>
+        
+        <h2>波形显示</h2>
+        <div class="wave-display">
+            <canvas id="waveCanvas" width="1000" height="400"></canvas>
+            <div id="waveInfo" class="data-display">
+                <p class="loading">请输入参数并点击生成波形按钮</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始生成一个默认波形
+            generateWave();
+        });
+
+        // 生成波形
+        function generateWave() {
+            const canvas = document.getElementById('waveCanvas');
+            const ctx = canvas.getContext('2d');
+            const waveInfo = document.getElementById('waveInfo');
+            
+            try {
+                // 获取输入参数
+                const amplitude1 = parseFloat(document.getElementById('amplitude1').value);
+                const frequency1 = parseFloat(document.getElementById('frequency1').value);
+                const phase1 = parseFloat(document.getElementById('phase1').value);
+                const changeTime = parseFloat(document.getElementById('changeTime').value);
+                const amplitude2 = parseFloat(document.getElementById('amplitude2').value);
+                const frequency2 = parseFloat(document.getElementById('frequency2').value);
+                const phase2 = parseFloat(document.getElementById('phase2').value);
+                const duration = parseFloat(document.getElementById('duration').value);
+                const samples = parseInt(document.getElementById('samples').value);
+                
+                // 验证变换时刻是否在总时长范围内
+                if (changeTime >= duration) {
+                    throw new Error('变换时刻必须小于总时长');
+                }
+                
+                // 清除画布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制坐标轴
+                const centerY = canvas.height / 2;
+                const centerX = 50;
+                const width = canvas.width - 100;
+                const height = canvas.height - 40;
+                
+                // 绘制坐标轴
+                ctx.beginPath();
+                ctx.moveTo(centerX, 20);
+                ctx.lineTo(centerX, canvas.height - 20);
+                ctx.lineTo(canvas.width - 20, canvas.height - 20);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // 绘制网格
+                ctx.strokeStyle = '#eee';
+                ctx.lineWidth = 0.5;
+                
+                // 水平网格线
+                for (let i = 0; i <= 10; i++) {
+                    const y = 20 + (i * height / 10);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, y);
+                    ctx.lineTo(canvas.width - 20, y);
+                    ctx.stroke();
+                }
+                
+                // 垂直网格线
+                for (let i = 0; i <= 10; i++) {
+                    const x = centerX + (i * width / 10);
+                    ctx.beginPath();
+                    ctx.moveTo(x, 20);
+                    ctx.lineTo(x, canvas.height - 20);
+                    ctx.stroke();
+                }
+                
+                // 绘制变换时刻线
+                const changeX = centerX + (changeTime / duration) * width;
+                ctx.beginPath();
+                ctx.moveTo(changeX, 20);
+                ctx.lineTo(changeX, canvas.height - 20);
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 计算正弦波数据
+                const data = [];
+                const phaseRad1 = phase1 * Math.PI / 180;
+                const phaseRad2 = phase2 * Math.PI / 180;
+                
+                for (let i = 0; i < samples; i++) {
+                    const t = (i / samples) * duration;
+                    let value;
+                    if (t < changeTime) {
+                        // 使用初始参数
+                        value = amplitude1 * Math.sin(2 * Math.PI * frequency1 * t + phaseRad1);
+                    } else {
+                        // 使用变换参数
+                        // 计算相对时间，从变换时刻开始
+                        const t2 = t - changeTime;
+                        value = amplitude2 * Math.sin(2 * Math.PI * frequency2 * t2 + phaseRad2);
+                    }
+                    data.push(value);
+                }
+                
+                // 确定最大幅值，用于缩放
+                const maxAmplitude = Math.max(amplitude1, amplitude2);
+                
+                // 绘制正弦波
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY - data[0] * (height / 2 / maxAmplitude));
+                
+                for (let i = 1; i < samples; i++) {
+                    const x = centerX + (i / (samples - 1)) * width;
+                    const y = centerY - data[i] * (height / 2 / maxAmplitude);
+                    ctx.lineTo(x, y);
+                }
+                
+                ctx.strokeStyle = '#3498db';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 绘制初始参数区域标记
+                ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
+                ctx.fillRect(centerX, 20, changeX - centerX, height);
+                
+                // 绘制变换参数区域标记
+                ctx.fillStyle = 'rgba(46, 204, 113, 0.1)';
+                ctx.fillRect(changeX, 20, width - (changeX - centerX), height);
+                
+                // 更新波形信息
+                const html = `
+                    <h3>波形参数</h3>
+                    <div class="card">
+                        <h4>初始参数 (0 - ${changeTime.toFixed(2)}s)</h4>
+                        <p><strong>幅值:</strong> ${amplitude1.toFixed(2)} V</p>
+                        <p><strong>频率:</strong> ${frequency1.toFixed(2)} Hz</p>
+                        <p><strong>相角:</strong> ${phase1.toFixed(2)} 度</p>
+                    </div>
+                    <div class="card">
+                        <h4>变换参数 (${changeTime.toFixed(2)} - ${duration.toFixed(2)}s)</h4>
+                        <p><strong>幅值:</strong> ${amplitude2.toFixed(2)} V</p>
+                        <p><strong>频率:</strong> ${frequency2.toFixed(2)} Hz</p>
+                        <p><strong>相角:</strong> ${phase2.toFixed(2)} 度</p>
+                    </div>
+                    <div class="card">
+                        <h4>其他参数</h4>
+                        <p><strong>总时长:</strong> ${duration.toFixed(2)} 秒</p>
+                        <p><strong>变换时刻:</strong> ${changeTime.toFixed(2)} 秒</p>
+                        <p><strong>采样点数:</strong> ${samples}</p>
+                        <p><strong>初始阶段周期数:</strong> ${(frequency1 * changeTime).toFixed(2)}</p>
+                        <p><strong>变换阶段周期数:</strong> ${(frequency2 * (duration - changeTime)).toFixed(2)}</p>
+                    </div>
+                `;
+                waveInfo.innerHTML = '<p class="success">✅ 波形生成成功！</p>' + html;
+                
+            } catch (error) {
+                waveInfo.innerHTML = '<p class="error">❌ 生成失败: ' + error.message + '</p>';
+            }
+        }
+
+        // 清除表单
+        function clearForm() {
+            document.getElementById('waveForm').reset();
+            // 确保变换时刻小于总时长
+            document.getElementById('changeTime').value = 1.0;
+            document.getElementById('duration').value = 2.0;
+            generateWave();
+        }
+    </script>
+</body>
+</html>

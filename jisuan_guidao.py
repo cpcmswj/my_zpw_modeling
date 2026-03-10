@@ -306,7 +306,7 @@ def find_tuning_unit_impedance_matrix(angular_frequency, F, randomize=False, var
     return np.eye(2)
 
 def find_attenuation(r1, r2):
-    """根据端子查表获取衰耗盘接收端变压器次级线圈匝数"""
+    """根据端子（c3、c4连接的端子）查表获取衰耗盘接收端变压器次级线圈匝数（主轨道）"""
     if r1 == 1 and r2 == 2:
         return 1
     elif r1 == 3 and r2 == 4:
@@ -326,6 +326,18 @@ def find_attenuation(r1, r2):
     error_msg = f"未找到该衰耗盘参数/端子错误：r1={r1}, r2={r2}。请检查端子输入是否正确。"
     print(error_msg)
     return 0
+
+def find_attenuation_2(r3,r4):
+    """根据端子确定连接入衰耗盘的电阻"""
+    resist_table=[1,20,39,75,150,300,560,1100,2200,3300,6200,12000,0]
+    resist=0
+    i=0
+    while((i<r3-11 | i>r4-11)&i<12):
+        i=i+1
+        resist=resist+resist_table[i]
+    
+
+    return resist
 
 def find_track_circuit_length(ballast_resist, cable_length, frequency):
     """根据道碴电阻、SPT电缆长度和载频率查表获取轨道电路传输长度"""
