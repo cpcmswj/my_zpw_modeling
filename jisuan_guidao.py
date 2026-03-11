@@ -581,6 +581,54 @@ def attenuation_matrix(r1, r2):
         return np.array([[1, 0], [0, 1]])
     return np.array([[N_rirj / 116, 0], [0, 116 / N_rirj]])
 
+def find_attenuation_resistance_2(serial_number):
+    """根据序号从small_attenuation_resist_table.xlsx文件中查找R*的值
+    
+    参数:
+        serial_number: 序号
+    
+    返回:
+        R*的值
+    """
+    import os
+    from openpyxl import load_workbook
+    
+    # 构建Excel文件的路径
+    file_path = os.path.join(os.path.dirname(__file__), 'static', 'small_attenuation_resist_table.xlsx')
+    
+    try:
+        # 加载Excel工作簿
+        wb = load_workbook(file_path)
+        # 选择第一个工作表
+        ws = wb.active
+        
+        # 遍历工作表中的行，查找匹配的序号
+        for row in ws.iter_rows(min_row=2, values_only=True):  # 从第2行开始，跳过表头
+            if row[0] == serial_number:
+                return row[1]  # 返回R*的值
+        
+        # 如果没有找到匹配的序号，返回None
+        print(f"警告：在small_attenuation_resist_table.xlsx中未找到序号{serial_number}对应的R*值")
+        return None
+    except Exception as e:
+        print(f"错误：读取small_attenuation_resist_table.xlsx文件时出现错误: {e}")
+        return None
+    
+
+
+def attenuation_matrix_2(R):
+    """ 根据小轨道电路的调整电阻计算小轨道电路衰耗盘的传输矩阵，R为调整电阻
+    输入输出关系: T*[V_in, I_in]^T = [V_out, I_out]^T
+    其中T为衰耗盘传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
+    
+    Ro=3300#输出负载3.3kΩ
+    if R <0:
+        print("警告：调整电阻R不能小于0，使用单位矩阵代替传输矩阵")
+        return np.array([[1, 0], [0, 1]])
+    return np.array([[3, -3*R], [3/Ro, -3*R/Ro]])
+
+
+
 def calculate_current(voltage, resist, induct, capacit, angular_frequency=0):
     """使用电压向量和电阻电容电感来计算电流向量"""
     

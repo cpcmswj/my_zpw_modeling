@@ -109,6 +109,8 @@ class Error_Of_Trail:
         # 衰耗盘端子
         self.r3 = r3
         self.r4 = r4
+        # 衰耗盘调整电阻
+        self.R_attenuation=1000
         
         # 计算频率
         frequency = self.frequency_table(self.error_position)
@@ -255,6 +257,8 @@ class Error_Of_Trail:
             self.r3 = r3
         if r4 is not None:
             self.r4 = r4
+        # 衰耗盘调整电阻
+        self.R_attenuation=1000
         
         # 计算频率
         frequency = self.frequency_table(self.error_position)
@@ -380,10 +384,10 @@ class Error_Of_Trail:
             return "未知故障类型"
          # 轨出2电压，经过衰耗盘
         try:
-            attenuation_matrix = jg.attenuation_matrix(self.r3, self.r4)
+            attenuation_matrix = jg.attenuation_matrix_2(self.R_attenuation)            
             _, attenuation_matrix = check_matrix_validity(attenuation_matrix, "衰耗盘矩阵")
             
-            self.matrix = np.dot(self.matrix, attenuation_matrix)
+            self.matrix = np.dot(attenuation_matrix,self.matrix)
             _, self.matrix = check_matrix_validity(self.matrix, "矩阵乘法结果")
             
             self.output_voltage_main_2, self.output_current_main_2 = self.count_output()
