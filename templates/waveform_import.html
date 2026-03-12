@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>波形导入与显示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h2 {
+            color: #3498db;
+            margin: 20px 0 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn.secondary {
+            background-color: #95a5a6;
+        }
+        .btn.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .form-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .wave-display {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .data-display {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            min-height: 100px;
+            border: 1px solid #ddd;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .loading { color: #7f8c8d; font-style: italic; }
+        .control-buttons {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .file-upload {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .file-upload:hover {
+            border-color: #3498db;
+        }
+        .sheet-selector {
+            margin: 10px 0;
+        }
+    </style>
+    <!-- 引入SheetJS库 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>波形导入与显示</h1>
+        <div style="margin-bottom: 20px; text-align: center;">
+            <a href="/" class="btn">返回首页</a>
+        </div>
+        
+        <h2>文件导入</h2>
+        <div class="file-upload">
+            <h3>上传Excel文件</h3>
+            <p>请上传包含采样数据的xlsx文件，数据应按列保存</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls">
+            <div class="sheet-selector" id="sheetSelector" style="display: none;">
+                <label for="sheetName">选择工作表:</label>
+                <select id="sheetName"></select>
+            </div>
+        </div>
+        
+        <h2>参数设置</h2>
+        <form id="paramsForm" onsubmit="event.preventDefault(); plotWaveform();">
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="samplingFreq">采样频率 (Hz):</label>
+                    <input type="number" id="samplingFreq" value="1000" step="100" min="1">
+                </div>
+                <div class="form-col">
+                    <label for="startRow">数据起始行:</label>
+                    <input type="number" id="startRow" value="1" step="1" min="1">
+                </div>
+                <div class="form-col">
+                    <label for="selectedColumn">选择数据列:</label>
+                    <select id="selectedColumn"></select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="duration">显示时长 (秒):</label>
+                    <input type="number" id="duration" value="2" step="0.1" min="0.1" max="10">
+                </div>
+                <div class="form-col">
+                    <label for="samples">采样点数:</label>
+                    <input type="number" id="samples" value="500" step="100" min="100" max="5000">
+                </div>
+            </div>
+            <div class="control-buttons">
+                <button type="submit" class="btn">绘制波形</button>
+                <button type="button" class="btn secondary" onclick="clearForm()">重置</button>
+            </div>
+        </form>
+        
+        <h2>波形显示</h2>
+        <div class="wave-display">
+            <canvas id="waveCanvas" width="1000" height="400"></canvas>
+            <div id="waveInfo" class="data-display">
+                <p class="loading">请上传文件并设置参数后绘制波形</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        // 全局变量
+        let workbook = null;
+        let worksheet = null;
+        let data = [];
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 监听文件上传
+            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+            // 监听工作表选择
+            document.getElementById('sheetName').addEventListener('change', handleSheetChange);
+        });
+
+        // 处理文件上传
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // 显示工作表选择器
+                    const sheetSelector = document.getElementById('sheetSelector');
+                    sheetSelector.style.display = 'block';
+                    
+                    // 填充工作表选项
+                    const sheetNameSelect = document.getElementById('sheetName');
+                    sheetNameSelect.innerHTML = '';
+                    workbook.SheetNames.forEach(sheetName => {
+                        const option = document.createElement('option');
+                        option.value = sheetName;
+                        option.textContent = sheetName;
+                        sheetNameSelect.appendChild(option);
+                    });
+                    
+                    // 自动选择第一个工作表
+                    handleSheetChange({ target: sheetNameSelect });
+                    
+                    document.getElementById('waveInfo').innerHTML = '<p class="success">✅ 文件上传成功！</p>';
+                } catch (error) {
+                    document.getElementById('waveInfo').innerHTML = '<p class="error">❌ 文件读取失败: ' + error.message + '</p>';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 处理工作表选择
+        function handleSheetChange(event) {
+            const sheetName = event.target.value;
+            worksheet = workbook.Sheets[sheetName];
+            
+            // 转换工作表数据
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            // 填充数据列选择器
+            const columnSelect = document.getElementById('selectedColumn');
+            columnSelect.innerHTML = '';
+            
+            if (jsonData.length > 0) {
+                // 获取列数
+                const columnCount = jsonData[0].length;
+                for (let i = 0; i < columnCount; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `列 ${i + 1}`;
+                    columnSelect.appendChild(option);
+                }
+            }
+            
+            document.getElementById('waveInfo').innerHTML = '<p class="success">✅ 工作表选择成功！</p>';
+        }
+
+        // 绘制波形
+        function plotWaveform() {
+            const canvas = document.getElementById('waveCanvas');
+            const ctx = canvas.getContext('2d');
+            const waveInfo = document.getElementById('waveInfo');
+            
+            try {
+                if (!workbook || !worksheet) {
+                    throw new Error('请先上传文件并选择工作表');
+                }
+                
+                // 获取输入参数
+                const samplingFreq = parseFloat(document.getElementById('samplingFreq').value);
+                const startRow = parseInt(document.getElementById('startRow').value) - 1; // 转换为0索引
+                const selectedColumn = parseInt(document.getElementById('selectedColumn').value);
+                const duration = parseFloat(document.getElementById('duration').value);
+                const samples = parseInt(document.getElementById('samples').value);
+                
+                // 转换工作表数据
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (startRow >= jsonData.length) {
+                    throw new Error('数据起始行超出范围');
+                }
+                
+                // 提取数据
+                data = [];
+                for (let i = startRow; i < jsonData.length; i++) {
+                    const value = parseFloat(jsonData[i][selectedColumn]);
+                    if (!isNaN(value)) {
+                        data.push(value);
+                    }
+                }
+                
+                if (data.length === 0) {
+                    throw new Error('所选列中没有有效数据');
+                }
+                
+                // 清除画布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制坐标轴
+                const centerY = canvas.height / 2;
+                const centerX = 50;
+                const width = canvas.width - 100;
+                const height = canvas.height - 40;
+                
+                // 绘制坐标轴
+                ctx.beginPath();
+                ctx.moveTo(centerX, 20);
+                ctx.lineTo(centerX, canvas.height - 20);
+                ctx.lineTo(canvas.width - 20, canvas.height - 20);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // 绘制网格
+                ctx.strokeStyle = '#eee';
+                ctx.lineWidth = 0.5;
+                
+                // 水平网格线
+                for (let i = 0; i <= 10; i++) {
+                    const y = 20 + (i * height / 10);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, y);
+                    ctx.lineTo(canvas.width - 20, y);
+                    ctx.stroke();
+                }
+                
+                // 垂直网格线
+                for (let i = 0; i <= 10; i++) {
+                    const x = centerX + (i * width / 10);
+                    ctx.beginPath();
+                    ctx.moveTo(x, 20);
+                    ctx.lineTo(x, canvas.height - 20);
+                    ctx.stroke();
+                }
+                
+                // 确定数据范围
+                const maxValue = Math.max(...data);
+                const minValue = Math.min(...data);
+                const valueRange = maxValue - minValue;
+                const offsetY = centerY - (minValue + valueRange / 2) * (height / valueRange);
+                
+                // 计算采样间隔
+                const sampleInterval = 1 / samplingFreq;
+                const totalDuration = data.length * sampleInterval;
+                
+                // 绘制波形
+                ctx.beginPath();
+                
+                // 计算要显示的数据点
+                const displayPoints = Math.min(samples, data.length);
+                const step = Math.floor(data.length / displayPoints);
+                
+                for (let i = 0; i < displayPoints; i++) {
+                    const dataIndex = i * step;
+                    const x = centerX + (i / (displayPoints - 1)) * width;
+                    const y = offsetY - data[dataIndex] * (height / valueRange);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                ctx.strokeStyle = '#3498db';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 更新波形信息
+                const html = `
+                    <h3>波形信息</h3>
+                    <div class="card">
+                        <p><strong>采样频率:</strong> ${samplingFreq.toFixed(2)} Hz</p>
+                        <p><strong>数据点数:</strong> ${data.length}</p>
+                        <p><strong>总时长:</strong> ${totalDuration.toFixed(2)} 秒</p>
+                        <p><strong>数据范围:</strong> ${minValue.toFixed(4)} - ${maxValue.toFixed(4)}</p>
+                        <p><strong>显示点数:</strong> ${displayPoints}</p>
+                    </div>
+                `;
+                waveInfo.innerHTML = '<p class="success">✅ 波形绘制成功！</p>' + html;
+                
+            } catch (error) {
+                waveInfo.innerHTML = '<p class="error">❌ 绘制失败: ' + error.message + '</p>';
+            }
+        }
+
+        // 清除表单
+        function clearForm() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('sheetSelector').style.display = 'none';
+            document.getElementById('selectedColumn').innerHTML = '';
+            document.getElementById('paramsForm').reset();
+            document.getElementById('waveInfo').innerHTML = '<p class="loading">请上传文件并设置参数后绘制波形</p>';
+            
+            // 清除画布
+            const canvas = document.getElementById('waveCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 重置全局变量
+            workbook = null;
+            worksheet = null;
+            data = [];
+        }
+    </script>
+</body>
+</html>

@@ -30,7 +30,9 @@ define_pages = {
     'fsk_signal': 'http://127.0.0.1:8000/fsk-signal-viewer',
     'alternating_2fsk': 'http://127.0.0.1:8000/alternating-2fsk-viewer',
     'test_image': 'http://127.0.0.1:8000/test-image',
-    'developer_debug': 'http://127.0.0.1:8000/developer-debug'
+    'developer_debug': 'http://127.0.0.1:8000/developer-debug',
+    'sine_wave': 'http://127.0.0.1:8000/sine-wave-generator',
+    'waveform_import': 'http://127.0.0.1:8000/waveform-import'
 }
 
 def is_port_in_use(port):

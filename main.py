@@ -78,6 +78,11 @@ async def read_developer_debug(request: Request):
 async def read_sine_wave_generator(request: Request):
     return templates.TemplateResponse("sine_wave_generator.html", {"request": request})
 
+# 波形导入与显示页面
+@app.get("/waveform-import", response_class=HTMLResponse)
+async def read_waveform_import(request: Request):
+    return templates.TemplateResponse("waveform_import.html", {"request": request})
+
 # 直接返回HTML内容的图片查看器页面
 @app.get("/image-viewer-direct", response_class=HTMLResponse)
 async def read_image_viewer_direct():

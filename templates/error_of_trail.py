@@ -468,9 +468,23 @@ class Error_Of_Trail:
             # 使用复数形式的阻抗计算电流分配，这样可以得到更准确的结果
             currents = circuit_tool.calculate_current_distribution(voltage_complex, self.Z_rail_complex, self.Z_tuner_complex)
             
-            # 使用分配到主轨道的电流
+            # 将送端轨面电压电流矩阵中的电流赋值给主轨道
             if len(currents) > 0:
-                self.output_voltage_surface1[1] = currents[0]
+                # 确保获取标量值，避免创建三维数组
+                if isinstance(self.output_voltage_surface1, np.ndarray):
+                    # 如果是numpy数组，确保获取标量
+                    voltage_value = self.output_voltage_surface1.flatten()[0]
+                else:
+                    # 如果不是numpy数组，直接获取第一个元素
+                    voltage_value = self.output_voltage_surface1[0]
+                
+                # 确保currents[0]是标量
+                current_value = currents[0]
+                if isinstance(current_value, (list, np.ndarray)):
+                    current_value = current_value[0] if len(current_value) > 0 else 0
+                
+                # 创建形状为(2, 1)的数组
+                self.output_voltage_surface1 = np.array([[voltage_value], [current_value]])
             print("送端轨面电压电流矩阵:")
             print(self.output_voltage_surface1)
             #钢轨等效，需要修正,第一个参数的计算需要后续统一单位,连接线的电阻和电容需要后续查找资料
