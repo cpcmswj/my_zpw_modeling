@@ -151,7 +151,7 @@
         <div class="file-upload">
             <h3>上传Excel文件</h3>
             <p>请上传包含采样数据的xlsx文件，数据应按列保存</p>
-            <input type="file" id="fileInput" accept=".xlsx,.xls">
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
             <div class="sheet-selector" id="sheetSelector" style="display: none;">
                 <label for="sheetName">选择工作表:</label>
                 <select id="sheetName"></select>
@@ -221,8 +221,16 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const data = new Uint8Array(e.target.result);
-                    workbook = XLSX.read(data, { type: 'array' });
+                    // 对于CSV文件，尝试使用文本方式读取以处理编码问题
+                    if (file.name.endsWith('.csv')) {
+                        // 尝试使用UTF-8编码读取
+                        const text = e.target.result;
+                        workbook = XLSX.read(text, { type: 'string' });
+                    } else {
+                        // 对于Excel文件，使用二进制方式读取
+                        const data = new Uint8Array(e.target.result);
+                        workbook = XLSX.read(data, { type: 'array' });
+                    }
                     
                     // 显示工作表选择器
                     const sheetSelector = document.getElementById('sheetSelector');
@@ -246,7 +254,13 @@
                     document.getElementById('waveInfo').innerHTML = '<p class="error">❌ 文件读取失败: ' + error.message + '</p>';
                 }
             };
-            reader.readAsArrayBuffer(file);
+            
+            // 根据文件类型选择读取方式
+            if (file.name.endsWith('.csv')) {
+                reader.readAsText(file, 'UTF-8');
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
         }
 
         // 处理工作表选择
@@ -267,7 +281,11 @@
                 for (let i = 0; i < columnCount; i++) {
                     const option = document.createElement('option');
                     option.value = i;
-                    option.textContent = `列 ${i + 1}`;
+                    // 尝试使用表头作为选项文本，如果没有则使用列号
+                    const headerText = jsonData[0][i] ? String(jsonData[0][i]) : `列 ${i + 1}`;
+                    // 清理可能的乱码字符
+                    const cleanedText = headerText.replace(/[^\x00-\x7F\u4e00-\u9fa5]/g, '');
+                    option.textContent = cleanedText || `列 ${i + 1}`;
                     columnSelect.appendChild(option);
                 }
             }
@@ -309,6 +327,18 @@
                     }
                 }
                 
+                // 检查数据是否有效
+                if (data.length === 0) {
+                    // 尝试跳过表头行
+                    data = [];
+                    for (let i = startRow + 1; i < jsonData.length; i++) {
+                        const value = parseFloat(jsonData[i][selectedColumn]);
+                        if (!isNaN(value)) {
+                            data.push(value);
+                        }
+                    }
+                }
+                
                 if (data.length === 0) {
                     throw new Error('所选列中没有有效数据');
                 }
@@ -321,6 +351,24 @@
                 const centerX = 50;
                 const width = canvas.width - 100;
                 const height = canvas.height - 40;
+                
+                // 确定数据范围
+                const maxValue = Math.max(...data);
+                const minValue = Math.min(...data);
+                const valueRange = maxValue - minValue;
+                
+                // 添加一些边距，确保所有数据点都能显示
+                const padding = valueRange * 0.1;
+                const adjustedMin = minValue - padding;
+                const adjustedMax = maxValue + padding;
+                const adjustedRange = adjustedMax - adjustedMin;
+                
+                // 计算Y轴偏移
+                const offsetY = centerY - (adjustedMin + adjustedRange / 2) * (height / adjustedRange);
+                
+                // 计算采样间隔
+                const sampleInterval = 1 / samplingFreq;
+                const totalDuration = data.length * sampleInterval;
                 
                 // 绘制坐标轴
                 ctx.beginPath();
@@ -335,33 +383,39 @@
                 ctx.strokeStyle = '#eee';
                 ctx.lineWidth = 0.5;
                 
-                // 水平网格线
-                for (let i = 0; i <= 10; i++) {
-                    const y = 20 + (i * height / 10);
+                // 水平网格线和刻度
+                const ySteps = 10;
+                for (let i = 0; i <= ySteps; i++) {
+                    const y = 20 + (i * height / ySteps);
                     ctx.beginPath();
                     ctx.moveTo(centerX, y);
                     ctx.lineTo(canvas.width - 20, y);
                     ctx.stroke();
+                    
+                    // 绘制Y轴刻度
+                    const value = adjustedMax - (i * adjustedRange / ySteps);
+                    ctx.fillStyle = '#333';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(value.toFixed(2), centerX - 5, y + 3);
                 }
                 
-                // 垂直网格线
-                for (let i = 0; i <= 10; i++) {
-                    const x = centerX + (i * width / 10);
+                // 垂直网格线和刻度
+                const xSteps = 10;
+                for (let i = 0; i <= xSteps; i++) {
+                    const x = centerX + (i * width / xSteps);
                     ctx.beginPath();
                     ctx.moveTo(x, 20);
                     ctx.lineTo(x, canvas.height - 20);
                     ctx.stroke();
+                    
+                    // 绘制X轴刻度
+                    const time = (i * totalDuration / xSteps).toFixed(2);
+                    ctx.fillStyle = '#333';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(time, x, canvas.height - 5);
                 }
-                
-                // 确定数据范围
-                const maxValue = Math.max(...data);
-                const minValue = Math.min(...data);
-                const valueRange = maxValue - minValue;
-                const offsetY = centerY - (minValue + valueRange / 2) * (height / valueRange);
-                
-                // 计算采样间隔
-                const sampleInterval = 1 / samplingFreq;
-                const totalDuration = data.length * sampleInterval;
                 
                 // 绘制波形
                 ctx.beginPath();
@@ -373,7 +427,7 @@
                 for (let i = 0; i < displayPoints; i++) {
                     const dataIndex = i * step;
                     const x = centerX + (i / (displayPoints - 1)) * width;
-                    const y = offsetY - data[dataIndex] * (height / valueRange);
+                    const y = offsetY - (data[dataIndex] - adjustedMin) * (height / adjustedRange);
                     
                     if (i === 0) {
                         ctx.moveTo(x, y);

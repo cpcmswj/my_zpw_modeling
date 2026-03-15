@@ -83,6 +83,11 @@ async def read_sine_wave_generator(request: Request):
 async def read_waveform_import(request: Request):
     return templates.TemplateResponse("waveform_import.html", {"request": request})
 
+# XY坐标图绘制页面
+@app.get("/xy-plot", response_class=HTMLResponse)
+async def read_xy_plot(request: Request):
+    return templates.TemplateResponse("xy_plot.html", {"request": request})
+
 # 直接返回HTML内容的图片查看器页面
 @app.get("/image-viewer-direct", response_class=HTMLResponse)
 async def read_image_viewer_direct():

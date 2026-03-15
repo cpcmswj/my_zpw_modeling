@@ -32,7 +32,8 @@ define_pages = {
     'test_image': 'http://127.0.0.1:8000/test-image',
     'developer_debug': 'http://127.0.0.1:8000/developer-debug',
     'sine_wave': 'http://127.0.0.1:8000/sine-wave-generator',
-    'waveform_import': 'http://127.0.0.1:8000/waveform-import'
+    'waveform_import': 'http://127.0.0.1:8000/waveform-import',
+    'xy_plot': 'http://127.0.0.1:8000/xy-plot'
 }
 
 def is_port_in_use(port):
