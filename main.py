@@ -88,6 +88,11 @@ async def read_waveform_import(request: Request):
 async def read_xy_plot(request: Request):
     return templates.TemplateResponse("xy_plot.html", {"request": request})
 
+# 时间序列故障模拟页面
+@app.get("/time-series-simulation", response_class=HTMLResponse)
+async def read_time_series_simulation(request: Request):
+    return templates.TemplateResponse("time_series_simulation.html", {"request": request})
+
 # 直接返回HTML内容的图片查看器页面
 @app.get("/image-viewer-direct", response_class=HTMLResponse)
 async def read_image_viewer_direct():
