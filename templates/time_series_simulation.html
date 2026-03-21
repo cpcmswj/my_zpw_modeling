@@ -460,13 +460,19 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // 设置图表尺寸
-            const padding = 50;
+            const padding = 60;
             const chartWidth = canvas.width - 2 * padding;
             const chartHeight = canvas.height - 2 * padding;
             
             // 计算电压范围
-            const minVoltage = Math.min(...voltageValues) - 5;
-            const maxVoltage = Math.max(...voltageValues) + 5;
+            let allVoltages = [...voltageValues];
+            if (results.length > 0) {
+                const sendEndVoltages = results.map(r => r.send_end_track_voltage).filter(v => v);
+                allVoltages = [...allVoltages, ...sendEndVoltages];
+            }
+            
+            const minVoltage = Math.min(...allVoltages) - 5;
+            const maxVoltage = Math.max(...allVoltages) + 5;
             
             // 绘制坐标轴
             ctx.beginPath();
@@ -477,37 +483,68 @@
             ctx.lineWidth = 2;
             ctx.stroke();
             
+            // 绘制网格线
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            
+            // 水平网格线
+            const yStep = (maxVoltage - minVoltage) / 5;
+            for (let i = 0; i <= 5; i++) {
+                const y = canvas.height - padding - (i / 5) * chartHeight;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+            }
+            
+            // 垂直网格线
+            if (voltageValues.length > 1) {
+                const xStep = chartWidth / (voltageValues.length - 1);
+                for (let i = 0; i < voltageValues.length; i++) {
+                    const x = padding + i * xStep;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding);
+                    ctx.lineTo(x, canvas.height - padding);
+                    ctx.stroke();
+                }
+            }
+            
             // 绘制刻度和标签
             ctx.font = '12px Arial';
             ctx.fillStyle = '#333';
             
             // Y轴刻度
-            const yStep = (maxVoltage - minVoltage) / 5;
             for (let i = 0; i <= 5; i++) {
                 const y = canvas.height - padding - (i / 5) * chartHeight;
                 const voltage = minVoltage + i * yStep;
                 ctx.beginPath();
                 ctx.moveTo(padding - 5, y);
                 ctx.lineTo(padding, y);
+                ctx.strokeStyle = '#333';
                 ctx.stroke();
                 ctx.fillText(voltage.toFixed(1), padding - 40, y + 4);
             }
             
             // X轴刻度
-            const xStep = chartWidth / (voltageValues.length - 1);
-            for (let i = 0; i < voltageValues.length; i++) {
-                const x = padding + i * xStep;
-                ctx.beginPath();
-                ctx.moveTo(x, canvas.height - padding);
-                ctx.lineTo(x, canvas.height - padding + 5);
-                ctx.stroke();
-                if (i % Math.ceil(voltageValues.length / 10) === 0) {
-                    ctx.fillText(i, x - 10, canvas.height - padding + 20);
+            if (voltageValues.length > 1) {
+                const xStep = chartWidth / (voltageValues.length - 1);
+                for (let i = 0; i < voltageValues.length; i++) {
+                    const x = padding + i * xStep;
+                    ctx.beginPath();
+                    ctx.moveTo(x, canvas.height - padding);
+                    ctx.lineTo(x, canvas.height - padding + 5);
+                    ctx.strokeStyle = '#333';
+                    ctx.stroke();
+                    if (i % Math.ceil(voltageValues.length / 10) === 0) {
+                        ctx.fillText(i, x - 10, canvas.height - padding + 20);
+                    }
                 }
             }
             
             // 绘制电压值曲线
             if (voltageValues.length > 1) {
+                const xStep = chartWidth / (voltageValues.length - 1);
+                
                 ctx.beginPath();
                 ctx.moveTo(padding, canvas.height - padding - ((voltageValues[0] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight);
                 
@@ -526,7 +563,7 @@
                     const x = padding + i * xStep;
                     const y = canvas.height - padding - ((voltageValues[i] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
                     ctx.beginPath();
-                    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
                     ctx.fillStyle = '#3498db';
                     ctx.fill();
                     ctx.strokeStyle = '#fff';
@@ -541,15 +578,14 @@
                 const validResults = results.filter(r => r.send_end_track_voltage);
                 if (validResults.length > 0) {
                     const sendEndVoltages = validResults.map(r => r.send_end_track_voltage);
-                    const minSendEndVoltage = Math.min(...sendEndVoltages) - 5;
-                    const maxSendEndVoltage = Math.max(...sendEndVoltages) + 5;
+                    const xStep = chartWidth / (validResults.length - 1);
                     
                     ctx.beginPath();
-                    ctx.moveTo(padding, canvas.height - padding - ((sendEndVoltages[0] - minSendEndVoltage) / (maxSendEndVoltage - minSendEndVoltage)) * chartHeight);
+                    ctx.moveTo(padding, canvas.height - padding - ((sendEndVoltages[0] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight);
                     
                     for (let i = 1; i < validResults.length; i++) {
                         const x = padding + i * xStep;
-                        const y = canvas.height - padding - ((sendEndVoltages[i] - minSendEndVoltage) / (maxSendEndVoltage - minSendEndVoltage)) * chartHeight;
+                        const y = canvas.height - padding - ((sendEndVoltages[i] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
                         ctx.lineTo(x, y);
                     }
                     
@@ -560,9 +596,9 @@
                     // 绘制数据点
                     for (let i = 0; i < validResults.length; i++) {
                         const x = padding + i * xStep;
-                        const y = canvas.height - padding - ((sendEndVoltages[i] - minSendEndVoltage) / (maxSendEndVoltage - minSendEndVoltage)) * chartHeight;
+                        const y = canvas.height - padding - ((validResults[i].send_end_track_voltage - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
                         ctx.beginPath();
-                        ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                        ctx.arc(x, y, 5, 0, 2 * Math.PI);
                         ctx.fillStyle = '#e74c3c';
                         ctx.fill();
                         ctx.strokeStyle = '#fff';
@@ -576,9 +612,9 @@
             ctx.font = '14px Arial';
             ctx.fillStyle = '#333';
             ctx.textAlign = 'center';
-            ctx.fillText('数据点序号', canvas.width / 2, canvas.height - 10);
+            ctx.fillText('数据点序号', canvas.width / 2, canvas.height - 15);
             ctx.save();
-            ctx.translate(20, canvas.height / 2);
+            ctx.translate(30, canvas.height / 2);
             ctx.rotate(-Math.PI / 2);
             ctx.fillText('电压 (V)', 0, 0);
             ctx.restore();

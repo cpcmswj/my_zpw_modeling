@@ -33,6 +33,107 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             text-align: center;
+            position: relative;
+        }
+        
+        .login-section {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        
+        .login-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .login-btn:hover {
+            background-color: #219653;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .login-modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .login-form input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .login-form button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .login-form button:hover {
+            background-color: #2980b9;
+        }
+        
+        .login-error {
+            color: #e74c3c;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .access-denied {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .access-denied h3 {
+            margin-bottom: 10px;
         }
         .btn {
             background-color: #3498db;
@@ -546,6 +647,20 @@
     <div class="container">
         <div class="header">
             <h1>铁路轨道电路故障模拟系统</h1>
+            
+            <!-- 登录部分 -->
+            <div class="login-section" id="loginSection">
+                <button class="login-btn" onclick="openLoginModal()">登录</button>
+            </div>
+            
+            <!-- 用户信息部分 -->
+            <div class="login-section" id="userInfoSection" style="display: none;">
+                <div class="user-info">
+                    <span id="userName">用户</span>
+                    <button class="logout-btn" onclick="logout()">登出</button>
+                </div>
+            </div>
+            
             <div style="margin-top: 15px;">
                 <button class="btn" onclick="switchTab('integrated', event)">集成故障模拟</button>
                 <button class="btn" onclick="switchTab('batch', event)">批量故障模拟</button>
@@ -1053,7 +1168,180 @@
         </div>
     </div>
     
+    <!-- 登录弹窗 -->
+    <div id="loginModal" class="modal" style="display: none;">
+        <div class="login-modal-content">
+            <span class="close" onclick="closeLoginModal()">&times;</span>
+            <h2 style="text-align: center;">用户登录</h2>
+            <form class="login-form" onsubmit="event.preventDefault(); login()">
+                <div>
+                    <label for="loginUsername">用户名:</label>
+                    <input type="text" id="loginUsername" name="loginUsername" required>
+                </div>
+                <div>
+                    <label for="loginPassword">密码:</label>
+                    <input type="password" id="loginPassword" name="loginPassword" required>
+                </div>
+                <button type="submit">登录</button>
+                <div class="login-error" id="loginError" style="display: none;">用户名或密码错误</div>
+            </form>
+        </div>
+    </div>
+    
     <script>
+        // 登录功能
+        let isLoggedIn = false;
+        let currentUser = null;
+        let originalMainContent = '';
+        
+        // 保存原始内容
+        function saveOriginalContent() {
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent && !mainContent.querySelector('.access-denied')) {
+                originalMainContent = mainContent.innerHTML;
+            }
+        }
+        
+        // 检查登录状态
+        function checkLoginStatus() {
+            saveOriginalContent();
+            const user = localStorage.getItem('user');
+            if (user) {
+                isLoggedIn = true;
+                currentUser = JSON.parse(user);
+                updateLoginUI();
+                enableSimulationFeatures();
+            } else {
+                isLoggedIn = false;
+                currentUser = null;
+                updateLoginUI();
+                disableSimulationFeatures();
+            }
+        }
+        
+        // 更新登录UI
+        function updateLoginUI() {
+            if (isLoggedIn) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('userInfoSection').style.display = 'block';
+                document.getElementById('userName').textContent = currentUser.username;
+            } else {
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('userInfoSection').style.display = 'none';
+            }
+        }
+        
+        // 启用模拟功能
+        function enableSimulationFeatures() {
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent.querySelector('.access-denied') && originalMainContent) {
+                mainContent.innerHTML = originalMainContent;
+            }
+        }
+        
+        // 禁用模拟功能
+        function disableSimulationFeatures() {
+            saveOriginalContent();
+            const mainContent = document.querySelector('.main-content');
+            mainContent.innerHTML = `
+                <div class="access-denied">
+                    <h3>访问被拒绝</h3>
+                    <p>请先登录以使用仿真系统功能</p>
+                    <button class="btn" onclick="openLoginModal()">去登录</button>
+                </div>
+            `;
+        }
+        
+        // 打开登录模态框
+        function openLoginModal() {
+            document.getElementById('loginModal').style.display = 'block';
+        }
+        
+        // 关闭登录模态框
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+        
+        // 登录
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            console.log('开始登录流程:', { username, password });
+            
+            try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                console.log('准备发送登录请求');
+                
+                // 确保请求正确的端口
+                const response = await fetch('http://127.0.0.1:8000/api/login', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                console.log('登录请求已发送，状态码:', response.status);
+                
+                const result = await response.json();
+                
+                console.log('登录响应:', result);
+                
+                if (result.status === 'success') {
+                    console.log('登录成功');
+                    isLoggedIn = true;
+                    currentUser = { username: username };
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    updateLoginUI();
+                    enableSimulationFeatures();
+                    closeLoginModal();
+                } else {
+                    console.log('登录失败:', result.message);
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('loginError').textContent = '登录验证失败，请稍后重试';
+            }
+        }
+        
+        // 登出
+        function logout() {
+            isLoggedIn = false;
+            currentUser = null;
+            localStorage.removeItem('user');
+            updateLoginUI();
+            disableSimulationFeatures();
+        }
+        
+        // 点击弹窗外部关闭
+        window.onclick = function(event) {
+            const warningModal = document.getElementById('warningModal');
+            const loginModal = document.getElementById('loginModal');
+            
+            if (event.target == warningModal) {
+                closeWarningModal();
+            }
+            
+            if (event.target == loginModal) {
+                closeLoginModal();
+            }
+        }
+        
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+        });
+        
         // 悬浮窗切换
         function switchTab(tabName, event) {
             // 隐藏所有标签内容

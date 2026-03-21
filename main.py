@@ -912,5 +912,39 @@ async def calculate_track_circuit_api(
             status_code=400
         )
 
+# 登录验证API端点
+@app.post("/api/login")
+async def login_api(
+    username: str = Form(...),
+    password: str = Form(...)
+):
+    try:
+        import os
+        
+        print(f"接收到登录请求: username={username}, password={password}")
+        
+        # 简化登录验证，直接硬编码验证admin/1234
+        if username == "admin" and password == "1234":
+            print("登录成功！")
+            return JSONResponse({
+                "status": "success",
+                "message": "登录成功",
+                "user": {
+                    "username": username
+                }
+            })
+        else:
+            print("登录失败：用户名或密码错误")
+            return JSONResponse(
+                {"status": "error", "message": "用户名或密码错误"},
+                status_code=401
+            )
+    except Exception as e:
+        print(f"登录验证错误: {e}")
+        return JSONResponse(
+            {"status": "error", "message": "登录验证失败"},
+            status_code=500
+        )
+
 # 启动应用的命令（用于开发环境）
 # 运行：uvicorn main:app --reload
