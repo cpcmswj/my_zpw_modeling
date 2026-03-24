@@ -334,8 +334,35 @@
             <!-- 图表显示 -->
             <div class="section">
                 <h2>📈 电压曲线图表</h2>
-                <div style="width: 100%; height: 400px; margin-top: 20px;">
-                    <canvas id="voltageChart" width="100%" height="400"></canvas>
+                
+                <!-- 输入电压图表 -->
+                <div style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;">
+                    <h3>输入电压</h3>
+                    <canvas id="inputVoltageChart" width="100%" height="300"></canvas>
+                </div>
+                
+                <!-- 送端轨面电压图表 -->
+                <div style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;">
+                    <h3>送端轨面电压</h3>
+                    <canvas id="sendEndVoltageChart" width="100%" height="300"></canvas>
+                </div>
+                
+                <!-- 受端轨面电压图表 -->
+                <div style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;">
+                    <h3>受端轨面电压</h3>
+                    <canvas id="receiveEndVoltageChart" width="100%" height="300"></canvas>
+                </div>
+                
+                <!-- 主轨入电压图表 -->
+                <div style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;">
+                    <h3>主轨入电压</h3>
+                    <canvas id="mainTrackInputVoltageChart" width="100%" height="300"></canvas>
+                </div>
+                
+                <!-- 轨出1电压图表 -->
+                <div style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;">
+                    <h3>轨出1电压</h3>
+                    <canvas id="mainTrackOutputVoltageChart" width="100%" height="300"></canvas>
                 </div>
             </div>
             
@@ -379,6 +406,13 @@
         let isSimulationRunning = false;
         let currentSimulationIndex = 0;
         let totalSimulationCount = 0;
+        
+        // 窗口大小改变事件监听器
+        window.addEventListener('resize', function() {
+            if (simulationResults.length > 0) {
+                drawAllVoltageCharts(simulationResults);
+            }
+        });
         
         // 轨道区段数据
         const railwaySections = {
@@ -451,10 +485,14 @@
             return voltageValues;
         }
         
-        // 绘制电压曲线图
-        function drawVoltageChart(voltageValues, results = []) {
-            const canvas = document.getElementById('voltageChart');
+        // 绘制单个电压类型的图表
+        function drawSingleVoltageChart(canvasId, title, voltageValues, resultValues, color) {
+            const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
+            
+            // 确保canvas宽度与容器一致
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
             
             // 清除画布
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -466,9 +504,8 @@
             
             // 计算电压范围
             let allVoltages = [...voltageValues];
-            if (results.length > 0) {
-                const sendEndVoltages = results.map(r => r.send_end_track_voltage).filter(v => v);
-                allVoltages = [...allVoltages, ...sendEndVoltages];
+            if (resultValues.length > 0) {
+                allVoltages = [...allVoltages, ...resultValues];
             }
             
             const minVoltage = Math.min(...allVoltages) - 5;
@@ -500,6 +537,10 @@
             // 垂直网格线
             if (voltageValues.length > 1) {
                 const xStep = chartWidth / (voltageValues.length - 1);
+                // 计算合适的刻度间隔，最多显示10个刻度
+                const maxTicks = 10;
+                const tickInterval = Math.ceil(voltageValues.length / maxTicks);
+                
                 for (let i = 0; i < voltageValues.length; i++) {
                     const x = padding + i * xStep;
                     ctx.beginPath();
@@ -528,6 +569,10 @@
             // X轴刻度
             if (voltageValues.length > 1) {
                 const xStep = chartWidth / (voltageValues.length - 1);
+                // 计算合适的刻度间隔，最多显示10个刻度
+                const maxTicks = 10;
+                const tickInterval = Math.ceil(voltageValues.length / maxTicks);
+                
                 for (let i = 0; i < voltageValues.length; i++) {
                     const x = padding + i * xStep;
                     ctx.beginPath();
@@ -535,13 +580,14 @@
                     ctx.lineTo(x, canvas.height - padding + 5);
                     ctx.strokeStyle = '#333';
                     ctx.stroke();
-                    if (i % Math.ceil(voltageValues.length / 10) === 0) {
+                    // 只在间隔点上显示标签
+                    if (i % tickInterval === 0 || i === voltageValues.length - 1) {
                         ctx.fillText(i, x - 10, canvas.height - padding + 20);
                     }
                 }
             }
             
-            // 绘制电压值曲线
+            // 绘制输入电压曲线
             if (voltageValues.length > 1) {
                 const xStep = chartWidth / (voltageValues.length - 1);
                 
@@ -572,39 +618,34 @@
                 }
             }
             
-            // 如果有模拟结果，绘制送端轨面电压曲线
-            if (results.length > 0) {
-                // 过滤出成功的结果
-                const validResults = results.filter(r => r.send_end_track_voltage);
-                if (validResults.length > 0) {
-                    const sendEndVoltages = validResults.map(r => r.send_end_track_voltage);
-                    const xStep = chartWidth / (validResults.length - 1);
-                    
+            // 绘制目标电压曲线
+            if (resultValues.length > 1) {
+                const xStep = chartWidth / (resultValues.length - 1);
+                
+                ctx.beginPath();
+                ctx.moveTo(padding, canvas.height - padding - ((resultValues[0] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight);
+                
+                for (let i = 1; i < resultValues.length; i++) {
+                    const x = padding + i * xStep;
+                    const y = canvas.height - padding - ((resultValues[i] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
+                    ctx.lineTo(x, y);
+                }
+                
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 绘制数据点
+                for (let i = 0; i < resultValues.length; i++) {
+                    const x = padding + i * xStep;
+                    const y = canvas.height - padding - ((resultValues[i] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
                     ctx.beginPath();
-                    ctx.moveTo(padding, canvas.height - padding - ((sendEndVoltages[0] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight);
-                    
-                    for (let i = 1; i < validResults.length; i++) {
-                        const x = padding + i * xStep;
-                        const y = canvas.height - padding - ((sendEndVoltages[i] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
-                        ctx.lineTo(x, y);
-                    }
-                    
-                    ctx.strokeStyle = '#e74c3c';
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 2;
                     ctx.stroke();
-                    
-                    // 绘制数据点
-                    for (let i = 0; i < validResults.length; i++) {
-                        const x = padding + i * xStep;
-                        const y = canvas.height - padding - ((validResults[i].send_end_track_voltage - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
-                        ctx.beginPath();
-                        ctx.arc(x, y, 5, 0, 2 * Math.PI);
-                        ctx.fillStyle = '#e74c3c';
-                        ctx.fill();
-                        ctx.strokeStyle = '#fff';
-                        ctx.lineWidth = 2;
-                        ctx.stroke();
-                    }
                 }
             }
             
@@ -627,10 +668,32 @@
             ctx.textAlign = 'left';
             ctx.fillText('输入电压 (V)', padding + 40, padding + 25);
             
-            ctx.fillStyle = '#e74c3c';
+            ctx.fillStyle = color;
             ctx.fillRect(padding + 150, padding + 10, 20, 20);
             ctx.fillStyle = '#333';
-            ctx.fillText('送端轨面电压 (V)', padding + 180, padding + 25);
+            ctx.fillText(title + ' (V)', padding + 180, padding + 25);
+        }
+        
+        // 绘制所有电压类型的图表
+        function drawAllVoltageCharts(results) {
+            if (results.length === 0) return;
+            
+            const voltageValues = results.map(r => r.voltage);
+            
+            // 定义电压类型配置
+            const voltageConfigs = [
+                { key: 'voltage', canvasId: 'inputVoltageChart', title: '输入电压', color: '#3498db' },
+                { key: 'send_end_track_voltage', canvasId: 'sendEndVoltageChart', title: '送端轨面电压', color: '#e74c3c' },
+                { key: 'receive_end_track_voltage', canvasId: 'receiveEndVoltageChart', title: '受端轨面电压', color: '#27ae60' },
+                { key: 'main_track_input_voltage', canvasId: 'mainTrackInputVoltageChart', title: '主轨入电压', color: '#f39c12' },
+                { key: 'main_track_output_voltage_1', canvasId: 'mainTrackOutputVoltageChart', title: '轨出1电压', color: '#9b59b6' }
+            ];
+            
+            // 绘制每种电压类型的图表
+            voltageConfigs.forEach(config => {
+                const resultValues = results.map(r => r[config.key]).filter(v => v);
+                drawSingleVoltageChart(config.canvasId, config.title, voltageValues, resultValues, config.color);
+            });
         }
         
         // 开始时间序列模拟
@@ -850,8 +913,7 @@
             if (simulationResults.length > 0) {
                 addResultItem('success', `时间序列模拟完成！共生成 ${simulationResults.length} 条有效数据。`);
                 // 生成曲线图
-                const voltageValues = simulationResults.map(r => r.voltage);
-                drawVoltageChart(voltageValues, simulationResults);
+                drawAllVoltageCharts(simulationResults);
             } else if (currentSimulationIndex > 0) {
                 addResultItem('error', `时间序列模拟完成，但未生成任何有效数据。`);
             }

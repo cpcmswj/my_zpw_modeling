@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request, Form, Body
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import numpy as np
@@ -919,30 +919,298 @@ async def login_api(
     password: str = Form(...)
 ):
     try:
+        import csv
         import os
         
         print(f"接收到登录请求: username={username}, password={password}")
         
-        # 简化登录验证，直接硬编码验证admin/1234
-        if username == "admin" and password == "1234":
-            print("登录成功！")
-            return JSONResponse({
-                "status": "success",
-                "message": "登录成功",
-                "user": {
-                    "username": username
-                }
-            })
-        else:
-            print("登录失败：用户名或密码错误")
+        # 读取CSV文件
+        csv_path = os.path.join("static", "username_code.csv")
+        
+        # 检查文件是否存在
+        if not os.path.exists(csv_path):
+            print("用户数据文件不存在")
             return JSONResponse(
-                {"status": "error", "message": "用户名或密码错误"},
-                status_code=401
+                {"status": "error", "message": "用户数据文件不存在"},
+                status_code=500
             )
+        
+        # 验证用户名和密码
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            if len(lines) < 2:
+                print("用户数据文件格式错误")
+                return JSONResponse(
+                    {"status": "error", "message": "用户数据文件格式错误"},
+                    status_code=500
+                )
+            
+            # 跳过表头
+            for line in lines[1:]:
+                line = line.strip()
+                if line:
+                    parts = line.split(',')
+                    if len(parts) >= 2:
+                        csv_username = parts[0].strip()
+                        csv_password = parts[1].strip()
+                        print(f"CSV用户: {csv_username}, 密码: {csv_password}")
+                        print(f"比较结果: username匹配={csv_username == username}, password匹配={csv_password == password}")
+                        if csv_username == username and csv_password == password:
+                            print("登录成功！")
+                            return JSONResponse({
+                                "status": "success",
+                                "message": "登录成功",
+                                "user": {
+                                    "username": username
+                                }
+                            })
+        
+        # 未找到匹配的用户
+        print("登录失败：用户名或密码错误")
+        return JSONResponse(
+            {"status": "error", "message": "用户名或密码错误"},
+            status_code=401
+        )
     except Exception as e:
         print(f"登录验证错误: {e}")
         return JSONResponse(
             {"status": "error", "message": "登录验证失败"},
+            status_code=500
+        )
+
+# 批量模拟CSV下载API端点
+@app.post("/api/batch-download")
+async def batch_download_api(data: dict = Body(...)):
+    try:
+        import csv
+        import io
+        from datetime import datetime
+        
+        batch_results = data.get("results", [])
+        
+        if not batch_results:
+            return JSONResponse(
+                {"status": "error", "message": "没有可下载的数据"},
+                status_code=400
+            )
+        
+        # 创建CSV内容
+        csv_lines = []
+        
+        # 写入BOM标记
+        csv_lines.append('\ufeff')
+        
+        # 写入表头
+        headers = [
+            '时间戳',
+            '轨道区段ID',
+            '轨道区段名称',
+            '错误类型',
+            '错误类型名称',
+            '轨道长度(m)',
+            '钢轨电阻(Ω/m)',
+            '钢轨电感(H/m)',
+            '漏泄电容(F/m)',
+            '钢轨漏泄电阻(Ω/km)',
+            'SPT电缆长度(km)',
+            '电平档位',
+            '错误值',
+            '衰耗盘端子1',
+            '衰耗盘端子2',
+            '送端轨面电压(V)',
+            '受端轨面电压(V)',
+            '主轨入电压(V)',
+            '轨出1电压(V)',
+            '送端轨面电流(A)',
+            '受端轨面电流(A)',
+            '主轨入电流(A)',
+            '轨出1电流(A)',
+            '输入阻抗(Ω)',
+            '输入电流(A)',
+            '主轨道阻抗(Ω)',
+            '调谐区阻抗(Ω)'
+        ]
+        csv_lines.append(headers.join(','))
+        
+        # 写入数据
+        for result in batch_results:
+            row = [
+                result.get('timestamp', ''),
+                result.get('section_id', ''),
+                result.get('section_name', ''),
+                result.get('error_type', ''),
+                result.get('error_type_name', ''),
+                result.get('track_length', 0),
+                result.get('resistance', 0),
+                result.get('inductance', 0),
+                result.get('capacitance', 0),
+                result.get('leakage_resistance', 0),
+                result.get('spt_cable_length', 0),
+                result.get('voltage_level', 0),
+                result.get('error_value', 0),
+                result.get('r1', 0),
+                result.get('r2', 0),
+                result.get('send_end_track_voltage', 0),
+                result.get('receive_end_track_voltage', 0),
+                result.get('main_track_input_voltage', 0),
+                result.get('main_track_output_voltage_1', 0),
+                result.get('send_end_track_current', 0),
+                result.get('receive_end_track_current', 0),
+                result.get('main_track_input_current', 0),
+                result.get('main_track_output_current_1', 0),
+                result.get('input_impedance', 0),
+                result.get('input_current', 0),
+                result.get('Z_rail', 0),
+                result.get('Z_tuner', 0)
+            ]
+            # 转换所有值为字符串并处理逗号
+            row_str = [str(item).replace(',', ' ') for item in row]
+            csv_lines.append(','.join(row_str))
+        
+        # 合并所有行
+        csv_content = '\n'.join(csv_lines)
+        
+        # 编码为UTF-8字节
+        csv_content_bytes = csv_content.encode('utf-8')
+        
+        # 生成文件名
+        filename = f"批量模拟数据_{datetime.now().strftime('%Y-%m-%d')}.csv"
+        
+        # 返回CSV文件
+        return Response(
+            content=csv_content_bytes,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "text/csv; charset=utf-8"
+            }
+        )
+    except Exception as e:
+        print(f"CSV下载错误: {e}")
+        return JSONResponse(
+            {"status": "error", "message": str(e)},
+            status_code=500
+        )
+
+# 批量模拟XLSX下载API端点
+@app.post("/api/batch-download-xlsx")
+async def batch_download_xlsx_api(data: dict = Body(...)):
+    try:
+        import openpyxl
+        from io import BytesIO
+        from datetime import datetime
+        
+        batch_results = data.get("results", [])
+        
+        if not batch_results:
+            return JSONResponse(
+                {"status": "error", "message": "没有可下载的数据"},
+                status_code=400
+            )
+        
+        # 创建Excel工作簿
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "批量模拟数据"
+        
+        # 写入表头
+        headers = [
+            '时间戳',
+            '轨道区段ID',
+            '轨道区段名称',
+            '错误类型',
+            '错误类型名称',
+            '轨道长度(m)',
+            '钢轨电阻(Ω/m)',
+            '钢轨电感(H/m)',
+            '漏泄电容(F/m)',
+            '钢轨漏泄电阻(Ω/km)',
+            'SPT电缆长度(km)',
+            '电平档位',
+            '错误值',
+            '衰耗盘端子1',
+            '衰耗盘端子2',
+            '送端轨面电压(V)',
+            '受端轨面电压(V)',
+            '主轨入电压(V)',
+            '轨出1电压(V)',
+            '送端轨面电流(A)',
+            '受端轨面电流(A)',
+            '主轨入电流(A)',
+            '轨出1电流(A)',
+            '输入阻抗(Ω)',
+            '输入电流(A)',
+            '主轨道阻抗(Ω)',
+            '调谐区阻抗(Ω)'
+        ]
+        ws.append(headers)
+        
+        # 写入数据
+        for result in batch_results:
+            row = [
+                result.get('timestamp', ''),
+                result.get('section_id', ''),
+                result.get('section_name', ''),
+                result.get('error_type', ''),
+                result.get('error_type_name', ''),
+                result.get('track_length', 0),
+                result.get('resistance', 0),
+                result.get('inductance', 0),
+                result.get('capacitance', 0),
+                result.get('leakage_resistance', 0),
+                result.get('spt_cable_length', 0),
+                result.get('voltage_level', 0),
+                result.get('error_value', 0),
+                result.get('r1', 0),
+                result.get('r2', 0),
+                result.get('send_end_track_voltage', 0),
+                result.get('receive_end_track_voltage', 0),
+                result.get('main_track_input_voltage', 0),
+                result.get('main_track_output_voltage_1', 0),
+                result.get('send_end_track_current', 0),
+                result.get('receive_end_track_current', 0),
+                result.get('main_track_input_current', 0),
+                result.get('main_track_output_current_1', 0),
+                result.get('input_impedance', 0),
+                result.get('input_current', 0),
+                result.get('Z_rail', 0),
+                result.get('Z_tuner', 0)
+            ]
+            ws.append(row)
+        
+        # 调整列宽
+        for column in ws.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # 保存到内存
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        # 生成文件名
+        filename = f"批量模拟数据_{datetime.now().strftime('%Y-%m-%d')}.xlsx"
+        
+        # 返回XLSX文件
+        return Response(
+            content=output.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            }
+        )
+    except Exception as e:
+        print(f"XLSX下载错误: {e}")
+        return JSONResponse(
+            {"status": "error", "message": str(e)},
             status_code=500
         )
 

@@ -260,6 +260,21 @@ class Error_Of_Trail:
         # 衰耗盘调整电阻
         self.R_attenuation=1000
         
+        # 重置可能影响计算结果的实例变量
+        self.matrix = None
+        self.Z_rail_complex = None
+        self.Z_tuner_complex = None
+        self.output_voltage_surface1 = None
+        self.output_voltage_surface2 = None
+        self.output_voltage_main = None
+        self.output_current_surface1 = None
+        self.output_current_surface2 = None
+        self.output_current_main = None
+        self.output_voltage_main_1 = None
+        self.output_current_main_1 = None
+        self.output_voltage_main_2 = None
+        self.output_current_main_2 = None
+        
         # 计算频率
         frequency = self.frequency_table(self.error_position)
         

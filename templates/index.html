@@ -1279,8 +1279,8 @@
                 
                 console.log('准备发送登录请求');
                 
-                // 确保请求正确的端口
-                const response = await fetch('http://127.0.0.1:8000/api/login', {
+                // 使用相对路径，避免端口依赖
+                const response = await fetch('/api/login', {
                     method: 'POST',
                     body: formData,
                     headers: {

@@ -415,9 +415,10 @@
                 <h2>🚀 操作控制</h2>
                 <div style="text-align: center;">
                     <button id="startBatchBtn" class="btn" onclick="startBatchSimulation()">开始批量模拟</button>
-                    <button id="stopBatchBtn" class="btn secondary" onclick="stopBatchSimulation()" disabled>停止</button>
-                    <button id="downloadBatchBtn" class="btn secondary" onclick="downloadBatchData()" disabled>下载数据</button>
-                    <button id="clearResultsBtn" class="btn secondary" onclick="clearResults()">清空结果</button>
+                <button id="stopBatchBtn" class="btn secondary" onclick="stopBatchSimulation()" disabled>停止</button>
+                <button id="downloadBatchBtn" class="btn secondary" onclick="downloadBatchData('csv')" disabled>下载CSV</button>
+                <button id="downloadXLSXBtn" class="btn secondary" onclick="downloadBatchData('xlsx')" disabled>下载XLSX</button>
+                <button id="clearResultsBtn" class="btn secondary" onclick="clearResults()">清空结果</button>
                 </div>
             </div>
             
@@ -436,9 +437,9 @@
                             已完成: 0 / 0
                         </span>
                     </div>
-                    <div class="result-content" id="resultContent">
-                        <p class="loading">请点击"开始批量模拟"按钮开始生成数据。</p>
-                    </div>
+                    <div class="result-content" id="batchResultContent">
+                    <p class="loading">请点击"开始批量模拟"按钮开始生成数据。</p>
+                </div>
                 </div>
             </div>
         </div>
@@ -732,7 +733,7 @@
             document.getElementById('startBatchBtn').disabled = true;
             document.getElementById('stopBatchBtn').disabled = false;
             document.getElementById('downloadBatchBtn').disabled = true;
-            document.getElementById('resultContent').innerHTML = '<p class="loading">正在准备批量模拟...</p>';
+            document.getElementById('batchResultContent').innerHTML = '<p class="loading">正在准备批量模拟...</p>';
             document.getElementById('progressFill').style.width = '0%';
             document.getElementById('progressFill').textContent = '0%';
             document.getElementById('resultStats').textContent = `已完成: 0 / ${batchSize}`;
@@ -794,17 +795,14 @@
                         // 记录错误
                         console.error('任务执行失败:', error);
                         
+                        // 构建错误结果对象
+                        const errorResult = {
+                            params: { section_id: '未知', error_type: '未知' },
+                            error: error.message || '未知错误'
+                        };
+                        
                         // 处理错误结果
-                        if (isBatchRunning) {
-                            addResultItem('error', `任务执行失败: ${error.message || '未知错误'}`);
-                            currentBatchIndex++;
-                            
-                            // 更新进度
-                            const progress = (currentBatchIndex / totalBatchSize) * 100;
-                            document.getElementById('progressFill').style.width = `${progress}%`;
-                            document.getElementById('progressFill').textContent = `${Math.round(progress)}%`;
-                            document.getElementById('resultStats').textContent = `已完成: ${currentBatchIndex} / ${totalBatchSize}`;
-                        }
+                        processSimulationResult(errorResult);
                     });
                     
                     runningTasks.push(taskPromise);
@@ -870,7 +868,12 @@
                     const response = await fetch('/api/calculate/track-circuit', {
                         method: 'POST',
                         body: formData,
-                        signal: controller.signal
+                        signal: controller.signal,
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache',
+                            'Expires': '0'
+                        }
                     });
                     
                     clearTimeout(timeoutId);
@@ -994,6 +997,7 @@
             } else if (currentBatchIndex >= totalBatchSize && !isBatchRunning) {
                 // 如果批量模拟已停止但所有任务都完成了，更新下载按钮状态
                 document.getElementById('downloadBatchBtn').disabled = batchResults.length === 0;
+                document.getElementById('downloadXLSXBtn').disabled = batchResults.length === 0;
                 addResultItem('success', `所有模拟任务已完成！共生成 ${batchResults.length} 条有效数据。`);
             }
         }
@@ -1006,6 +1010,7 @@
             document.getElementById('startBatchBtn').disabled = false;
             document.getElementById('stopBatchBtn').disabled = true;
             document.getElementById('downloadBatchBtn').disabled = batchResults.length === 0;
+            document.getElementById('downloadXLSXBtn').disabled = batchResults.length === 0;
             
             if (batchResults.length > 0) {
                 addResultItem('success', `批量模拟完成！共生成 ${batchResults.length} 条有效数据。`);
@@ -1022,13 +1027,14 @@
             document.getElementById('startBatchBtn').disabled = false;
             document.getElementById('stopBatchBtn').disabled = true;
             document.getElementById('downloadBatchBtn').disabled = batchResults.length === 0;
+            document.getElementById('downloadXLSXBtn').disabled = batchResults.length === 0;
             
             addResultItem('error', `批量模拟已手动停止。已生成 ${batchResults.length} 条数据。`);
         }
         
         // 添加结果项
         function addResultItem(type, message) {
-            const resultContent = document.getElementById('resultContent');
+            const resultContent = document.getElementById('batchResultContent');
             const resultItem = document.createElement('div');
             resultItem.className = `result-item ${type}`;
             resultItem.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
@@ -1045,96 +1051,239 @@
         }
         
         // 下载批量数据
-        function downloadBatchData() {
+        async function downloadBatchData(format) {
             if (batchResults.length === 0) {
                 alert('没有可下载的数据');
                 return;
             }
             
-            // 构建CSV内容
-            let csvContent = '';
-            
-            // CSV标题行
-            const headers = [
-                '时间戳',
-                '轨道区段ID',
-                '轨道区段名称',
-                '错误类型',
-                '错误类型名称',
-                '轨道长度(m)',
-                '钢轨电阻(Ω/m)',
-                '钢轨电感(H/m)',
-                '漏泄电容(F/m)',
-                '钢轨漏泄电阻(Ω/km)',
-                'SPT电缆长度(km)',
-                '电平档位',
-                '错误值',
-                '衰耗盘端子1',
-                '衰耗盘端子2',
-                '送端轨面电压(V)',
-                '受端轨面电压(V)',
-                '主轨入电压(V)',
-                '轨出1电压(V)',
-                '送端轨面电流(A)',
-                '受端轨面电流(A)',
-                '主轨入电流(A)',
-                '轨出1电流(A)',
-                '输入阻抗(Ω)',
-                '输入电流(A)',
-                '主轨道阻抗(Ω)',
-                '调谐区阻抗(Ω)'
-            ];
-            csvContent += headers.join(',') + '\n';
-            
-            // CSV数据行
-            for (const data of batchResults) {
-                const row = [
-                    data.timestamp,
-                    data.section_id,
-                    data.section_name,
-                    data.error_type,
-                    data.error_type_name,
-                    data.track_length.toFixed(2),
-                    data.resistance.toFixed(6),
-                    data.inductance.toFixed(9),
-                    data.capacitance.toFixed(12),
-                    data.leakage_resistance,
-                    data.spt_cable_length,
-                    data.voltage_level,
-                    data.error_value.toFixed(2),
-                    data.r1,
-                    data.r2,
-                    data.send_end_track_voltage.toFixed(2),
-                    data.receive_end_track_voltage.toFixed(2),
-                    data.main_track_input_voltage.toFixed(2),
-                    data.main_track_output_voltage_1.toFixed(2),
-                    data.send_end_track_current.toFixed(4),
-                    data.receive_end_track_current.toFixed(4),
-                    data.main_track_input_current.toFixed(4),
-                    data.main_track_output_current_1.toFixed(4),
-                    data.input_impedance.toFixed(2),
-                    data.input_current.toFixed(4),
-                    data.Z_rail.toFixed(2),
-                    data.Z_tuner.toFixed(2)
+            if (format === 'csv') {
+                // 构建CSV内容
+                let csvContent = '';
+                
+                // 添加BOM标记以确保Excel能正确识别UTF-8编码
+                csvContent += '\ufeff';
+                
+                // CSV标题行
+                const headers = [
+                    '时间戳',
+                    '轨道区段ID',
+                    '轨道区段名称',
+                    '错误类型',
+                    '错误类型名称',
+                    '轨道长度(m)',
+                    '钢轨电阻(Ω/m)',
+                    '钢轨电感(H/m)',
+                    '漏泄电容(F/m)',
+                    '钢轨漏泄电阻(Ω/km)',
+                    'SPT电缆长度(km)',
+                    '电平档位',
+                    '错误值',
+                    '衰耗盘端子1',
+                    '衰耗盘端子2',
+                    '送端轨面电压(V)',
+                    '受端轨面电压(V)',
+                    '主轨入电压(V)',
+                    '轨出1电压(V)',
+                    '送端轨面电流(A)',
+                    '受端轨面电流(A)',
+                    '主轨入电流(A)',
+                    '轨出1电流(A)',
+                    '输入阻抗(Ω)',
+                    '输入电流(A)',
+                    '主轨道阻抗(Ω)',
+                    '调谐区阻抗(Ω)'
                 ];
-                csvContent += row.join(',') + '\n';
+                csvContent += headers.join(',') + '\n';
+                
+                // CSV数据行
+                for (const data of batchResults) {
+                    const row = [
+                        data.timestamp,
+                        data.section_id,
+                        data.section_name,
+                        data.error_type,
+                        data.error_type_name,
+                        data.track_length.toFixed(2),
+                        data.resistance.toFixed(6),
+                        data.inductance.toFixed(9),
+                        data.capacitance.toFixed(12),
+                        data.leakage_resistance,
+                        data.spt_cable_length,
+                        data.voltage_level,
+                        data.error_value.toFixed(2),
+                        data.r1,
+                        data.r2,
+                        data.send_end_track_voltage.toFixed(2),
+                        data.receive_end_track_voltage.toFixed(2),
+                        data.main_track_input_voltage.toFixed(2),
+                        data.main_track_output_voltage_1.toFixed(2),
+                        data.send_end_track_current.toFixed(4),
+                        data.receive_end_track_current.toFixed(4),
+                        data.main_track_input_current.toFixed(4),
+                        data.main_track_output_current_1.toFixed(4),
+                        data.input_impedance.toFixed(2),
+                        data.input_current.toFixed(4),
+                        data.Z_rail.toFixed(2),
+                        data.Z_tuner.toFixed(2)
+                    ];
+                    csvContent += row.join(',') + '\n';
+                }
+                
+                // 创建Blob对象，确保使用正确的编码
+                const blob = new Blob([csvContent], {
+                    type: 'text/csv;charset=utf-8;'
+                });
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `批量模拟数据_${new Date().toISOString().slice(0, 10)}.csv`);
+                link.style.visibility = 'hidden';
+                
+                // 添加到文档并触发下载
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } else if (format === 'xlsx') {
+                try {
+                    // 检查是否已加载SheetJS库
+                    if (typeof XLSX === 'undefined') {
+                        // 动态加载SheetJS库
+                        const script = document.createElement('script');
+                        script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+                        script.onload = function() {
+                            generateXLSX();
+                        };
+                        script.onerror = function() {
+                            alert('无法加载XLSX库，请检查网络连接');
+                        };
+                        document.head.appendChild(script);
+                    } else {
+                        generateXLSX();
+                    }
+                    
+                    function generateXLSX() {
+                        // 创建工作簿
+                        const wb = XLSX.utils.book_new();
+                        
+                        // 准备数据
+                        const headers = [
+                            '时间戳',
+                            '轨道区段ID',
+                            '轨道区段名称',
+                            '错误类型',
+                            '错误类型名称',
+                            '轨道长度(m)',
+                            '钢轨电阻(Ω/m)',
+                            '钢轨电感(H/m)',
+                            '漏泄电容(F/m)',
+                            '钢轨漏泄电阻(Ω/km)',
+                            'SPT电缆长度(km)',
+                            '电平档位',
+                            '错误值',
+                            '衰耗盘端子1',
+                            '衰耗盘端子2',
+                            '送端轨面电压(V)',
+                            '受端轨面电压(V)',
+                            '主轨入电压(V)',
+                            '轨出1电压(V)',
+                            '送端轨面电流(A)',
+                            '受端轨面电流(A)',
+                            '主轨入电流(A)',
+                            '轨出1电流(A)',
+                            '输入阻抗(Ω)',
+                            '输入电流(A)',
+                            '主轨道阻抗(Ω)',
+                            '调谐区阻抗(Ω)'
+                        ];
+                        
+                        // 准备数据行
+                        const data = [headers];
+                        for (const item of batchResults) {
+                            const row = [
+                                item.timestamp,
+                                item.section_id,
+                                item.section_name,
+                                item.error_type,
+                                item.error_type_name,
+                                item.track_length.toFixed(2),
+                                item.resistance.toFixed(6),
+                                item.inductance.toFixed(9),
+                                item.capacitance.toFixed(12),
+                                item.leakage_resistance,
+                                item.spt_cable_length,
+                                item.voltage_level,
+                                item.error_value.toFixed(2),
+                                item.r1,
+                                item.r2,
+                                item.send_end_track_voltage.toFixed(2),
+                                item.receive_end_track_voltage.toFixed(2),
+                                item.main_track_input_voltage.toFixed(2),
+                                item.main_track_output_voltage_1.toFixed(2),
+                                item.send_end_track_current.toFixed(4),
+                                item.receive_end_track_current.toFixed(4),
+                                item.main_track_input_current.toFixed(4),
+                                item.main_track_output_current_1.toFixed(4),
+                                item.input_impedance.toFixed(2),
+                                item.input_current.toFixed(4),
+                                item.Z_rail.toFixed(2),
+                                item.Z_tuner.toFixed(2)
+                            ];
+                            data.push(row);
+                        }
+                        
+                        // 创建工作表
+                        const ws = XLSX.utils.aoa_to_sheet(data);
+                        
+                        // 调整列宽
+                        const wscols = [
+                            {wch: 20}, // 时间戳
+                            {wch: 10}, // 轨道区段ID
+                            {wch: 15}, // 轨道区段名称
+                            {wch: 8},  // 错误类型
+                            {wch: 15}, // 错误类型名称
+                            {wch: 12}, // 轨道长度(m)
+                            {wch: 12}, // 钢轨电阻(Ω/m)
+                            {wch: 12}, // 钢轨电感(H/m)
+                            {wch: 12}, // 漏泄电容(F/m)
+                            {wch: 15}, // 钢轨漏泄电阻(Ω/km)
+                            {wch: 12}, // SPT电缆长度(km)
+                            {wch: 8},  // 电平档位
+                            {wch: 8},  // 错误值
+                            {wch: 10}, // 衰耗盘端子1
+                            {wch: 10}, // 衰耗盘端子2
+                            {wch: 15}, // 送端轨面电压(V)
+                            {wch: 15}, // 受端轨面电压(V)
+                            {wch: 15}, // 主轨入电压(V)
+                            {wch: 15}, // 轨出1电压(V)
+                            {wch: 15}, // 送端轨面电流(A)
+                            {wch: 15}, // 受端轨面电流(A)
+                            {wch: 15}, // 主轨入电流(A)
+                            {wch: 15}, // 轨出1电流(A)
+                            {wch: 12}, // 输入阻抗(Ω)
+                            {wch: 12}, // 输入电流(A)
+                            {wch: 15}, // 主轨道阻抗(Ω)
+                            {wch: 15}  // 调谐区阻抗(Ω)
+                        ];
+                        ws['!cols'] = wscols;
+                        
+                        // 添加工作表到工作簿
+                        XLSX.utils.book_append_sheet(wb, ws, '批量模拟数据');
+                        
+                        // 生成文件名
+                        const filename = `批量模拟数据_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                        
+                        // 下载文件
+                        XLSX.writeFile(wb, filename);
+                    }
+                } catch (error) {
+                    console.error('下载失败:', error);
+                    alert('下载失败，请稍后重试');
+                }
             }
-            
-            // 创建Blob对象，添加BOM标记以确保Excel能正确识别UTF-8编码
-            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
-            
-            // 创建下载链接
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `批量模拟数据_${new Date().toISOString().slice(0, 10)}.csv`);
-            link.style.visibility = 'hidden';
-            
-            // 添加到文档并触发下载
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
         
         // 清空结果
@@ -1148,6 +1297,7 @@
             document.getElementById('progressFill').textContent = '0%';
             document.getElementById('resultStats').textContent = '已完成: 0 / 0';
             document.getElementById('downloadBatchBtn').disabled = true;
+            document.getElementById('downloadXLSXBtn').disabled = true;
             document.getElementById('startBatchBtn').disabled = false;
             document.getElementById('stopBatchBtn').disabled = true;
         }

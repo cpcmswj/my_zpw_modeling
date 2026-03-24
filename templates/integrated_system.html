@@ -1285,7 +1285,12 @@
             // 使用相对路径，不硬编码端口号，确保与当前页面端口一致
             const response = await fetch('/api/calculate/track-circuit', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
             });
             
             const result = await response.json();
