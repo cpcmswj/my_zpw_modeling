@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>铁路轨道电路故障模拟系统 - 首页</title>
-    <style>
+        <!-- 引入SheetJS库 -->
+        <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+        <style>
         * {
             margin: 0;
             padding: 0;
@@ -564,6 +566,57 @@
             color: #666;
         }
         
+        /* 波形导入样式 */
+        .wave-display {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .data-display {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            min-height: 100px;
+            border: 1px solid #ddd;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .loading { color: #7f8c8d; font-style: italic; }
+        .control-buttons {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .file-upload {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .file-upload:hover {
+            border-color: #3498db;
+        }
+        .sheet-selector {
+            margin: 10px 0;
+        }
+        
         /* 弹窗样式 */
         .modal {
             display: none;
@@ -664,7 +717,8 @@
             <div style="margin-top: 15px;">
                 <button class="btn" onclick="switchTab('integrated', event)">集成故障模拟</button>
                 <button class="btn" onclick="switchTab('batch', event)">批量故障模拟</button>
-                <a href="/time-series-simulation" class="btn">时间序列模拟</a>
+                <button class="btn" onclick="switchTab('waveform', event)">波形导入</button>
+                <button class="btn" onclick="switchTab('time_series', event)">时间序列模拟</button>
                 <a href="/developer-debug" class="btn secondary">开发者调试页面</a>
             </div>
         </div>
@@ -674,7 +728,8 @@
             <div class="floating-tabs">
                 <div class="floating-tab active" onclick="switchTab('integrated', event)">集成故障模拟</div>
                 <div class="floating-tab" onclick="switchTab('batch', event)">批量故障模拟</div>
-                <a href="/time-series-simulation" class="floating-tab">时间序列模拟</a>
+                <div class="floating-tab" onclick="switchTab('waveform', event)">波形导入</div>
+                <div class="floating-tab" onclick="switchTab('time_series', event)">时间序列模拟</div>
             </div>
             
             <!-- 集成故障模拟内容 -->
@@ -1151,6 +1206,296 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- 波形导入内容 -->
+            <div id="waveform" class="tab-content">
+                <h2>波形导入与显示</h2>
+                
+                <div class="section">
+                    <h2>📁 文件导入</h2>
+                    <div class="file-upload">
+                        <h3>上传Excel文件</h3>
+                        <p>请上传包含采样数据的xlsx文件，数据应按列保存</p>
+                        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+                        <div class="sheet-selector" id="sheetSelector" style="display: none;">
+                            <label for="sheetName">选择工作表:</label>
+                            <select id="sheetName"></select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>🔧 参数设置</h2>
+                    <form id="paramsForm" onsubmit="event.preventDefault(); plotWaveform();">
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="samplingFreq">采样频率 (Hz):</label>
+                                <input type="number" id="samplingFreq" value="1000" step="100" min="1">
+                            </div>
+                            <div class="form-col">
+                                <label for="startRow">数据起始行:</label>
+                                <input type="number" id="startRow" value="1" step="1" min="1">
+                            </div>
+                            <div class="form-col">
+                                <label for="selectedColumn">选择数据列:</label>
+                                <select id="selectedColumn"></select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="duration">显示时长 (秒):</label>
+                                <input type="number" id="duration" value="2" step="0.1" min="0.1" max="10">
+                            </div>
+                            <div class="form-col">
+                                <label for="samples">采样点数:</label>
+                                <input type="number" id="samples" value="500" step="100" min="100" max="5000">
+                            </div>
+                        </div>
+                        <div class="control-buttons">
+                            <button type="submit" class="btn">绘制波形</button>
+                            <button type="button" class="btn secondary" onclick="clearForm()">重置</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="section">
+                    <h2>📊 波形显示</h2>
+                    <div class="wave-display">
+                        <canvas id="waveCanvas" width="1000" height="400"></canvas>
+                        <div id="waveInfo" class="data-display">
+                            <p class="loading">请上传文件并设置参数后绘制波形</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 时间序列模拟内容 -->
+            <div id="time_series" class="tab-content">
+                <h2>时间序列故障模拟</h2>
+                
+                <!-- 基本设置 -->
+                <div class="section">
+                    <h2>🔧 基本设置</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="section">轨道区段选择:</label>
+                            <select id="section" name="section" onchange="updateImageDisplay()">
+                                <option value="69G">69G</option>
+                                <option value="X1LQG">X1LQG</option>
+                                <option value="IG1">IG1</option>
+                                <option value="57G">57G</option>
+                                <option value="3DG">3DG</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label for="errorType">错误类型选择:</label>
+                            <select id="errorType" name="errorType" onchange="updateImageDisplay()">
+                                <option value="0">0 - 无故障</option>
+                                <option value="1">1 - 接收端调谐单元1断路</option>
+                                <option value="2">2 - 发送端调谐单元1断路</option>
+                                <option value="3">3 - 接收端空心线圈断路</option>
+                                <option value="4">4 - 接收端空芯线圈短路</option>
+                                <option value="5">5 - 接收端调谐单元2断路</option>
+                                <option value="6">6 - 补偿电容3断路</option>
+                                <option value="7">7 - 补偿电容3短路</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- 图片显示区域 -->
+                    <div class="form-row" style="margin-top: 20px;">
+                        <div class="form-col" style="flex: 2;">
+                            <label>对应图片:</label>
+                            <div id="imageDisplay" style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; text-align: center; min-height: 400px; background-color: #f9f9f9; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 300px; margin: 10px;">
+                                    <h4>故障示意图</h4>
+                                    <img id="sectionErrorImage" src="" alt="选择轨道区段和故障类型后显示对应图片" style="max-width: 100%; max-height: 300px; display: none;">
+                                    <p id="imagePlaceholder" style="color: #666; margin-top: 120px;">请选择轨道区段和故障类型</p>
+                                </div>
+                                <div style="flex: 1; min-width: 300px; margin: 10px;">
+                                    <h4>轨道区段图</h4>
+                                    <img id="railwayZoneImage" src="/static/images/railway_zone.png" alt="轨道区段图" style="max-width: 100%; max-height: 300px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 轨道参数设置 -->
+                <div class="section">
+                    <h2>🛤️ 轨道参数设置</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="trackLength">轨道长度 (m):</label>
+                            <input type="number" id="trackLength" name="trackLength" value="800" min="10">
+                        </div>
+                        <div class="form-col">
+                            <label for="resistance">钢轨电阻 (Ω/m):</label>
+                            <input type="number" id="resistance" name="resistance" value="0.1" step="0.01" min="0.01">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="inductance">钢轨电感 (H/m):</label>
+                            <input type="number" id="inductance" name="inductance" value="1.0e-3" step="0.0001" min="0.0001">
+                        </div>
+                        <div class="form-col">
+                            <label for="capacitance">漏泄电容 (F/m):</label>
+                            <input type="number" id="capacitance" name="capacitance" value="1.0e-9" step="0.0000000001" min="0.0000000001">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="leakageResistance">钢轨漏泄电阻 (Ω/km):</label>
+                            <select id="leakageResistance" name="leakageResistance">
+                                <option value="1">1 Ω/km</option>
+                                <option value="1.2">1.2 Ω/km</option>
+                                <option value="1.5" selected>1.5 Ω/km</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label for="sptCableLength">SPT电缆长度 (km):</label>
+                            <select id="sptCableLength" name="sptCableLength">
+                                <option value="10">10km</option>
+                                <option value="12.5">12.5km</option>
+                                <option value="15">15km</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="errorValue">错误值:</label>
+                            <input type="number" id="errorValue" name="errorValue" value="5" step="0.1" min="0">
+                        </div>
+                        <div class="form-col">
+                            <label for="r1">衰耗盘端子1:</label>
+                            <select id="r1" name="r1">
+                                <option value="1">1</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="6">6</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label for="r2">衰耗盘端子2:</label>
+                            <select id="r2" name="r2">
+                                <option value="2">2</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="7">7</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 电压参数设置 -->
+                <div class="section">
+                    <h2>⚡ 电压参数设置</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="voltageLevel">电平档位:</label>
+                            <select id="voltageLevel" name="voltageLevel">
+                                <option value="1">档位1 (161-170V)</option>
+                                <option value="2">档位2 (146-154V)</option>
+                                <option value="3">档位3 (128-135V)</option>
+                                <option value="4">档位4 (104.5-110.5V)</option>
+                                <option value="5">档位5 (75-79.5V)</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label for="useRandomVoltage">
+                                <input type="checkbox" id="useRandomVoltage" name="useRandomVoltage" value="1">
+                                随机化电压值
+                            </label>
+                            <div style="margin-top: 5px; font-size: 14px; color: #666;">
+                                勾选后，将根据档位上下限随机生成电压值
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <label for="voltageCount">电压点数:</label>
+                            <input type="number" id="voltageCount" name="voltageCount" value="10" step="1" min="2" max="50">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 图表显示 -->
+                <div class="section">
+                    <h2>📈 电压曲线图表</h2>
+                    
+                    <!-- 输入电压图表 -->
+                    <div style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;">
+                        <h3>输入电压</h3>
+                        <canvas id="inputVoltageChart" width="100%" height="300"></canvas>
+                    </div>
+                    
+                    <!-- 送端轨面电压图表 -->
+                    <div style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;">
+                        <h3>送端轨面电压</h3>
+                        <canvas id="sendEndVoltageChart" width="100%" height="300"></canvas>
+                    </div>
+                    
+                    <!-- 受端轨面电压图表 -->
+                    <div style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;">
+                        <h3>受端轨面电压</h3>
+                        <canvas id="receiveEndVoltageChart" width="100%" height="300"></canvas>
+                    </div>
+                    
+                    <!-- 主轨入电压图表 -->
+                    <div style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;">
+                        <h3>主轨入电压</h3>
+                        <canvas id="mainTrackInputVoltageChart" width="100%" height="300"></canvas>
+                    </div>
+                    
+                    <!-- 轨出1电压图表 -->
+                    <div style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;">
+                        <h3>轨出1电压</h3>
+                        <canvas id="mainTrackOutputVoltageChart" width="100%" height="300"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="section">
+                    <h2>🚀 操作控制</h2>
+                    <div style="text-align: center;">
+                        <button id="startSimulationBtn" class="btn" onclick="startTimeSeriesSimulation()">开始时间序列模拟</button>
+                        <button id="stopSimulationBtn" class="btn secondary" onclick="stopTimeSeriesSimulation()" disabled>停止</button>
+                        <button id="downloadDataBtn" class="btn secondary" onclick="downloadTimeSeriesData()" disabled>下载数据</button>
+                        <button id="clearResultsBtn" class="btn secondary" onclick="clearResults()">清空结果</button>
+                    </div>
+                </div>
+                
+                <!-- 结果显示 -->
+                <div class="section">
+                    <h2>📊 模拟结果</h2>
+                    
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%;">0%</div>
+                    </div>
+                    
+                    <div class="result-container">
+                        <div class="result-title">
+                            时间序列模拟结果
+                            <span id="resultStats" style="float: right; font-weight: normal; color: #666;">
+                                已完成: 0 / 0
+                            </span>
+                        </div>
+                        <div class="result-content" id="resultContent">
+                            <p class="loading">请点击"开始时间序列模拟"按钮开始生成数据。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -1366,7 +1711,13 @@
                 // 如果没有事件对象（比如从头部按钮调用），找到对应的悬浮窗并激活
                 const floatingTabs = document.getElementsByClassName('floating-tab');
                 for (let i = 0; i < floatingTabs.length; i++) {
-                    if (floatingTabs[i].textContent.trim() === (tabName === 'integrated' ? '集成故障模拟' : '批量故障模拟')) {
+                    const tabText = floatingTabs[i].textContent.trim();
+                    if (
+                        (tabName === 'integrated' && tabText === '集成故障模拟') ||
+                        (tabName === 'batch' && tabText === '批量故障模拟') ||
+                        (tabName === 'waveform' && tabText === '波形导入') ||
+                        (tabName === 'time_series' && tabText === '时间序列模拟')
+                    ) {
                         floatingTabs[i].classList.add('active');
                         break;
                     }
@@ -1381,7 +1732,7 @@
         let simulationResult = null;
         
         // 铁路区段数据
-        const railwaySections = {
+        let railwaySections = {
             "69G": {
                 id: "69G",
                 name: "轨道区段 - 69G",
@@ -1430,7 +1781,7 @@
         };
         
         // 错误类型数据
-        const errorTypes = [
+        let errorTypes = [
             { value: 0, name: "0 - 无故障", description: "正常运行状态，无故障" },
             { value: 1, name: "1 - 接收端调谐单元1断路", description: "接收端调谐单元1发生断路故障" },
             { value: 2, name: "2 - 发送端调谐单元1断路", description: "发送端调谐单元1发生断路故障" },
@@ -2789,6 +3140,1095 @@
             document.getElementById('progressFill').textContent = '0%';
             document.getElementById('resultStats').textContent = '已完成: 0 / 0';
             document.getElementById('downloadBatchBtn').disabled = true;
+        }
+        
+        // 波形导入功能
+        let workbook = null;
+        let worksheet = null;
+        let data = [];
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 监听文件上传
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.addEventListener('change', function(event) {
+                    // 上传新文件时，先重置之前的数据
+                    if (event.target.files && event.target.files.length > 0) {
+                        // 重置全局变量
+                        workbook = null;
+                        worksheet = null;
+                        data = [];
+                        
+                        // 重置UI
+                        const sheetSelector = document.getElementById('sheetSelector');
+                        if (sheetSelector) {
+                            sheetSelector.style.display = 'none';
+                        }
+                        
+                        const selectedColumn = document.getElementById('selectedColumn');
+                        if (selectedColumn) {
+                            selectedColumn.innerHTML = '';
+                        }
+                        
+                        const waveInfo = document.getElementById('waveInfo');
+                        if (waveInfo) {
+                            waveInfo.innerHTML = '<p class="loading">正在读取文件...</p>';
+                        }
+                        
+                        // 清除画布
+                        const canvas = document.getElementById('waveCanvas');
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        }
+                    }
+                    
+                    // 处理文件上传
+                    handleFileUpload(event);
+                });
+            }
+            // 监听工作表选择
+            const sheetNameSelect = document.getElementById('sheetName');
+            if (sheetNameSelect) {
+                sheetNameSelect.addEventListener('change', handleSheetChange);
+            }
+        });
+
+        // 处理文件上传
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                const waveInfo = document.getElementById('waveInfo');
+                if (waveInfo) {
+                    waveInfo.innerHTML = '<p class="error">❌ 不支持的文件格式，请上传CSV或XLSX文件</p>';
+                }
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // 对于CSV文件，尝试使用文本方式读取以处理编码问题
+                    if (fileName.endsWith('.csv')) {
+                        // 尝试使用UTF-8编码读取
+                        const text = e.target.result;
+                        // 处理可能的BOM字符
+                        const cleanedText = text.replace(/^\ufeff/, '');
+                        workbook = XLSX.read(cleanedText, { type: 'string', encoding: 'UTF-8' });
+                    } else {
+                        // 对于Excel文件，使用二进制方式读取
+                        const data = new Uint8Array(e.target.result);
+                        workbook = XLSX.read(data, { type: 'array' });
+                    }
+                    
+                    // 显示工作表选择器
+                    const sheetSelector = document.getElementById('sheetSelector');
+                    if (sheetSelector) {
+                        sheetSelector.style.display = 'block';
+                    }
+                    
+                    // 填充工作表选项
+                    const sheetNameSelect = document.getElementById('sheetName');
+                    if (sheetNameSelect) {
+                        sheetNameSelect.innerHTML = '';
+                        workbook.SheetNames.forEach(sheetName => {
+                            const option = document.createElement('option');
+                            option.value = sheetName;
+                            option.textContent = sheetName;
+                            sheetNameSelect.appendChild(option);
+                        });
+                        
+                        // 自动选择第一个工作表
+                        handleSheetChange({ target: sheetNameSelect });
+                    }
+                    
+                    const waveInfo = document.getElementById('waveInfo');
+                    if (waveInfo) {
+                        waveInfo.innerHTML = '<p class="success">✅ 文件上传成功！</p>';
+                    }
+                } catch (error) {
+                    const waveInfo = document.getElementById('waveInfo');
+                    if (waveInfo) {
+                        waveInfo.innerHTML = '<p class="error">❌ 文件读取失败: ' + error.message + '</p>';
+                    }
+                }
+            };
+            
+            // 根据文件类型选择读取方式
+            if (fileName.endsWith('.csv')) {
+                reader.readAsText(file, 'UTF-8');
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        // 处理工作表选择
+        function handleSheetChange(event) {
+            const sheetName = event.target.value;
+            worksheet = workbook.Sheets[sheetName];
+            
+            // 转换工作表数据
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            // 填充数据列选择器
+            const columnSelect = document.getElementById('selectedColumn');
+            if (columnSelect) {
+                columnSelect.innerHTML = '';
+                
+                if (jsonData.length > 0) {
+                    // 获取列数
+                    const columnCount = jsonData[0].length;
+                    for (let i = 0; i < columnCount; i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        // 尝试使用表头作为选项文本，如果没有则使用列号
+                        const headerText = jsonData[0][i] ? String(jsonData[0][i]) : `列 ${i + 1}`;
+                        // 清理可能的乱码字符
+                        const cleanedText = headerText.replace(/[^\x00-\x7F\u4e00-\u9fa5]/g, '');
+                        option.textContent = cleanedText || `列 ${i + 1}`;
+                        columnSelect.appendChild(option);
+                    }
+                }
+            }
+            
+            const waveInfo = document.getElementById('waveInfo');
+            if (waveInfo) {
+                waveInfo.innerHTML = '<p class="success">✅ 工作表选择成功！</p>';
+            }
+        }
+
+        // 绘制波形
+        function plotWaveform() {
+            const canvas = document.getElementById('waveCanvas');
+            const ctx = canvas.getContext('2d');
+            const waveInfo = document.getElementById('waveInfo');
+            
+            try {
+                if (!workbook || !worksheet) {
+                    throw new Error('请先上传文件并选择工作表');
+                }
+                
+                // 获取输入参数
+                const samplingFreq = parseFloat(document.getElementById('samplingFreq').value);
+                const startRow = parseInt(document.getElementById('startRow').value) - 1; // 转换为0索引
+                const selectedColumn = parseInt(document.getElementById('selectedColumn').value);
+                const duration = parseFloat(document.getElementById('duration').value);
+                const samples = parseInt(document.getElementById('samples').value);
+                
+                // 转换工作表数据
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (startRow >= jsonData.length) {
+                    throw new Error('数据起始行超出范围');
+                }
+                
+                // 提取数据
+                data = [];
+                for (let i = startRow; i < jsonData.length; i++) {
+                    const value = parseFloat(jsonData[i][selectedColumn]);
+                    if (!isNaN(value)) {
+                        data.push(value);
+                    }
+                }
+                
+                // 检查数据是否有效
+                if (data.length === 0) {
+                    // 尝试跳过表头行
+                    data = [];
+                    for (let i = startRow + 1; i < jsonData.length; i++) {
+                        const value = parseFloat(jsonData[i][selectedColumn]);
+                        if (!isNaN(value)) {
+                            data.push(value);
+                        }
+                    }
+                }
+                
+                if (data.length === 0) {
+                    throw new Error('所选列中没有有效数据');
+                }
+                
+                // 清除画布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制坐标轴
+                const centerY = canvas.height / 2;
+                const centerX = 50;
+                const width = canvas.width - 100;
+                const height = canvas.height - 40;
+                
+                // 确定数据范围
+                const maxValue = Math.max(...data);
+                const minValue = Math.min(...data);
+                const valueRange = maxValue - minValue;
+                
+                // 添加一些边距，确保所有数据点都能显示
+                const padding = valueRange * 0.1;
+                const adjustedMin = minValue - padding;
+                const adjustedMax = maxValue + padding;
+                const adjustedRange = adjustedMax - adjustedMin;
+                
+                // 计算Y轴偏移
+                const offsetY = centerY - (adjustedMin + adjustedRange / 2) * (height / adjustedRange);
+                
+                // 计算采样间隔
+                const sampleInterval = 1 / samplingFreq;
+                const totalDuration = data.length * sampleInterval;
+                
+                // 绘制坐标轴
+                ctx.beginPath();
+                ctx.moveTo(centerX, 20);
+                ctx.lineTo(centerX, canvas.height - 20);
+                ctx.lineTo(canvas.width - 20, canvas.height - 20);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // 绘制网格
+                ctx.strokeStyle = '#eee';
+                ctx.lineWidth = 0.5;
+                
+                // 水平网格线和刻度
+                const ySteps = 10;
+                for (let i = 0; i <= ySteps; i++) {
+                    const y = 20 + (i * height / ySteps);
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, y);
+                    ctx.lineTo(canvas.width - 20, y);
+                    ctx.stroke();
+                    
+                    // 绘制Y轴刻度
+                    const value = adjustedMax - (i * adjustedRange / ySteps);
+                    ctx.fillStyle = '#333';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(value.toFixed(2), centerX - 5, y + 3);
+                }
+                
+                // 垂直网格线和刻度
+                const xSteps = 10;
+                for (let i = 0; i <= xSteps; i++) {
+                    const x = centerX + (i * width / xSteps);
+                    ctx.beginPath();
+                    ctx.moveTo(x, 20);
+                    ctx.lineTo(x, canvas.height - 20);
+                    ctx.stroke();
+                    
+                    // 绘制X轴刻度
+                    const time = (i * totalDuration / xSteps).toFixed(2);
+                    ctx.fillStyle = '#333';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(time, x, canvas.height - 5);
+                }
+                
+                // 绘制波形
+                ctx.beginPath();
+                
+                // 计算要显示的数据点
+                const displayPoints = Math.min(samples, data.length);
+                const step = Math.floor(data.length / displayPoints);
+                
+                for (let i = 0; i < displayPoints; i++) {
+                    const dataIndex = i * step;
+                    const x = centerX + (i / (displayPoints - 1)) * width;
+                    const y = offsetY - (data[dataIndex] - adjustedMin) * (height / adjustedRange);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                ctx.strokeStyle = '#3498db';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 更新波形信息
+                const html = `
+                    <h3>波形信息</h3>
+                    <div class="card">
+                        <p><strong>采样频率:</strong> ${samplingFreq.toFixed(2)} Hz</p>
+                        <p><strong>数据点数:</strong> ${data.length}</p>
+                        <p><strong>总时长:</strong> ${totalDuration.toFixed(2)} 秒</p>
+                        <p><strong>数据范围:</strong> ${minValue.toFixed(4)} - ${maxValue.toFixed(4)}</p>
+                        <p><strong>显示点数:</strong> ${displayPoints}</p>
+                    </div>
+                `;
+                waveInfo.innerHTML = '<p class="success">✅ 波形绘制成功！</p>' + html;
+                
+            } catch (error) {
+                waveInfo.innerHTML = '<p class="error">❌ 绘制失败: ' + error.message + '</p>';
+            }
+        }
+
+        // 清除表单
+        function clearForm() {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+            
+            const sheetSelector = document.getElementById('sheetSelector');
+            if (sheetSelector) {
+                sheetSelector.style.display = 'none';
+            }
+            
+            const selectedColumn = document.getElementById('selectedColumn');
+            if (selectedColumn) {
+                selectedColumn.innerHTML = '';
+            }
+            
+            const paramsForm = document.getElementById('paramsForm');
+            if (paramsForm) {
+                paramsForm.reset();
+            }
+            
+            const waveInfo = document.getElementById('waveInfo');
+            if (waveInfo) {
+                waveInfo.innerHTML = '<p class="loading">请上传文件并设置参数后绘制波形</p>';
+            }
+            
+            // 清除画布
+            const canvas = document.getElementById('waveCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            // 重置全局变量
+            workbook = null;
+            worksheet = null;
+            data = [];
+        }
+        
+        // 时间序列模拟功能
+        // 全局状态
+        let simulationResults = [];
+        let isSimulationRunning = false;
+        let currentSimulationIndex = 0;
+        let totalSimulationCount = 0;
+        
+        // 轨道区段和故障类型对应的图片映射
+        const imageMapping = {
+            "69G": {
+                0: "/static/images/错误展示0.png",
+                1: "/static/images/错误展示1.png",
+                2: "/static/images/错误展示2.png",
+                3: "/static/images/错误展示3.png",
+                4: "/static/images/错误展示4.png",
+                5: "/static/images/错误展示5.png",
+                6: "/static/images/错误展示6.png",
+                7: "/static/images/错误展示7.png"
+            },
+            "X1LQG": {
+                0: "/static/images/错误展示0.png",
+                1: "/static/images/错误展示1.png",
+                2: "/static/images/错误展示2.png",
+                3: "/static/images/错误展示3.png",
+                4: "/static/images/错误展示4.png",
+                5: "/static/images/错误展示5.png",
+                6: "/static/images/错误展示6.png",
+                7: "/static/images/错误展示7.png"
+            },
+            "IG1": {
+                0: "/static/images/错误展示0.png",
+                1: "/static/images/错误展示1.png",
+                2: "/static/images/错误展示2.png",
+                3: "/static/images/错误展示3.png",
+                4: "/static/images/错误展示4.png",
+                5: "/static/images/错误展示5.png",
+                6: "/static/images/错误展示6.png",
+                7: "/static/images/错误展示7.png"
+            },
+            "57G": {
+                0: "/static/images/错误展示0.png",
+                1: "/static/images/错误展示1.png",
+                2: "/static/images/错误展示2.png",
+                3: "/static/images/错误展示3.png",
+                4: "/static/images/错误展示4.png",
+                5: "/static/images/错误展示5.png",
+                6: "/static/images/错误展示6.png",
+                7: "/static/images/错误展示7.png"
+            },
+            "3DG": {
+                0: "/static/images/错误展示0.png",
+                1: "/static/images/错误展示1.png",
+                2: "/static/images/错误展示2.png",
+                3: "/static/images/错误展示3.png",
+                4: "/static/images/错误展示4.png",
+                5: "/static/images/错误展示5.png",
+                6: "/static/images/错误展示6.png",
+                7: "/static/images/错误展示7.png"
+            }
+        };
+        
+        // 窗口大小改变事件监听器
+        window.addEventListener('resize', function() {
+            if (simulationResults.length > 0) {
+                drawAllVoltageCharts(simulationResults);
+            }
+        });
+        
+        // 更新图片显示
+        function updateImageDisplay() {
+            const section = document.getElementById('section').value;
+            const errorType = parseInt(document.getElementById('errorType').value);
+            const image = document.getElementById('sectionErrorImage');
+            const placeholder = document.getElementById('imagePlaceholder');
+            
+            // 查找对应的图片URL
+            const imageUrl = imageMapping[section] && imageMapping[section][errorType] ? imageMapping[section][errorType] : '';
+            
+            if (imageUrl) {
+                // 显示图片
+                image.src = imageUrl;
+                image.style.display = 'block';
+                placeholder.style.display = 'none';
+            } else {
+                // 显示占位符
+                image.style.display = 'none';
+                placeholder.style.display = 'block';
+            }
+        }
+        
+        // 页面加载时初始化图片显示
+        window.addEventListener('load', function() {
+            updateImageDisplay();
+        });
+        
+
+        
+        // 图表对象
+        let voltageChart = null;
+        
+        // 根据档位获取电压范围
+        function getVoltageRange(level) {
+            switch(level) {
+                case 1:
+                    return { min: 161, max: 170 };
+                case 2:
+                    return { min: 146, max: 154 };
+                case 3:
+                    return { min: 128, max: 135 };
+                case 4:
+                    return { min: 104.5, max: 110.5 };
+                case 5:
+                    return { min: 75, max: 79.5 };
+                default:
+                    return { min: 75, max: 170 };
+            }
+        }
+        
+        // 生成电压序列
+        function generateVoltageValues() {
+            const voltageLevel = parseInt(document.getElementById('voltageLevel').value);
+            const useRandomVoltage = document.getElementById('useRandomVoltage').checked;
+            const voltageCount = parseInt(document.getElementById('voltageCount').value);
+            
+            const range = getVoltageRange(voltageLevel);
+            const voltageValues = [];
+            
+            if (useRandomVoltage) {
+                // 生成随机电压值
+                for (let i = 0; i < voltageCount; i++) {
+                    const voltage = range.min + Math.random() * (range.max - range.min);
+                    voltageValues.push(parseFloat(voltage.toFixed(1)));
+                }
+                // 排序
+                voltageValues.sort((a, b) => a - b);
+            } else {
+                // 生成均匀分布的电压值
+                const step = (range.max - range.min) / (voltageCount - 1);
+                for (let i = 0; i < voltageCount; i++) {
+                    const voltage = range.min + i * step;
+                    voltageValues.push(parseFloat(voltage.toFixed(1)));
+                }
+            }
+            
+            return voltageValues;
+        }
+        
+        // 绘制单个电压类型的图表
+        function drawSingleVoltageChart(canvasId, title, voltageValues, resultValues, color) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // 确保canvas宽度与容器一致
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 设置图表尺寸
+            const padding = 60;
+            const chartWidth = canvas.width - 2 * padding;
+            const chartHeight = canvas.height - 2 * padding;
+            
+            // 计算电压范围
+            let allVoltages = [...voltageValues];
+            if (resultValues.length > 0) {
+                allVoltages = [...allVoltages, ...resultValues];
+            }
+            
+            const minVoltage = Math.min(...allVoltages) - 5;
+            const maxVoltage = Math.max(...allVoltages) + 5;
+            
+            // 绘制坐标轴
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // 绘制网格线
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            
+            // 水平网格线
+            const yStep = (maxVoltage - minVoltage) / 5;
+            for (let i = 0; i <= 5; i++) {
+                const y = canvas.height - padding - (i / 5) * chartHeight;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+            }
+            
+            // 垂直网格线
+            if (voltageValues.length > 1) {
+                const xStep = chartWidth / (voltageValues.length - 1);
+                // 计算合适的刻度间隔，最多显示10个刻度
+                const maxTicks = 10;
+                const tickInterval = Math.ceil(voltageValues.length / maxTicks);
+                
+                for (let i = 0; i < voltageValues.length; i++) {
+                    const x = padding + i * xStep;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding);
+                    ctx.lineTo(x, canvas.height - padding);
+                    ctx.stroke();
+                }
+            }
+            
+            // 绘制刻度和标签
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#333';
+            
+            // Y轴刻度
+            for (let i = 0; i <= 5; i++) {
+                const y = canvas.height - padding - (i / 5) * chartHeight;
+                const voltage = minVoltage + i * yStep;
+                ctx.beginPath();
+                ctx.moveTo(padding - 5, y);
+                ctx.lineTo(padding, y);
+                ctx.strokeStyle = '#333';
+                ctx.stroke();
+                ctx.fillText(voltage.toFixed(1), padding - 40, y + 4);
+            }
+            
+            // X轴刻度
+            if (voltageValues.length > 1) {
+                const xStep = chartWidth / (voltageValues.length - 1);
+                // 计算合适的刻度间隔，最多显示10个刻度
+                const maxTicks = 10;
+                const tickInterval = Math.ceil(voltageValues.length / maxTicks);
+                
+                for (let i = 0; i < voltageValues.length; i++) {
+                    const x = padding + i * xStep;
+                    ctx.beginPath();
+                    ctx.moveTo(x, canvas.height - padding);
+                    ctx.lineTo(x, canvas.height - padding + 5);
+                    ctx.strokeStyle = '#333';
+                    ctx.stroke();
+                    // 只在间隔点上显示标签
+                    if (i % tickInterval === 0 || i === voltageValues.length - 1) {
+                        ctx.fillText(i, x - 10, canvas.height - padding + 20);
+                    }
+                }
+            }
+            
+            // 绘制输入电压曲线
+            if (voltageValues.length > 1) {
+                const xStep = chartWidth / (voltageValues.length - 1);
+                
+                ctx.beginPath();
+                ctx.moveTo(padding, canvas.height - padding - ((voltageValues[0] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight);
+                
+                for (let i = 1; i < voltageValues.length; i++) {
+                    const x = padding + i * xStep;
+                    const y = canvas.height - padding - ((voltageValues[i] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
+                    ctx.lineTo(x, y);
+                }
+                
+                ctx.strokeStyle = '#3498db';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 绘制数据点
+                for (let i = 0; i < voltageValues.length; i++) {
+                    const x = padding + i * xStep;
+                    const y = canvas.height - padding - ((voltageValues[i] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#3498db';
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+            
+            // 绘制目标电压曲线
+            if (resultValues.length > 1) {
+                const xStep = chartWidth / (resultValues.length - 1);
+                
+                ctx.beginPath();
+                ctx.moveTo(padding, canvas.height - padding - ((resultValues[0] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight);
+                
+                for (let i = 1; i < resultValues.length; i++) {
+                    const x = padding + i * xStep;
+                    const y = canvas.height - padding - ((resultValues[i] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
+                    ctx.lineTo(x, y);
+                }
+                
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 绘制数据点
+                for (let i = 0; i < resultValues.length; i++) {
+                    const x = padding + i * xStep;
+                    const y = canvas.height - padding - ((resultValues[i] - minVoltage) / (maxVoltage - minVoltage)) * chartHeight;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+            
+            // 绘制坐标轴标题
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            ctx.fillText('数据点序号', canvas.width / 2, canvas.height - 15);
+            ctx.save();
+            ctx.translate(30, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('电压 (V)', 0, 0);
+            ctx.restore();
+            
+            // 绘制图例
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(padding + 10, padding + 10, 20, 20);
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'left';
+            ctx.fillText('输入电压 (V)', padding + 40, padding + 25);
+            
+            ctx.fillStyle = color;
+            ctx.fillRect(padding + 150, padding + 10, 20, 20);
+            ctx.fillStyle = '#333';
+            ctx.fillText(title + ' (V)', padding + 180, padding + 25);
+        }
+        
+        // 绘制所有电压类型的图表
+        function drawAllVoltageCharts(results) {
+            if (results.length === 0) return;
+            
+            const voltageValues = results.map(r => r.voltage);
+            
+            // 定义电压类型配置
+            const voltageConfigs = [
+                { key: 'voltage', canvasId: 'inputVoltageChart', title: '输入电压', color: '#3498db' },
+                { key: 'send_end_track_voltage', canvasId: 'sendEndVoltageChart', title: '送端轨面电压', color: '#e74c3c' },
+                { key: 'receive_end_track_voltage', canvasId: 'receiveEndVoltageChart', title: '受端轨面电压', color: '#27ae60' },
+                { key: 'main_track_input_voltage', canvasId: 'mainTrackInputVoltageChart', title: '主轨入电压', color: '#f39c12' },
+                { key: 'main_track_output_voltage_1', canvasId: 'mainTrackOutputVoltageChart', title: '轨出1电压', color: '#9b59b6' }
+            ];
+            
+            // 绘制每种电压类型的图表
+            voltageConfigs.forEach(config => {
+                const resultValues = results.map(r => r[config.key]).filter(v => v);
+                drawSingleVoltageChart(config.canvasId, config.title, voltageValues, resultValues, config.color);
+            });
+        }
+        
+        // 开始时间序列模拟
+        async function startTimeSeriesSimulation() {
+            // 获取参数
+            const sectionId = document.getElementById('section').value;
+            const errorType = parseInt(document.getElementById('errorType').value);
+            const trackLength = parseFloat(document.getElementById('trackLength').value);
+            const resistance = parseFloat(document.getElementById('resistance').value);
+            const inductance = parseFloat(document.getElementById('inductance').value);
+            const capacitance = parseFloat(document.getElementById('capacitance').value);
+            const leakageResistance = parseFloat(document.getElementById('leakageResistance').value);
+            const sptCableLength = parseFloat(document.getElementById('sptCableLength').value);
+            const errorValue = parseFloat(document.getElementById('errorValue').value);
+            const r1 = parseInt(document.getElementById('r1').value);
+            const r2 = parseInt(document.getElementById('r2').value);
+            
+            // 生成电压序列
+            const voltageValues = generateVoltageValues();
+            totalSimulationCount = voltageValues.length;
+            
+            if (totalSimulationCount <= 0) {
+                alert('无效的电压设置');
+                return;
+            }
+            
+            // 重置状态
+            simulationResults = [];
+            isSimulationRunning = true;
+            currentSimulationIndex = 0;
+            
+            // 更新UI
+            document.getElementById('startSimulationBtn').disabled = true;
+            document.getElementById('stopSimulationBtn').disabled = false;
+            document.getElementById('downloadDataBtn').disabled = true;
+            document.getElementById('resultContent').innerHTML = '<p class="loading">正在准备时间序列模拟...</p>';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressFill').textContent = '0%';
+            document.getElementById('resultStats').textContent = `已完成: 0 / ${totalSimulationCount}`;
+            
+            try {
+                // 执行模拟
+                for (let i = 0; i < voltageValues.length; i++) {
+                    if (!isSimulationRunning) break;
+                    
+                    const voltage = voltageValues[i];
+                    const params = {
+                        section_id: sectionId,
+                        section_name: railwaySections[sectionId].name,
+                        section_type: railwaySections[sectionId].type,
+                        frequency: railwaySections[sectionId].frequency,
+                        error_type: errorType,
+                        error_type_name: errorTypes.find(e => e.value === errorType).name,
+                        track_length: trackLength,
+                        resistance: resistance,
+                        inductance: inductance,
+                        capacitance: capacitance,
+                        leakage_resistance: leakageResistance,
+                        spt_cable_length: sptCableLength,
+                        error_value: errorValue,
+                        r1: r1,
+                        r2: r2,
+                        voltage: voltage
+                    };
+                    
+                    try {
+                        const result = await simulateSingle(params);
+                        processSimulationResult({ params, result });
+                    } catch (error) {
+                        console.error('模拟失败:', error);
+                        processSimulationResult({ params, error: error.message });
+                    }
+                }
+                
+            } catch (error) {
+                console.error('时间序列模拟失败:', error);
+                addResultItem('error', `时间序列模拟失败: ${error.message}`);
+            } finally {
+                // 完成模拟
+                finishTimeSeriesSimulation();
+            }
+        }
+        
+        // 模拟单个电压点
+        async function simulateSingle(params) {
+            // 构建表单数据
+            const formData = new FormData();
+            formData.append('trail', `time_series_${Date.now()}_${Math.floor(Math.random() * 1000)}`);
+            formData.append('error_type', params.error_type);
+            formData.append('error_value', params.error_value);
+            formData.append('error_position', params.section_id);
+            formData.append('track_length', params.track_length);
+            formData.append('resist_per_meter', params.resistance);
+            formData.append('induct_per_meter', params.inductance);
+            formData.append('capacit_per_meter', params.capacitance);
+            formData.append('conduct_per_meter', 1.0 / (params.leakage_resistance * 1000)); // 转换为S/m
+            formData.append('frequency', params.frequency);
+            formData.append('spt_cable_length', params.spt_cable_length);
+            formData.append('r1', params.r1);
+            formData.append('r2', params.r2);
+            formData.append('input_V', params.voltage); // 添加输入电压参数
+            
+            try {
+                // 检查是否已停止模拟
+                if (!isSimulationRunning) {
+                    throw new Error('模拟已停止');
+                }
+                
+                // 模拟API调用延迟
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // 实际API调用，添加超时处理
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                
+                try {
+                    const response = await fetch('/api/calculate/track-circuit', {
+                        method: 'POST',
+                        body: formData,
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`API调用失败: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.status !== 'success') {
+                        throw new Error(result.message || '模拟失败');
+                    }
+                    
+                    return result;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    throw error;
+                }
+            } catch (error) {
+                console.error('模拟失败:', error);
+                throw error;
+            }
+        }
+        
+        // 处理模拟结果
+        function processSimulationResult(simulation) {
+            currentSimulationIndex++;
+            
+            if (simulation.error) {
+                // 处理错误
+                addResultItem('error', `模拟失败 (电压: ${simulation.params.voltage.toFixed(1)}V): ${simulation.error}`);
+            } else {
+                // 处理成功结果
+                const result = simulation.result;
+                const params = simulation.params;
+                
+                // 构建结果对象
+                const resultData = {
+                    voltage: params.voltage,
+                    section_id: params.section_id,
+                    section_name: params.section_name,
+                    error_type: params.error_type,
+                    error_type_name: params.error_type_name,
+                    track_length: params.track_length,
+                    resistance: params.resistance,
+                    inductance: params.inductance,
+                    capacitance: params.capacitance,
+                    leakage_resistance: params.leakage_resistance,
+                    spt_cable_length: params.spt_cable_length,
+                    error_value: params.error_value,
+                    r1: params.r1,
+                    r2: params.r2,
+                    send_end_track_voltage: result.voltage_results.send_end_track_voltage,
+                    receive_end_track_voltage: result.voltage_results.receive_end_track_voltage,
+                    main_track_input_voltage: result.voltage_results.main_track_input_voltage,
+                    main_track_output_voltage_1: result.voltage_results.main_track_output_voltage_1,
+                    send_end_track_current: result.current_results ? (result.current_results.send_end_track_current || 0) : 0,
+                    receive_end_track_current: result.current_results ? (result.current_results.receive_end_track_current || 0) : 0,
+                    main_track_input_current: result.current_results ? (result.current_results.main_track_input_current || 0) : 0,
+                    main_track_output_current_1: result.current_results ? (result.current_results.main_track_output_current_1 || 0) : 0,
+                    input_impedance: result.input_impedance || 0,
+                    input_current: result.input_current || 0,
+                    Z_rail: result.Z_rail || 0,
+                    Z_tuner: result.Z_tuner || 0,
+                    timestamp: new Date().toISOString()
+                };
+                
+                simulationResults.push(resultData);
+                
+                // 添加结果到UI
+                const sendEndCurrent = result.current_results ? (result.current_results.send_end_track_current || 0).toFixed(4) : '0.0000';
+                const receiveEndCurrent = result.current_results ? (result.current_results.receive_end_track_current || 0).toFixed(4) : '0.0000';
+                const mainTrackInputCurrent = result.current_results ? (result.current_results.main_track_input_current || 0).toFixed(4) : '0.0000';
+                const mainTrackOutputCurrent = result.current_results ? (result.current_results.main_track_output_current_1 || 0).toFixed(4) : '0.0000';
+                addResultItem('success', `模拟成功 (电压: ${params.voltage.toFixed(1)}V) - 送端轨面电压: ${result.voltage_results.send_end_track_voltage.toFixed(2)}V, 受端轨面电压: ${result.voltage_results.receive_end_track_voltage.toFixed(2)}V, 主轨入电压: ${result.voltage_results.main_track_input_voltage.toFixed(2)}V, 轨出1电压: ${result.voltage_results.main_track_output_voltage_1.toFixed(2)}V, 送端轨面电流: ${sendEndCurrent}A, 受端轨面电流: ${receiveEndCurrent}A, 主轨入电流: ${mainTrackInputCurrent}A, 轨出1电流: ${mainTrackOutputCurrent}A, 输入阻抗: ${(result.input_impedance || 0).toFixed(2)}Ω, 输入电流: ${(result.input_current || 0).toFixed(4)}A`);
+            }
+            
+            // 更新进度
+            const progress = (currentSimulationIndex / totalSimulationCount) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressFill').textContent = `${Math.round(progress)}%`;
+            document.getElementById('resultStats').textContent = `已完成: ${currentSimulationIndex} / ${totalSimulationCount}`;
+        }
+        
+        // 完成时间序列模拟
+        function finishTimeSeriesSimulation() {
+            isSimulationRunning = false;
+            
+            // 更新UI
+            document.getElementById('startSimulationBtn').disabled = false;
+            document.getElementById('stopSimulationBtn').disabled = true;
+            document.getElementById('downloadDataBtn').disabled = simulationResults.length === 0;
+            
+            if (simulationResults.length > 0) {
+                addResultItem('success', `时间序列模拟完成！共生成 ${simulationResults.length} 条有效数据。`);
+                // 生成曲线图
+                drawAllVoltageCharts(simulationResults);
+            } else if (currentSimulationIndex > 0) {
+                addResultItem('error', `时间序列模拟完成，但未生成任何有效数据。`);
+            }
+        }
+        
+        // 停止时间序列模拟
+        function stopTimeSeriesSimulation() {
+            isSimulationRunning = false;
+            
+            // 更新UI
+            document.getElementById('startSimulationBtn').disabled = false;
+            document.getElementById('stopSimulationBtn').disabled = true;
+            document.getElementById('downloadDataBtn').disabled = simulationResults.length === 0;
+            
+            addResultItem('error', `时间序列模拟已手动停止。已生成 ${simulationResults.length} 条数据。`);
+        }
+        
+        // 添加结果项
+        function addResultItem(type, message) {
+            const resultContent = document.getElementById('resultContent');
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item ${type}`;
+            resultItem.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            
+            // 如果是首次添加结果，清空加载提示
+            if (resultContent.querySelector('.loading')) {
+                resultContent.innerHTML = '';
+            }
+            
+            resultContent.appendChild(resultItem);
+            
+            // 滚动到底部
+            resultContent.scrollTop = resultContent.scrollHeight;
+        }
+        
+        // 下载时间序列数据
+        function downloadTimeSeriesData() {
+            if (simulationResults.length === 0) {
+                alert('没有可下载的数据');
+                return;
+            }
+            
+            // 构建CSV内容
+            let csvContent = '';
+            
+            // CSV标题行
+            const headers = [
+                '时间戳',
+                '输入电压(V)',
+                '轨道区段ID',
+                '轨道区段名称',
+                '错误类型',
+                '错误类型名称',
+                '轨道长度(m)',
+                '钢轨电阻(Ω/m)',
+                '钢轨电感(H/m)',
+                '漏泄电容(F/m)',
+                '钢轨漏泄电阻(Ω/km)',
+                'SPT电缆长度(km)',
+                '错误值',
+                '衰耗盘端子1',
+                '衰耗盘端子2',
+                '送端轨面电压(V)',
+                '受端轨面电压(V)',
+                '主轨入电压(V)',
+                '轨出1电压(V)',
+                '送端轨面电流(A)',
+                '受端轨面电流(A)',
+                '主轨入电流(A)',
+                '轨出1电流(A)',
+                '输入阻抗(Ω)',
+                '输入电流(A)',
+                '钢轨阻抗(Ω)',
+                '调谐单元阻抗(Ω)'
+            ];
+            csvContent += headers.join(',') + '\n';
+            
+            // CSV数据行
+            for (const result of simulationResults) {
+                const row = [
+                    result.timestamp,
+                    result.voltage,
+                    result.section_id,
+                    result.section_name,
+                    result.error_type,
+                    result.error_type_name,
+                    result.track_length,
+                    result.resistance,
+                    result.inductance,
+                    result.capacitance,
+                    result.leakage_resistance,
+                    result.spt_cable_length,
+                    result.error_value,
+                    result.r1,
+                    result.r2,
+                    result.send_end_track_voltage,
+                    result.receive_end_track_voltage,
+                    result.main_track_input_voltage,
+                    result.main_track_output_voltage_1,
+                    result.send_end_track_current,
+                    result.receive_end_track_current,
+                    result.main_track_input_current,
+                    result.main_track_output_current_1,
+                    result.input_impedance,
+                    result.input_current,
+                    result.Z_rail,
+                    result.Z_tuner
+                ];
+                csvContent += row.join(',') + '\n';
+            }
+            
+            // 创建Blob并下载
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `时间序列轨道电路故障模拟结果_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 清空结果
+        function clearResults() {
+            simulationResults = [];
+            document.getElementById('resultContent').innerHTML = '<p class="loading">请点击"开始时间序列模拟"按钮开始生成数据。</p>';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressFill').textContent = '0%';
+            document.getElementById('resultStats').textContent = '已完成: 0 / 0';
+            document.getElementById('downloadDataBtn').disabled = true;
+            
+            // 清除所有图表
+            const canvasIds = [
+                'inputVoltageChart',
+                'sendEndVoltageChart',
+                'receiveEndVoltageChart',
+                'mainTrackInputVoltageChart',
+                'mainTrackOutputVoltageChart'
+            ];
+            
+            canvasIds.forEach(canvasId => {
+                const canvas = document.getElementById(canvasId);
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            });
         }
     </script>
 </body>

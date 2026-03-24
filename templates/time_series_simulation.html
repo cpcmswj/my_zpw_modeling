@@ -66,6 +66,40 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+        /* 悬浮窗样式 */
+        .floating-tabs {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            z-index: 1000;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 10px;
+        }
+        .floating-tab {
+            padding: 15px 20px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+            display: block;
+        }
+        .floating-tab:hover {
+            background-color: #e3f2fd;
+            color: #2196f3;
+            transform: translateX(-5px);
+        }
+        .floating-tab.active {
+            background-color: #3498db;
+            color: white;
+            transform: translateX(-5px);
+        }
         .section {
             margin-bottom: 30px;
             padding: 20px;
@@ -194,6 +228,16 @@
         </div>
         
         <div class="main-content">
+            <!-- 悬浮窗切换 -->
+            <div class="floating-tabs">
+                <a href="/" class="floating-tab">首页</a>
+                <a href="/integrated-system" class="floating-tab">集成故障模拟</a>
+                <a href="/batch-simulation" class="floating-tab">批量故障模拟</a>
+                <a href="/waveform-import" class="floating-tab">波形导入</a>
+                <a href="/time-series-simulation" class="floating-tab active">时间序列模拟</a>
+                <a href="/developer-debug" class="floating-tab">开发者调试</a>
+            </div>
+            
             <!-- 基本设置 -->
             <div class="section">
                 <h2>🔧 基本设置</h2>
@@ -201,7 +245,7 @@
                 <div class="form-row">
                     <div class="form-col">
                         <label for="section">轨道区段选择:</label>
-                        <select id="section" name="section">
+                        <select id="section" name="section" onchange="updateImageDisplay()">
                             <option value="69G">69G</option>
                             <option value="X1LQG">X1LQG</option>
                             <option value="IG1">IG1</option>
@@ -211,7 +255,7 @@
                     </div>
                     <div class="form-col">
                         <label for="errorType">错误类型选择:</label>
-                        <select id="errorType" name="errorType">
+                        <select id="errorType" name="errorType" onchange="updateImageDisplay()">
                             <option value="0">0 - 无故障</option>
                             <option value="1">1 - 接收端调谐单元1断路</option>
                             <option value="2">2 - 发送端调谐单元1断路</option>
@@ -221,6 +265,24 @@
                             <option value="6">6 - 补偿电容3断路</option>
                             <option value="7">7 - 补偿电容3短路</option>
                         </select>
+                    </div>
+                </div>
+                
+                <!-- 图片显示区域 -->
+                <div class="form-row" style="margin-top: 20px;">
+                    <div class="form-col" style="flex: 2;">
+                        <label>对应图片:</label>
+                        <div id="imageDisplay" style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; text-align: center; min-height: 400px; background-color: #f9f9f9; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 300px; margin: 10px;">
+                                <h4>故障示意图</h4>
+                                <img id="sectionErrorImage" src="" alt="选择轨道区段和故障类型后显示对应图片" style="max-width: 100%; max-height: 300px; display: none;">
+                                <p id="imagePlaceholder" style="color: #666; margin-top: 120px;">请选择轨道区段和故障类型</p>
+                            </div>
+                            <div style="flex: 1; min-width: 300px; margin: 10px;">
+                                <h4>轨道区段图</h4>
+                                <img id="railwayZoneImage" src="/static/images/railway_zone.png" alt="轨道区段图" style="max-width: 100%; max-height: 300px;">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -407,11 +469,92 @@
         let currentSimulationIndex = 0;
         let totalSimulationCount = 0;
         
+        // 轨道区段和故障类型对应的图片映射
+        const imageMapping = {
+            "69G": {
+                0: "/static/images/错误展示0.png",
+                1: "/static/images/错误展示1.png",
+                2: "/static/images/错误展示2.png",
+                3: "/static/images/错误展示3.png",
+                4: "/static/images/错误展示4.png",
+                5: "/static/images/错误展示5.png",
+                6: "/static/images/错误展示6.png",
+                7: "/static/images/错误展示7.png"
+            },
+            "X1LQG": {
+                0: "/static/images/错误展示0.png",
+                1: "/static/images/错误展示1.png",
+                2: "/static/images/错误展示2.png",
+                3: "/static/images/错误展示3.png",
+                4: "/static/images/错误展示4.png",
+                5: "/static/images/错误展示5.png",
+                6: "/static/images/错误展示6.png",
+                7: "/static/images/错误展示7.png"
+            },
+            "IG1": {
+                0: "/static/images/错误展示0.png",
+                1: "/static/images/错误展示1.png",
+                2: "/static/images/错误展示2.png",
+                3: "/static/images/错误展示3.png",
+                4: "/static/images/错误展示4.png",
+                5: "/static/images/错误展示5.png",
+                6: "/static/images/错误展示6.png",
+                7: "/static/images/错误展示7.png"
+            },
+            "57G": {
+                0: "/static/images/错误展示0.png",
+                1: "/static/images/错误展示1.png",
+                2: "/static/images/错误展示2.png",
+                3: "/static/images/错误展示3.png",
+                4: "/static/images/错误展示4.png",
+                5: "/static/images/错误展示5.png",
+                6: "/static/images/错误展示6.png",
+                7: "/static/images/错误展示7.png"
+            },
+            "3DG": {
+                0: "/static/images/错误展示0.png",
+                1: "/static/images/错误展示1.png",
+                2: "/static/images/错误展示2.png",
+                3: "/static/images/错误展示3.png",
+                4: "/static/images/错误展示4.png",
+                5: "/static/images/错误展示5.png",
+                6: "/static/images/错误展示6.png",
+                7: "/static/images/错误展示7.png"
+            }
+        };
+        
         // 窗口大小改变事件监听器
         window.addEventListener('resize', function() {
             if (simulationResults.length > 0) {
                 drawAllVoltageCharts(simulationResults);
             }
+        });
+        
+        // 更新图片显示
+        function updateImageDisplay() {
+            const section = document.getElementById('section').value;
+            const errorType = parseInt(document.getElementById('errorType').value);
+            const image = document.getElementById('sectionErrorImage');
+            const placeholder = document.getElementById('imagePlaceholder');
+            
+            // 查找对应的图片URL
+            const imageUrl = imageMapping[section] && imageMapping[section][errorType] ? imageMapping[section][errorType] : '';
+            
+            if (imageUrl) {
+                // 显示图片
+                image.src = imageUrl;
+                image.style.display = 'block';
+                placeholder.style.display = 'none';
+            } else {
+                // 显示占位符
+                image.style.display = 'none';
+                placeholder.style.display = 'block';
+            }
+        }
+        
+        // 页面加载时初始化图片显示
+        window.addEventListener('load', function() {
+            updateImageDisplay();
         });
         
         // 轨道区段数据
