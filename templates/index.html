@@ -15,7 +15,7 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f7fa;
-            color: #333;
+            color: #fff;
             line-height: 1.6;
             position: relative;
             min-height: 100vh;
@@ -38,18 +38,19 @@
             z-index: 1;
         }
         h1 {
-            color: #2c3e50;
+            color: #fff;
             margin-bottom: 20px;
             text-align: center;
         }
         .header {
-            background-color: white;
+            background-color: #000;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             text-align: center;
             position: relative;
+            border: 2px solid #3498db;
         }
         
         .login-section {
@@ -93,15 +94,16 @@
         }
         
         .login-modal-content {
-            background-color: #fefefe;
+            background-color: #000;
             margin: 15% auto;
             padding: 30px;
-            border: 1px solid #888;
+            border: 2px solid #3498db;
             width: 80%;
             max-width: 400px;
             border-radius: 8px;
             box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
             animation: modalFadeIn 0.3s ease;
+            color: #fff;
         }
         
         .login-form {
@@ -113,9 +115,11 @@
         
         .login-form input {
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 1px solid #3498db;
             border-radius: 4px;
             font-size: 16px;
+            background-color: #333;
+            color: #fff;
         }
         
         .login-form button {
@@ -140,12 +144,13 @@
         }
         
         .access-denied {
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: #000;
+            color: #e74c3c;
             padding: 20px;
             border-radius: 8px;
             text-align: center;
             margin: 20px 0;
+            border: 2px solid #3498db;
         }
         
         .access-denied h3 {
@@ -178,17 +183,18 @@
             cursor: not-allowed;
         }
         .main-content {
-            background-color: white;
+            background-color: #000;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border: 2px solid #3498db;
         }
         .tabs {
             margin-bottom: 20px;
             border-bottom: 2px solid #3498db;
         }
         .tab-button {
-            background-color: #f4f7fa;
+            background-color: #333;
             border: none;
             border-bottom: 2px solid transparent;
             padding: 15px 30px;
@@ -196,12 +202,13 @@
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: bold;
+            color: #fff;
         }
         .tab-button:hover {
-            background-color: #e3f2fd;
+            background-color: #3498db;
         }
         .tab-button.active {
-            background-color: white;
+            background-color: #000;
             border-bottom-color: #3498db;
             color: #3498db;
         }
@@ -220,10 +227,11 @@
             right: 20px;
             transform: translateY(-50%);
             z-index: 1000;
-            background-color: white;
+            background-color: #000;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             padding: 10px;
+            border: 2px solid #3498db;
         }
         .floating-tab {
             padding: 15px 20px;
@@ -233,11 +241,11 @@
             transition: all 0.3s ease;
             text-align: center;
             font-weight: bold;
-            color: #333;
+            color: #fff;
         }
         .floating-tab:hover {
-            background-color: #e3f2fd;
-            color: #2196f3;
+            background-color: #3498db;
+            color: #fff;
             transform: translateX(-5px);
         }
         .floating-tab.active {
@@ -249,13 +257,16 @@
         /* 集成系统样式 */
         .step-container {
             margin-bottom: 30px;
+            background-color: #000;
+            border-radius: 8px;
+            border: 2px solid #3498db;
+            overflow: hidden;
         }
         .step-header {
             background-color: #3498db;
             color: white;
             padding: 15px;
             border-radius: 6px 6px 0 0;
-            margin-bottom: 20px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -273,17 +284,17 @@
             font-weight: bold;
         }
         .step-content {
-            padding: 0 20px 20px;
+            padding: 20px;
         }
         .step-title {
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 15px;
-            color: #2c3e50;
+            color: #fff;
         }
         .step-description {
             margin-bottom: 20px;
-            color: #666;
+            color: #ccc;
         }
         .section-grid {
             display: grid;
@@ -292,23 +303,24 @@
             margin-bottom: 20px;
         }
         .section-card {
-            background-color: #f9f9f9;
-            border: 2px solid #ddd;
+            background-color: #000;
+            border: 2px solid #3498db;
             border-radius: 8px;
             padding: 15px;
             cursor: pointer;
             transition: all 0.3s ease;
+            color: #fff;
         }
         .section-card:hover {
-            background-color: #e3f2fd;
+            background-color: #3498db;
             border-color: #2196f3;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         .section-card.active {
-            background-color: #2196f3;
+            background-color: #3498db;
             color: white;
-            border-color: #1976d2;
+            border-color: #2196f3;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
         .section-name {
@@ -330,8 +342,8 @@
             margin-top: 15px;
         }
         .error-type-item {
-            background-color: #f9f9f9;
-            border: 2px solid #ddd;
+            background-color: #000;
+            border: 2px solid #3498db;
             border-radius: 8px;
             padding: 15px;
             cursor: pointer;
@@ -339,16 +351,17 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            color: #fff;
         }
         .error-type-item:hover {
-            background-color: #e8f5e8;
-            border-color: #4caf50;
+            background-color: #3498db;
+            border-color: #2196f3;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         .error-type-item.active {
-            background-color: #4caf50;
+            background-color: #3498db;
             color: white;
-            border-color: #388e3c;
+            border-color: #2196f3;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
         .error-type-radio {
@@ -379,14 +392,16 @@
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
-            color: #555;
+            color: #fff;
         }
         input[type="text"], input[type="number"], select {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 1px solid #3498db;
             border-radius: 4px;
             font-size: 14px;
+            background-color: #333;
+            color: #fff;
         }
         input[type="number"] {
             min-width: 150px;
@@ -394,40 +409,43 @@
         .image-preview {
             margin: 20px 0;
             padding: 20px;
-            background-color: #f9f9f9;
+            background-color: #000;
             border-radius: 8px;
             text-align: center;
+            border: 2px solid #3498db;
         }
         .preview-image {
             max-width: 100%;
             max-height: 500px;
             object-fit: contain;
-            border: 1px solid #ddd;
+            border: 1px solid #3498db;
             border-radius: 4px;
             margin: 10px 0;
         }
         .result-container {
             margin: 20px 0;
             padding: 20px;
-            background-color: #f9f9f9;
+            background-color: #000;
             border-radius: 8px;
+            border: 2px solid #3498db;
         }
         .result-title {
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 15px;
-            color: #2c3e50;
+            color: #fff;
         }
         .result-content {
-            background-color: white;
+            background-color: #333;
             padding: 15px;
             border-radius: 4px;
-            border: 1px solid #ddd;
+            border: 1px solid #3498db;
+            color: #fff;
         }
         .result-section {
             margin-bottom: 15px;
             padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #555;
         }
         .result-section:last-child {
             margin-bottom: 0;
@@ -444,17 +462,18 @@
             gap: 10px;
         }
         .result-item {
-            background-color: #f0f7ff;
+            background-color: #333;
             padding: 10px;
             border-radius: 4px;
             border-left: 4px solid #3498db;
+            color: #fff;
         }
         .result-label {
             font-weight: bold;
-            color: #2c3e50;
+            color: #fff;
         }
         .result-value {
-            color: #666;
+            color: #ccc;
         }
         .loading {
             color: #7f8c8d;
@@ -474,7 +493,7 @@
             align-items: center;
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #555;
         }
         .validation-message {
             margin-top: 10px;
@@ -483,23 +502,24 @@
             font-weight: bold;
         }
         .validation-message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background-color: #333;
+            color: #27ae60;
+            border: 1px solid #3498db;
         }
         .validation-message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background-color: #333;
+            color: #e74c3c;
+            border: 1px solid #3498db;
         }
         
         /* 批量模拟样式 */
         .section {
             margin-bottom: 30px;
             padding: 20px;
-            border: 1px solid #e0e0e0;
+            border: 2px solid #3498db;
             border-radius: 8px;
-            background-color: #f9f9f9;
+            background-color: #000;
+            color: #fff;
         }
         .section h2 {
             color: #3498db;
@@ -509,7 +529,7 @@
             gap: 10px;
         }
         .section h3 {
-            color: #2c3e50;
+            color: #fff;
             margin: 15px 0 10px;
         }
         input[type="checkbox"] {
@@ -532,26 +552,31 @@
         }
         .result-item {
             padding: 10px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #555;
+            background-color: #333;
+            color: #fff;
         }
         .result-item:last-child {
             border-bottom: none;
         }
         .result-item.success {
-            background-color: #d4edda;
-            border-left: 4px solid #28a745;
+            background-color: #333;
+            border-left: 4px solid #27ae60;
+            color: #27ae60;
         }
         .result-item.error {
-            background-color: #f8d7da;
-            border-left: 4px solid #dc3545;
+            background-color: #333;
+            border-left: 4px solid #e74c3c;
+            color: #e74c3c;
         }
         .progress-bar {
             width: 100%;
             height: 20px;
-            background-color: #e0e0e0;
+            background-color: #333;
             border-radius: 10px;
             overflow: hidden;
             margin: 15px 0;
+            border: 1px solid #3498db;
         }
         .progress-fill {
             height: 100%;
@@ -584,31 +609,34 @@
         .wave-display {
             margin: 20px 0;
             padding: 20px;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            background-color: #000;
+            border: 2px solid #3498db;
+            border-radius: 8px;
             text-align: center;
+            color: #fff;
         }
         canvas {
-            border: 1px solid #ddd;
-            background-color: white;
+            border: 1px solid #3498db;
+            background-color: #333;
             border-radius: 4px;
             margin: 10px 0;
         }
         .data-display {
-            background-color: #ecf0f1;
+            background-color: #333;
             padding: 20px;
-            border-radius: 4px;
+            border-radius: 8px;
             margin: 20px 0;
             min-height: 100px;
-            border: 1px solid #ddd;
+            border: 2px solid #3498db;
+            color: #fff;
         }
         .card {
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            background-color: #000;
+            border: 2px solid #3498db;
+            border-radius: 8px;
             padding: 15px;
             margin: 10px 0;
+            color: #fff;
         }
         .success { color: #27ae60; }
         .error { color: #e74c3c; }
@@ -620,15 +648,27 @@
         .file-upload {
             margin: 20px 0;
             padding: 20px;
-            border: 2px dashed #ddd;
-            border-radius: 4px;
+            border: 2px dashed #3498db;
+            border-radius: 8px;
             text-align: center;
+            background-color: #000;
+            color: #fff;
         }
         .file-upload:hover {
-            border-color: #3498db;
+            border-color: #2196f3;
         }
         .sheet-selector {
             margin: 10px 0;
+        }
+        .column-selectors {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .column-selector {
+            flex: 1;
+            min-width: 200px;
         }
         
         /* 弹窗样式 */
@@ -644,22 +684,23 @@
             background-color: rgba(0,0,0,0.5);
         }
         .modal-content {
-            background-color: #fefefe;
+            background-color: #000;
             margin: 15% auto;
             padding: 20px;
-            border: 1px solid #888;
+            border: 2px solid #3498db;
             width: 80%;
             max-width: 400px;
             border-radius: 8px;
             box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
             animation: modalFadeIn 0.3s ease;
+            color: #fff;
         }
         @keyframes modalFadeIn {
             from {opacity: 0; transform: translateY(-20px);}
             to {opacity: 1; transform: translateY(0);}
         }
         .close {
-            color: #aaa;
+            color: #3498db;
             float: right;
             font-size: 28px;
             font-weight: bold;
@@ -667,7 +708,7 @@
         }
         .close:hover,
         .close:focus {
-            color: black;
+            color: #2196f3;
             text-decoration: none;
             cursor: pointer;
         }
@@ -683,6 +724,7 @@
             margin-bottom: 20px;
             text-align: center;
             font-size: 16px;
+            color: #fff;
         }
         
         @media (max-width: 768px) {
@@ -718,10 +760,7 @@
         <div class="header">
             <h1>铁路轨道电路故障模拟系统</h1>
             
-            <!-- 登录部分 -->
-            <div class="login-section" id="loginSection">
-                <button class="login-btn" onclick="openLoginModal()">登录</button>
-            </div>
+
             
             <!-- 用户信息部分 -->
             <div class="login-section" id="userInfoSection" style="display: none;">
@@ -731,13 +770,7 @@
                 </div>
             </div>
             
-            <div style="margin-top: 15px;">
-                <button class="btn" onclick="switchTab('integrated', event)">集成故障模拟</button>
-                <button class="btn" onclick="switchTab('batch', event)">批量故障模拟</button>
-                <button class="btn" onclick="switchTab('waveform', event)">波形导入</button>
-                <button class="btn" onclick="switchTab('time_series', event)">时间序列模拟</button>
-                <a href="/developer-debug" class="btn secondary">开发者调试页面</a>
-            </div>
+
         </div>
         
         <div class="main-content">
@@ -954,27 +987,7 @@
                     </div>
                 </div>
                 
-                <!-- 步骤 4: 查看结果 -->
-                <div class="step-container">
-                    <div class="step-header">
-                        <div class="step-number">4</div>
-                        <div>查看模拟结果</div>
-                    </div>
-                    <div class="step-content">
-                        <div class="step-title">步骤 4: 查看模拟结果</div>
-                        <div class="step-description">系统将根据您的输入进行故障模拟计算，并显示结果。</div>
-                        
-                        <div class="result-container" id="resultContainer">
-                            <div class="result-title">
-                                模拟结果
-                                <button id="downloadCsvBtn" class="btn" onclick="downloadCsv()" style="float: right; margin-top: -10px; display: none;">下载CSV</button>
-                            </div>
-                            <div class="result-content" id="resultContent">
-                                <p class="loading">请完成前面的步骤并点击"开始模拟"按钮。</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
                 
                 <!-- 步骤导航 -->
                 <div class="step-nav">
@@ -1200,39 +1213,28 @@
                         <button id="downloadBatchBtn" class="btn secondary" onclick="downloadBatchData()" disabled>下载数据</button>
                         <button id="clearResultsBtn" class="btn secondary" onclick="clearResults()">清空结果</button>
                     </div>
-                </div>
-                
-                <!-- 结果显示 -->
-                <div class="section">
-                    <h2>📊 模拟结果</h2>
                     
-                    <div class="progress-bar" id="progressBar">
+                    <!-- 进度条 -->
+                    <div class="progress-bar" style="margin-top: 20px;">
                         <div class="progress-fill" id="progressFill" style="width: 0%;">0%</div>
                     </div>
-                    
-                    <div class="result-container">
-                        <div class="result-title">
-                            批量模拟结果
-                            <span id="resultStats" style="float: right; font-weight: normal; color: #666;">
-                                已完成: 0 / 0
-                            </span>
-                        </div>
-                        <div class="result-content" id="resultContent">
-                            <p class="loading">请点击"开始批量模拟"按钮开始生成数据。</p>
-                        </div>
+                    <div style="text-align: center; margin-top: 10px; font-size: 14px; color: #666;" id="resultStats">
+                        已完成: 0 / 0
                     </div>
                 </div>
+                
+
             </div>
             
             <!-- 波形导入内容 -->
             <div id="waveform" class="tab-content">
-                <h2>波形导入与显示</h2>
+                <h2>XY坐标图绘制</h2>
                 
                 <div class="section">
                     <h2>📁 文件导入</h2>
                     <div class="file-upload">
-                        <h3>上传Excel文件</h3>
-                        <p>请上传包含采样数据的xlsx文件，数据应按列保存</p>
+                        <h3>上传数据文件</h3>
+                        <p>请上传包含X和Y坐标数据的文件，数据应按列保存</p>
                         <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
                         <div class="sheet-selector" id="sheetSelector" style="display: none;">
                             <label for="sheetName">选择工作表:</label>
@@ -1243,45 +1245,64 @@
                 
                 <div class="section">
                     <h2>🔧 参数设置</h2>
-                    <form id="paramsForm" onsubmit="event.preventDefault(); plotWaveform();">
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label for="samplingFreq">采样频率 (Hz):</label>
-                                <input type="number" id="samplingFreq" value="1000" step="100" min="1">
+                    <form id="paramsForm" onsubmit="event.preventDefault(); plotXY();">
+                        <div class="column-selectors">
+                            <div class="column-selector">
+                                <label for="xColumn">选择X轴数据列:</label>
+                                <select id="xColumn"></select>
                             </div>
-                            <div class="form-col">
-                                <label for="startRow">数据起始行:</label>
-                                <input type="number" id="startRow" value="1" step="1" min="1">
+                            <div class="column-selector">
+                                <label for="yColumns">选择Y轴数据列 (可多选):</label>
+                                <select id="yColumns" multiple size="5"></select>
+                                <small style="display: block; margin-top: 5px; color: #666;">提示：按住Ctrl键可选择多个选项</small>
                             </div>
-                            <div class="form-col">
-                                <label for="selectedColumn">选择数据列:</label>
-                                <select id="selectedColumn"></select>
+                            <div class="column-selector">
+                                <label for="typeColumn">选择数据类型列:</label>
+                                <select id="typeColumn">
+                                    <option value="-1">不使用数据类型</option>
+                                </select>
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-col">
-                                <label for="duration">显示时长 (秒):</label>
-                                <input type="number" id="duration" value="2" step="0.1" min="0.1" max="10">
+                                <label for="startRow">数据起始行:</label>
+                                <select id="startRow">
+                                    <option value="1">包含表头</option>
+                                    <option value="2" selected>不包含表头</option>
+                                </select>
                             </div>
                             <div class="form-col">
                                 <label for="samples">采样点数:</label>
-                                <input type="number" id="samples" value="500" step="100" min="100" max="5000">
+                                <select id="samples">
+                                    <option value="100">100</option>
+                                    <option value="200">200</option>
+                                    <option value="500" selected>500</option>
+                                    <option value="1000">1000</option>
+                                    <option value="2000">2000</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label for="displayMode">显示模式:</label>
+                                <select id="displayMode">
+                                    <option value="single">同一图表</option>
+                                    <option value="multiple">不同图表</option>
+                                </select>
                             </div>
                         </div>
                         <div class="control-buttons">
-                            <button type="submit" class="btn">绘制波形</button>
+                            <button type="submit" class="btn">绘制XY图</button>
                             <button type="button" class="btn secondary" onclick="clearForm()">重置</button>
                         </div>
                     </form>
                 </div>
                 
                 <div class="section">
-                    <h2>📊 波形显示</h2>
+                    <h2>📊 XY坐标图显示</h2>
                     <div class="wave-display">
-                        <canvas id="waveCanvas" width="1000" height="400"></canvas>
-                        <div id="waveInfo" class="data-display">
-                            <p class="loading">请上传文件并设置参数后绘制波形</p>
+                        <canvas id="xyCanvas" width="1000" height="400"></canvas>
+                        <div id="xyInfo" class="data-display">
+                            <p class="loading">请上传文件并设置参数后绘制XY图</p>
                         </div>
                     </div>
                 </div>
@@ -1327,13 +1348,13 @@
                             <label>对应图片:</label>
                             <div id="imageDisplay" style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; text-align: center; min-height: 400px; background-color: #f9f9f9; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 300px; margin: 10px;">
+                                    <h4>轨道区段图</h4>
+                                    <img id="railwayZoneImage" src="/static/images/railway_zone.png" alt="轨道区段图" style="max-width: 100%; max-height: 300px;">
+                                </div>
+                                <div style="flex: 1; min-width: 300px; margin: 10px;">
                                     <h4>故障示意图</h4>
                                     <img id="sectionErrorImage" src="" alt="选择轨道区段和故障类型后显示对应图片" style="max-width: 100%; max-height: 300px; display: none;">
                                     <p id="imagePlaceholder" style="color: #666; margin-top: 120px;">请选择轨道区段和故障类型</p>
-                                </div>
-                                <div style="flex: 1; min-width: 300px; margin: 10px;">
-                                    <h4>轨道区段图</h4>
-                                    <img id="railwayZoneImage" src="/static/images/railway_zone.png" alt="轨道区段图" style="max-width: 100%; max-height: 300px;">
                                 </div>
                             </div>
                         </div>
@@ -1492,23 +1513,28 @@
                     </div>
                 </div>
                 
-                <!-- 结果显示 -->
-                <div class="section">
-                    <h2>📊 模拟结果</h2>
+
+            </div>
+            
+            <!-- 统一结果显示区域 -->
+            <div class="step-container" style="margin-top: 30px;">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <div>查看模拟结果</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-title">查看模拟结果</div>
+                    <div class="step-description">系统将根据您的输入进行故障模拟计算，并显示结果。</div>
                     
-                    <div class="progress-bar" id="progressBar">
-                        <div class="progress-fill" id="progressFill" style="width: 0%;">0%</div>
-                    </div>
-                    
-                    <div class="result-container">
+                    <div class="result-container" id="resultContainer">
                         <div class="result-title">
-                            时间序列模拟结果
-                            <span id="resultStats" style="float: right; font-weight: normal; color: #666;">
-                                已完成: 0 / 0
-                            </span>
+                            模拟结果
+                            <button id="downloadCsvBtn" class="btn" onclick="downloadCsv()" style="float: right; margin-top: -10px; display: none;">下载CSV</button>
+                            <button id="downloadBatchBtn" class="btn" onclick="downloadBatchData()" style="float: right; margin-top: -10px; margin-right: 10px; display: none;">下载批量数据</button>
+                            <button id="downloadDataBtn" class="btn" onclick="downloadTimeSeriesData()" style="float: right; margin-top: -10px; margin-right: 10px; display: none;">下载时间序列数据</button>
                         </div>
                         <div class="result-content" id="resultContent">
-                            <p class="loading">请点击"开始时间序列模拟"按钮开始生成数据。</p>
+                            <p class="loading">请完成前面的步骤并点击"开始模拟"按钮。</p>
                         </div>
                     </div>
                 </div>
@@ -1526,29 +1552,11 @@
                 <div style="text-align: center; margin-top: 20px;">
                     <button class="btn" onclick="closeWarningModal()">确定</button>
                 </div>
-            </div>
+
         </div>
     </div>
     
-    <!-- 登录弹窗 -->
-    <div id="loginModal" class="modal" style="display: none;">
-        <div class="login-modal-content">
-            <span class="close" onclick="closeLoginModal()">&times;</span>
-            <h2 style="text-align: center;">用户登录</h2>
-            <form class="login-form" onsubmit="event.preventDefault(); login()">
-                <div>
-                    <label for="loginUsername">用户名:</label>
-                    <input type="text" id="loginUsername" name="loginUsername" required>
-                </div>
-                <div>
-                    <label for="loginPassword">密码:</label>
-                    <input type="password" id="loginPassword" name="loginPassword" required>
-                </div>
-                <button type="submit">登录</button>
-                <div class="login-error" id="loginError" style="display: none;">用户名或密码错误</div>
-            </form>
-        </div>
-    </div>
+
     
     <script>
         // 登录功能
@@ -1584,11 +1592,9 @@
         // 更新登录UI
         function updateLoginUI() {
             if (isLoggedIn) {
-                document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('userInfoSection').style.display = 'block';
                 document.getElementById('userName').textContent = currentUser.username;
             } else {
-                document.getElementById('loginSection').style.display = 'block';
                 document.getElementById('userInfoSection').style.display = 'none';
             }
         }
@@ -1609,23 +1615,23 @@
                 <div class="access-denied">
                     <h3>访问被拒绝</h3>
                     <p>请先登录以使用仿真系统功能</p>
-                    <button class="btn" onclick="openLoginModal()">去登录</button>
+                    <form class="login-form" onsubmit="event.preventDefault(); login()">
+                        <div>
+                            <label for="loginUsername">用户名:</label>
+                            <input type="text" id="loginUsername" name="loginUsername" required>
+                        </div>
+                        <div>
+                            <label for="loginPassword">密码:</label>
+                            <input type="password" id="loginPassword" name="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn">登录</button>
+                        <div class="login-error" id="loginError" style="display: none;">用户名或密码错误</div>
+                    </form>
                 </div>
             `;
         }
         
-        // 打开登录模态框
-        function openLoginModal() {
-            document.getElementById('loginModal').style.display = 'block';
-        }
-        
-        // 关闭登录模态框
-        function closeLoginModal() {
-            document.getElementById('loginModal').style.display = 'none';
-            document.getElementById('loginError').style.display = 'none';
-            document.getElementById('loginUsername').value = '';
-            document.getElementById('loginPassword').value = '';
-        }
+
         
         // 登录
         async function login() {
@@ -1664,7 +1670,6 @@
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     updateLoginUI();
                     enableSimulationFeatures();
-                    closeLoginModal();
                 } else {
                     console.log('登录失败:', result.message);
                     document.getElementById('loginError').style.display = 'block';
@@ -1706,6 +1711,12 @@
         
         // 悬浮窗切换
         function switchTab(tabName, event) {
+            // 检查是否有模拟正在运行
+            if (isSimulationRunning || isBatchRunning) {
+                showWarningModal('警告', '模拟进程正在进行中，无法切换功能模块！');
+                return;
+            }
+            
             // 隐藏所有标签内容
             const tabContents = document.getElementsByClassName('tab-content');
             for (let i = 0; i < tabContents.length; i++) {
@@ -2178,9 +2189,10 @@
             const resultContent = document.getElementById('resultContent');
             resultContent.innerHTML = '<p class="loading">请完成前面的步骤并点击"开始模拟"按钮。</p>';
             
-            // 隐藏下载CSV按钮
-            const downloadCsvBtn = document.getElementById('downloadCsvBtn');
-            downloadCsvBtn.style.display = 'none';
+            // 隐藏所有下载按钮
+            document.getElementById('downloadCsvBtn').style.display = 'none';
+            document.getElementById('downloadBatchBtn').style.display = 'none';
+            document.getElementById('downloadDataBtn').style.display = 'none';
             
             // 更新UI
             updateStepUI();
@@ -2190,6 +2202,9 @@
         async function startSimulation() {
             const resultContent = document.getElementById('resultContent');
             resultContent.innerHTML = '<p class="loading">正在进行故障模拟计算...</p>';
+            
+            // 显示集成故障模拟相关的下载按钮
+            showDownloadButtons('integrated');
             
             try {
                 // 获取表单数据
@@ -2240,6 +2255,7 @@
             } catch (error) {
                 console.error('模拟计算失败:', error);
                 resultContent.innerHTML = `<p class="error">模拟计算失败: ${error.message}</p>`;
+                document.getElementById('downloadCsvBtn').style.display = 'none';
             }
         }
         
@@ -2368,13 +2384,56 @@
             const resultContent = document.getElementById('resultContent');
             const downloadCsvBtn = document.getElementById('downloadCsvBtn');
             
+            // 确保result对象存在
+            if (!result || !result.data) {
+                resultContent.innerHTML = '<p class="error">无效的模拟结果</p>';
+                downloadCsvBtn.style.display = 'none';
+                return;
+            }
+            
+            // 确保fault_response存在
+            const faultResponse = result.fault_response || {
+                voltage_results: {
+                    send_end_track_voltage: 0,
+                    receive_end_track_voltage: 0,
+                    main_track_input_voltage: 0,
+                    main_track_output_voltage_1: 0
+                },
+                current_results: {
+                    send_end_track_current: 0,
+                    receive_end_track_current: 0,
+                    main_track_input_current: 0,
+                    main_track_output_current_1: 0
+                },
+                input_impedance: 0,
+                input_current: 0,
+                Z_rail: 0,
+                Z_tuner: 0
+            };
+            
+            // 确保voltage_results存在
+            const voltageResults = faultResponse.voltage_results || {
+                send_end_track_voltage: 0,
+                receive_end_track_voltage: 0,
+                main_track_input_voltage: 0,
+                main_track_output_voltage_1: 0
+            };
+            
+            // 确保current_results存在
+            const currentResults = faultResponse.current_results || {
+                send_end_track_current: 0,
+                receive_end_track_current: 0,
+                main_track_input_current: 0,
+                main_track_output_current_1: 0
+            };
+            
             // 构建结果HTML
             let html = '<div class="result-section">';
             html += '<h4>模拟参数</h4>';
             html += '<div class="result-grid">';
             html += `<div class="result-item"><span class="result-label">轨道区段:</span> <span class="result-value">${result.data.section_name}</span></div>`;
             html += `<div class="result-item"><span class="result-label">错误类型:</span> <span class="result-value">${errorTypes.find(e => e.value === result.data.error_type).name}</span></div>`;
-            html += `<div class="result-item"><span class="result-label">轨道长度:</span> <span class="result-value">${result.data.length.toFixed(2)} m</span></div>`;
+            html += `<div class="result-item"><span class="result-label">轨道长度:</span> <span class="result-value">${(result.data.length || 0).toFixed(2)} m</span></div>`;
             html += `<div class="result-item"><span class="result-label">频率:</span> <span class="result-value">${result.data.frequency} Hz</span></div>`;
             html += '</div>';
             html += '</div>';
@@ -2383,10 +2442,10 @@
             html += '<div class="result-section">';
             html += '<h4>电压结果</h4>';
             html += '<div class="result-grid">';
-            html += `<div class="result-item"><span class="result-label">送端轨面电压:</span> <span class="result-value">${result.fault_response.voltage_results.send_end_track_voltage.toFixed(2)} V</span></div>`;
-            html += `<div class="result-item"><span class="result-label">受端轨面电压:</span> <span class="result-value">${result.fault_response.voltage_results.receive_end_track_voltage.toFixed(2)} V</span></div>`;
-            html += `<div class="result-item"><span class="result-label">主轨入电压:</span> <span class="result-value">${result.fault_response.voltage_results.main_track_input_voltage.toFixed(2)} V</span></div>`;
-            html += `<div class="result-item"><span class="result-label">轨出1电压:</span> <span class="result-value">${result.fault_response.voltage_results.main_track_output_voltage_1.toFixed(2)} V</span></div>`;
+            html += `<div class="result-item"><span class="result-label">送端轨面电压:</span> <span class="result-value">${(voltageResults.send_end_track_voltage || 0).toFixed(2)} V</span></div>`;
+            html += `<div class="result-item"><span class="result-label">受端轨面电压:</span> <span class="result-value">${(voltageResults.receive_end_track_voltage || 0).toFixed(2)} V</span></div>`;
+            html += `<div class="result-item"><span class="result-label">主轨入电压:</span> <span class="result-value">${(voltageResults.main_track_input_voltage || 0).toFixed(2)} V</span></div>`;
+            html += `<div class="result-item"><span class="result-label">轨出1电压:</span> <span class="result-value">${(voltageResults.main_track_output_voltage_1 || 0).toFixed(2)} V</span></div>`;
             html += '</div>';
             html += '</div>';
             
@@ -2394,10 +2453,10 @@
             html += '<div class="result-section">';
             html += '<h4>电流结果</h4>';
             html += '<div class="result-grid">';
-            html += `<div class="result-item"><span class="result-label">送端轨面电流:</span> <span class="result-value">${result.fault_response.current_results.send_end_track_current.toFixed(4)} A</span></div>`;
-            html += `<div class="result-item"><span class="result-label">受端轨面电流:</span> <span class="result-value">${result.fault_response.current_results.receive_end_track_current.toFixed(4)} A</span></div>`;
-            html += `<div class="result-item"><span class="result-label">主轨入电流:</span> <span class="result-value">${result.fault_response.current_results.main_track_input_current.toFixed(4)} A</span></div>`;
-            html += `<div class="result-item"><span class="result-label">轨出1电流:</span> <span class="result-value">${result.fault_response.current_results.main_track_output_current_1.toFixed(4)} A</span></div>`;
+            html += `<div class="result-item"><span class="result-label">送端轨面电流:</span> <span class="result-value">${(currentResults.send_end_track_current || 0).toFixed(4)} A</span></div>`;
+            html += `<div class="result-item"><span class="result-label">受端轨面电流:</span> <span class="result-value">${(currentResults.receive_end_track_current || 0).toFixed(4)} A</span></div>`;
+            html += `<div class="result-item"><span class="result-label">主轨入电流:</span> <span class="result-value">${(currentResults.main_track_input_current || 0).toFixed(4)} A</span></div>`;
+            html += `<div class="result-item"><span class="result-label">轨出1电流:</span> <span class="result-value">${(currentResults.main_track_output_current_1 || 0).toFixed(4)} A</span></div>`;
             html += '</div>';
             html += '</div>';
             
@@ -2405,10 +2464,10 @@
             html += '<div class="result-section">';
             html += '<h4>其他参数</h4>';
             html += '<div class="result-grid">';
-            html += `<div class="result-item"><span class="result-label">输入阻抗:</span> <span class="result-value">${result.fault_response.input_impedance.toFixed(2)} Ω</span></div>`;
-            html += `<div class="result-item"><span class="result-label">输入电流:</span> <span class="result-value">${result.fault_response.input_current.toFixed(4)} A</span></div>`;
-            html += `<div class="result-item"><span class="result-label">钢轨阻抗:</span> <span class="result-value">${result.fault_response.Z_rail.toFixed(2)} Ω</span></div>`;
-            html += `<div class="result-item"><span class="result-label">调谐单元阻抗:</span> <span class="result-value">${result.fault_response.Z_tuner.toFixed(2)} Ω</span></div>`;
+            html += `<div class="result-item"><span class="result-label">输入阻抗:</span> <span class="result-value">${(faultResponse.input_impedance || 0).toFixed(2)} Ω</span></div>`;
+            html += `<div class="result-item"><span class="result-label">输入电流:</span> <span class="result-value">${(faultResponse.input_current || 0).toFixed(4)} A</span></div>`;
+            html += `<div class="result-item"><span class="result-label">钢轨阻抗:</span> <span class="result-value">${(faultResponse.Z_rail || 0).toFixed(2)} Ω</span></div>`;
+            html += `<div class="result-item"><span class="result-label">调谐单元阻抗:</span> <span class="result-value">${(faultResponse.Z_tuner || 0).toFixed(2)} Ω</span></div>`;
             html += '</div>';
             html += '</div>';
             
@@ -2453,10 +2512,46 @@
         
         // 下载CSV
         function downloadCsv() {
-            if (!simulationResult) {
+            if (!simulationResult || !simulationResult.data) {
                 alert('没有可下载的模拟结果');
                 return;
             }
+            
+            // 确保fault_response存在
+            const faultResponse = simulationResult.fault_response || {
+                voltage_results: {
+                    send_end_track_voltage: 0,
+                    receive_end_track_voltage: 0,
+                    main_track_input_voltage: 0,
+                    main_track_output_voltage_1: 0
+                },
+                current_results: {
+                    send_end_track_current: 0,
+                    receive_end_track_current: 0,
+                    main_track_input_current: 0,
+                    main_track_output_current_1: 0
+                },
+                input_impedance: 0,
+                input_current: 0,
+                Z_rail: 0,
+                Z_tuner: 0
+            };
+            
+            // 确保voltage_results存在
+            const voltageResults = faultResponse.voltage_results || {
+                send_end_track_voltage: 0,
+                receive_end_track_voltage: 0,
+                main_track_input_voltage: 0,
+                main_track_output_voltage_1: 0
+            };
+            
+            // 确保current_results存在
+            const currentResults = faultResponse.current_results || {
+                send_end_track_current: 0,
+                receive_end_track_current: 0,
+                main_track_input_current: 0,
+                main_track_output_current_1: 0
+            };
             
             // 构建CSV内容
             let csvContent = '数据类型,参数,值\n';
@@ -2464,33 +2559,33 @@
             // 添加模拟参数
             csvContent += '模拟参数,轨道区段,' + simulationResult.data.section_name + '\n';
             csvContent += '模拟参数,错误类型,' + errorTypes.find(e => e.value === simulationResult.data.error_type).name + '\n';
-            csvContent += '模拟参数,轨道长度,' + simulationResult.data.length.toFixed(2) + ' m\n';
+            csvContent += '模拟参数,轨道长度,' + (simulationResult.data.length || 0).toFixed(2) + ' m\n';
             csvContent += '模拟参数,频率,' + simulationResult.data.frequency + ' Hz\n';
-            csvContent += '模拟参数,钢轨电阻,' + simulationResult.data.resistance.toFixed(6) + ' Ω/m\n';
-            csvContent += '模拟参数,钢轨电感,' + simulationResult.data.inductance.toExponential(6) + ' H/m\n';
-            csvContent += '模拟参数,漏泄电容,' + simulationResult.data.capacitance.toExponential(6) + ' F/m\n';
+            csvContent += '模拟参数,钢轨电阻,' + (simulationResult.data.resistance || 0).toFixed(6) + ' Ω/m\n';
+            csvContent += '模拟参数,钢轨电感,' + (simulationResult.data.inductance || 0).toExponential(6) + ' H/m\n';
+            csvContent += '模拟参数,漏泄电容,' + (simulationResult.data.capacitance || 0).toExponential(6) + ' F/m\n';
             csvContent += '模拟参数,钢轨漏泄电阻,' + simulationResult.data.leakage_resistance + ' Ω/km\n';
             csvContent += '模拟参数,SPT电缆长度,' + simulationResult.data.spt_cable_length + ' km\n';
             csvContent += '模拟参数,衰耗盘端子1,' + simulationResult.data.r1 + '\n';
             csvContent += '模拟参数,衰耗盘端子2,' + simulationResult.data.r2 + '\n';
             
             // 添加电压结果
-            csvContent += '电压结果,送端轨面电压,' + simulationResult.fault_response.voltage_results.send_end_track_voltage.toFixed(2) + ' V\n';
-            csvContent += '电压结果,受端轨面电压,' + simulationResult.fault_response.voltage_results.receive_end_track_voltage.toFixed(2) + ' V\n';
-            csvContent += '电压结果,主轨入电压,' + simulationResult.fault_response.voltage_results.main_track_input_voltage.toFixed(2) + ' V\n';
-            csvContent += '电压结果,轨出1电压,' + simulationResult.fault_response.voltage_results.main_track_output_voltage_1.toFixed(2) + ' V\n';
+            csvContent += '电压结果,送端轨面电压,' + (voltageResults.send_end_track_voltage || 0).toFixed(2) + ' V\n';
+            csvContent += '电压结果,受端轨面电压,' + (voltageResults.receive_end_track_voltage || 0).toFixed(2) + ' V\n';
+            csvContent += '电压结果,主轨入电压,' + (voltageResults.main_track_input_voltage || 0).toFixed(2) + ' V\n';
+            csvContent += '电压结果,轨出1电压,' + (voltageResults.main_track_output_voltage_1 || 0).toFixed(2) + ' V\n';
             
             // 添加电流结果
-            csvContent += '电流结果,送端轨面电流,' + simulationResult.fault_response.current_results.send_end_track_current.toFixed(4) + ' A\n';
-            csvContent += '电流结果,受端轨面电流,' + simulationResult.fault_response.current_results.receive_end_track_current.toFixed(4) + ' A\n';
-            csvContent += '电流结果,主轨入电流,' + simulationResult.fault_response.current_results.main_track_input_current.toFixed(4) + ' A\n';
-            csvContent += '电流结果,轨出1电流,' + simulationResult.fault_response.current_results.main_track_output_current_1.toFixed(4) + ' A\n';
+            csvContent += '电流结果,送端轨面电流,' + (currentResults.send_end_track_current || 0).toFixed(4) + ' A\n';
+            csvContent += '电流结果,受端轨面电流,' + (currentResults.receive_end_track_current || 0).toFixed(4) + ' A\n';
+            csvContent += '电流结果,主轨入电流,' + (currentResults.main_track_input_current || 0).toFixed(4) + ' A\n';
+            csvContent += '电流结果,轨出1电流,' + (currentResults.main_track_output_current_1 || 0).toFixed(4) + ' A\n';
             
             // 添加其他参数
-            csvContent += '其他参数,输入阻抗,' + simulationResult.fault_response.input_impedance.toFixed(2) + ' Ω\n';
-            csvContent += '其他参数,输入电流,' + simulationResult.fault_response.input_current.toFixed(4) + ' A\n';
-            csvContent += '其他参数,钢轨阻抗,' + simulationResult.fault_response.Z_rail.toFixed(2) + ' Ω\n';
-            csvContent += '其他参数,调谐单元阻抗,' + simulationResult.fault_response.Z_tuner.toFixed(2) + ' Ω\n';
+            csvContent += '其他参数,输入阻抗,' + (faultResponse.input_impedance || 0).toFixed(2) + ' Ω\n';
+            csvContent += '其他参数,输入电流,' + (faultResponse.input_current || 0).toFixed(4) + ' A\n';
+            csvContent += '其他参数,钢轨阻抗,' + (faultResponse.Z_rail || 0).toFixed(2) + ' Ω\n';
+            csvContent += '其他参数,调谐单元阻抗,' + (faultResponse.Z_tuner || 0).toFixed(2) + ' Ω\n';
             
             // 添加SPT电缆参数
             if (simulationResult.spt_cable_params) {
@@ -2561,6 +2656,23 @@
         let currentBatchIndex = 0;
         let totalBatchSize = 0;
         let batchSimulationTimeout = null;
+        
+        // 统一结果显示区域相关代码
+        function showDownloadButtons(type) {
+            // 隐藏所有下载按钮
+            document.getElementById('downloadCsvBtn').style.display = 'none';
+            document.getElementById('downloadBatchBtn').style.display = 'none';
+            document.getElementById('downloadDataBtn').style.display = 'none';
+            
+            // 显示对应类型的下载按钮
+            if (type === 'batch') {
+                document.getElementById('downloadBatchBtn').style.display = 'inline-block';
+            } else if (type === 'time_series') {
+                document.getElementById('downloadDataBtn').style.display = 'inline-block';
+            } else if (type === 'integrated') {
+                document.getElementById('downloadCsvBtn').style.display = 'inline-block';
+            }
+        }
         
         // 轨道区段数据
         const railwaySectionsBatch = {
@@ -2804,11 +2916,11 @@
             // 更新UI
             document.getElementById('startBatchBtn').disabled = true;
             document.getElementById('stopBatchBtn').disabled = false;
-            document.getElementById('downloadBatchBtn').disabled = true;
+            document.getElementById('downloadBatchBtn').style.display = 'none';
             document.getElementById('resultContent').innerHTML = '<p class="loading">正在准备批量模拟...</p>';
-            document.getElementById('progressFill').style.width = '0%';
-            document.getElementById('progressFill').textContent = '0%';
-            document.getElementById('resultStats').textContent = `已完成: 0 / ${batchSize}`;
+            
+            // 显示批量模拟相关的下载按钮
+            showDownloadButtons('batch');
             
             try {
                 // 生成模拟任务
@@ -2822,7 +2934,7 @@
                         
                         try {
                             // 模拟API调用
-                            const result = await simulateSingle(params);
+                            const result = await simulateBatchSingle(params);
                             return { params, result };
                         } catch (error) {
                             console.error('模拟失败:', error);
@@ -2858,7 +2970,7 @@
                         
                         // 处理结果，即使批量模拟已停止也继续处理
                         if (result) {
-                            processSimulationResult(result);
+                            processBatchSimulationResult(result);
                         }
                     }).catch(error => {
                         // 从运行任务中移除
@@ -2874,9 +2986,16 @@
                             
                             // 更新进度
                             const progress = (currentBatchIndex / totalBatchSize) * 100;
-                            document.getElementById('progressFill').style.width = `${progress}%`;
-                            document.getElementById('progressFill').textContent = `${Math.round(progress)}%`;
-                            document.getElementById('resultStats').textContent = `已完成: ${currentBatchIndex} / ${totalBatchSize}`;
+                            // 检查元素是否存在，避免报错
+                            const progressFill = document.getElementById('progressFill');
+                            if (progressFill) {
+                                progressFill.style.width = `${progress}%`;
+                                progressFill.textContent = `${Math.round(progress)}%`;
+                            }
+                            const resultStats = document.getElementById('resultStats');
+                            if (resultStats) {
+                                resultStats.textContent = `已完成: ${currentBatchIndex} / ${totalBatchSize}`;
+                            }
                         }
                     });
                     
@@ -2909,7 +3028,7 @@
         }
         
         // 模拟单个故障
-        async function simulateSingle(params, retryCount = 0) {
+        async function simulateBatchSingle(params, retryCount = 0) {
             // 构建表单数据
             const formData = new FormData();
             formData.append('trail', `batch_${Date.now()}_${Math.floor(Math.random() * 1000)}`);
@@ -2971,7 +3090,7 @@
                     // 重新生成参数
                     const newParams = generateRandomParams();
                     if (newParams && isBatchRunning) {
-                        return simulateSingle(newParams, retryCount + 1);
+                        return simulateBatchSingle(newParams, retryCount + 1);
                     }
                 }
                 
@@ -2980,8 +3099,8 @@
             }
         }
         
-        // 处理模拟结果
-        function processSimulationResult(simulation) {
+        // 处理批量模拟结果
+        function processBatchSimulationResult(simulation) {
             // 即使批量模拟已停止，也要处理结果
             currentBatchIndex++;
             
@@ -2992,6 +3111,20 @@
                 // 处理成功结果
                 const result = simulation.result;
                 const params = simulation.params;
+                
+                // 确保result对象存在
+                if (!result) {
+                    addResultItem('error', `模拟失败 (${params.section_id}, 错误类型: ${params.error_type}): 无效的模拟结果`);
+                    return;
+                }
+                
+                // 确保voltage_results存在
+                const voltageResults = result.voltage_results || {
+                    send_end_track_voltage: 0,
+                    receive_end_track_voltage: 0,
+                    main_track_input_voltage: 0,
+                    main_track_output_voltage_1: 0
+                };
                 
                 // 构建结果对象
                 const resultData = {
@@ -3009,10 +3142,10 @@
                     error_value: params.error_value,
                     r1: params.r1,
                     r2: params.r2,
-                    send_end_track_voltage: result.voltage_results.send_end_track_voltage,
-                    receive_end_track_voltage: result.voltage_results.receive_end_track_voltage,
-                    main_track_input_voltage: result.voltage_results.main_track_input_voltage,
-                    main_track_output_voltage_1: result.voltage_results.main_track_output_voltage_1,
+                    send_end_track_voltage: voltageResults.send_end_track_voltage || 0,
+                    receive_end_track_voltage: voltageResults.receive_end_track_voltage || 0,
+                    main_track_input_voltage: voltageResults.main_track_input_voltage || 0,
+                    main_track_output_voltage_1: voltageResults.main_track_output_voltage_1 || 0,
                     send_end_track_current: result.current_results ? (result.current_results.send_end_track_current || 0) : 0,
                     receive_end_track_current: result.current_results ? (result.current_results.receive_end_track_current || 0) : 0,
                     main_track_input_current: result.current_results ? (result.current_results.main_track_input_current || 0) : 0,
@@ -3031,14 +3164,8 @@
                 const receiveEndCurrent = result.current_results ? (result.current_results.receive_end_track_current || 0).toFixed(4) : '0.0000';
                 const mainTrackInputCurrent = result.current_results ? (result.current_results.main_track_input_current || 0).toFixed(4) : '0.0000';
                 const mainTrackOutputCurrent = result.current_results ? (result.current_results.main_track_output_current_1 || 0).toFixed(4) : '0.0000';
-                addResultItem('success', `模拟成功 (${params.section_id}, 错误类型: ${params.error_type}) - 送端轨面电压: ${result.voltage_results.send_end_track_voltage.toFixed(2)}V, 受端轨面电压: ${result.voltage_results.receive_end_track_voltage.toFixed(2)}V, 主轨入电压: ${result.voltage_results.main_track_input_voltage.toFixed(2)}V, 轨出1电压: ${result.voltage_results.main_track_output_voltage_1.toFixed(2)}V, 送端轨面电流: ${sendEndCurrent}A, 受端轨面电流: ${receiveEndCurrent}A, 主轨入电流: ${mainTrackInputCurrent}A, 轨出1电流: ${mainTrackOutputCurrent}A, 输入阻抗: ${(result.input_impedance || 0).toFixed(2)}Ω, 输入电流: ${(result.input_current || 0).toFixed(4)}A`);
+                addResultItem('success', `模拟成功 (${params.section_id}, 错误类型: ${params.error_type}) - 送端轨面电压: ${(voltageResults.send_end_track_voltage || 0).toFixed(2)}V, 受端轨面电压: ${(voltageResults.receive_end_track_voltage || 0).toFixed(2)}V, 主轨入电压: ${(voltageResults.main_track_input_voltage || 0).toFixed(2)}V, 轨出1电压: ${(voltageResults.main_track_output_voltage_1 || 0).toFixed(2)}V, 送端轨面电流: ${sendEndCurrent}A, 受端轨面电流: ${receiveEndCurrent}A, 主轨入电流: ${mainTrackInputCurrent}A, 轨出1电流: ${mainTrackOutputCurrent}A, 输入阻抗: ${(result.input_impedance || 0).toFixed(2)}Ω, 输入电流: ${(result.input_current || 0).toFixed(4)}A`);
             }
-            
-            // 更新进度
-            const progress = (currentBatchIndex / totalBatchSize) * 100;
-            document.getElementById('progressFill').style.width = `${progress}%`;
-            document.getElementById('progressFill').textContent = `${Math.round(progress)}%`;
-            document.getElementById('resultStats').textContent = `已完成: ${currentBatchIndex} / ${totalBatchSize}`;
             
             // 检查是否完成，但只在批量模拟仍在运行时调用finishBatchSimulation
             if (currentBatchIndex >= totalBatchSize && isBatchRunning) {
@@ -3057,12 +3184,14 @@
             // 更新UI
             document.getElementById('startBatchBtn').disabled = false;
             document.getElementById('stopBatchBtn').disabled = true;
-            document.getElementById('downloadBatchBtn').disabled = batchResults.length === 0;
             
             if (batchResults.length > 0) {
                 addResultItem('success', `批量模拟完成！共生成 ${batchResults.length} 条有效数据。`);
+                // 显示批量模拟相关的下载按钮
+                document.getElementById('downloadBatchBtn').style.display = 'inline-block';
             } else if (currentBatchIndex > 0) {
                 addResultItem('error', `批量模拟完成，但未生成任何有效数据。`);
+                document.getElementById('downloadBatchBtn').style.display = 'none';
             }
         }
         
@@ -3073,7 +3202,12 @@
             // 更新UI
             document.getElementById('startBatchBtn').disabled = false;
             document.getElementById('stopBatchBtn').disabled = true;
-            document.getElementById('downloadBatchBtn').disabled = batchResults.length === 0;
+            
+            if (batchResults.length > 0) {
+                document.getElementById('downloadBatchBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('downloadBatchBtn').style.display = 'none';
+            }
             
             addResultItem('error', `批量模拟已手动停止。已生成 ${batchResults.length} 条数据。`);
         }
@@ -3153,16 +3287,24 @@
         function clearResults() {
             batchResults = [];
             document.getElementById('resultContent').innerHTML = '<p class="loading">请点击"开始批量模拟"按钮开始生成数据。</p>';
-            document.getElementById('progressFill').style.width = '0%';
-            document.getElementById('progressFill').textContent = '0%';
-            document.getElementById('resultStats').textContent = '已完成: 0 / 0';
+            // 检查元素是否存在，避免报错
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) {
+                progressFill.style.width = '0%';
+                progressFill.textContent = '0%';
+            }
+            const resultStats = document.getElementById('resultStats');
+            if (resultStats) {
+                resultStats.textContent = '已完成: 0 / 0';
+            }
             document.getElementById('downloadBatchBtn').disabled = true;
         }
         
-        // 波形导入功能
+        // XY坐标图绘制功能
         let workbook = null;
         let worksheet = null;
-        let data = [];
+        let xData = [];
+        let yData = [];
         
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -3175,7 +3317,8 @@
                         // 重置全局变量
                         workbook = null;
                         worksheet = null;
-                        data = [];
+                        xData = [];
+                        yData = [];
                         
                         // 重置UI
                         const sheetSelector = document.getElementById('sheetSelector');
@@ -3183,18 +3326,28 @@
                             sheetSelector.style.display = 'none';
                         }
                         
-                        const selectedColumn = document.getElementById('selectedColumn');
-                        if (selectedColumn) {
-                            selectedColumn.innerHTML = '';
+                        const xColumn = document.getElementById('xColumn');
+                        if (xColumn) {
+                            xColumn.innerHTML = '';
                         }
                         
-                        const waveInfo = document.getElementById('waveInfo');
-                        if (waveInfo) {
-                            waveInfo.innerHTML = '<p class="loading">正在读取文件...</p>';
+                        const yColumns = document.getElementById('yColumns');
+                        if (yColumns) {
+                            yColumns.innerHTML = '';
+                        }
+                        
+                        const typeColumn = document.getElementById('typeColumn');
+                        if (typeColumn) {
+                            typeColumn.innerHTML = '<option value="-1">不使用数据类型</option>';
+                        }
+                        
+                        const xyInfo = document.getElementById('xyInfo');
+                        if (xyInfo) {
+                            xyInfo.innerHTML = '<p class="loading">正在读取文件...</p>';
                         }
                         
                         // 清除画布
-                        const canvas = document.getElementById('waveCanvas');
+                        const canvas = document.getElementById('xyCanvas');
                         if (canvas) {
                             const ctx = canvas.getContext('2d');
                             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -3220,9 +3373,9 @@
             // 检查文件类型
             const fileName = file.name.toLowerCase();
             if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-                const waveInfo = document.getElementById('waveInfo');
-                if (waveInfo) {
-                    waveInfo.innerHTML = '<p class="error">❌ 不支持的文件格式，请上传CSV或XLSX文件</p>';
+                const xyInfo = document.getElementById('xyInfo');
+                if (xyInfo) {
+                    xyInfo.innerHTML = '<p class="error">❌ 不支持的文件格式，请上传CSV或XLSX文件</p>';
                 }
                 return;
             }
@@ -3260,18 +3413,22 @@
                             sheetNameSelect.appendChild(option);
                         });
                         
-                        // 自动选择第一个工作表
-                        handleSheetChange({ target: sheetNameSelect });
+                        // 设置默认选中第一个工作表
+                        if (workbook.SheetNames.length > 0) {
+                            sheetNameSelect.value = workbook.SheetNames[0];
+                            // 自动选择第一个工作表
+                            handleSheetChange({ target: sheetNameSelect });
+                        }
                     }
                     
-                    const waveInfo = document.getElementById('waveInfo');
-                    if (waveInfo) {
-                        waveInfo.innerHTML = '<p class="success">✅ 文件上传成功！</p>';
+                    const xyInfo = document.getElementById('xyInfo');
+                    if (xyInfo) {
+                        xyInfo.innerHTML = '<p class="success">✅ 文件上传成功！</p>';
                     }
                 } catch (error) {
-                    const waveInfo = document.getElementById('waveInfo');
-                    if (waveInfo) {
-                        waveInfo.innerHTML = '<p class="error">❌ 文件读取失败: ' + error.message + '</p>';
+                    const xyInfo = document.getElementById('xyInfo');
+                    if (xyInfo) {
+                        xyInfo.innerHTML = '<p class="error">❌ 文件读取失败: ' + error.message + '</p>';
                     }
                 }
             };
@@ -3286,44 +3443,77 @@
 
         // 处理工作表选择
         function handleSheetChange(event) {
-            const sheetName = event.target.value;
+            let sheetName = event.target.value;
+            // 如果value为空，使用第一个工作表名称
+            if (!sheetName && workbook && workbook.SheetNames.length > 0) {
+                sheetName = workbook.SheetNames[0];
+                event.target.value = sheetName;
+            }
             worksheet = workbook.Sheets[sheetName];
             
             // 转换工作表数据
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             
             // 填充数据列选择器
-            const columnSelect = document.getElementById('selectedColumn');
-            if (columnSelect) {
-                columnSelect.innerHTML = '';
-                
-                if (jsonData.length > 0) {
-                    // 获取列数
-                    const columnCount = jsonData[0].length;
-                    for (let i = 0; i < columnCount; i++) {
-                        const option = document.createElement('option');
-                        option.value = i;
-                        // 尝试使用表头作为选项文本，如果没有则使用列号
-                        const headerText = jsonData[0][i] ? String(jsonData[0][i]) : `列 ${i + 1}`;
-                        // 清理可能的乱码字符
-                        const cleanedText = headerText.replace(/[^\x00-\x7F\u4e00-\u9fa5]/g, '');
-                        option.textContent = cleanedText || `列 ${i + 1}`;
-                        columnSelect.appendChild(option);
+            const xColumnSelect = document.getElementById('xColumn');
+            const yColumnsSelect = document.getElementById('yColumns');
+            const typeColumnSelect = document.getElementById('typeColumn');
+            if (xColumnSelect) {
+                xColumnSelect.innerHTML = '';
+            }
+            if (yColumnsSelect) {
+                yColumnsSelect.innerHTML = '';
+            }
+            if (typeColumnSelect) {
+                typeColumnSelect.innerHTML = '<option value="-1">不使用数据类型</option>';
+            }
+            
+            if (jsonData.length > 0) {
+                // 获取列数
+                const columnCount = jsonData[0].length;
+                for (let i = 0; i < columnCount; i++) {
+                    // 尝试使用表头作为选项文本，如果没有则使用列号
+                    const headerText = jsonData[0][i] ? String(jsonData[0][i]) : `列 ${i + 1}`;
+                    // 清理可能的乱码字符
+                    const cleanedText = headerText.replace(/[^\x00-\x7F\u4e00-\u9fa5]/g, '');
+                    const displayText = cleanedText || `列 ${i + 1}`;
+                    
+                    // 添加到X轴选择器
+                    if (xColumnSelect) {
+                        const xOption = document.createElement('option');
+                        xOption.value = i;
+                        xOption.textContent = displayText;
+                        xColumnSelect.appendChild(xOption);
+                    }
+                    
+                    // 添加到Y轴选择器（多选）
+                    if (yColumnsSelect) {
+                        const yOption = document.createElement('option');
+                        yOption.value = i;
+                        yOption.textContent = displayText;
+                        yColumnsSelect.appendChild(yOption);
+                    }
+                    
+                    // 添加到数据类型选择器
+                    if (typeColumnSelect) {
+                        const typeOption = document.createElement('option');
+                        typeOption.value = i;
+                        typeOption.textContent = displayText;
+                        typeColumnSelect.appendChild(typeOption);
                     }
                 }
             }
             
-            const waveInfo = document.getElementById('waveInfo');
-            if (waveInfo) {
-                waveInfo.innerHTML = '<p class="success">✅ 工作表选择成功！</p>';
+            const xyInfo = document.getElementById('xyInfo');
+            if (xyInfo) {
+                xyInfo.innerHTML = '<p class="success">✅ 工作表选择成功！</p>';
             }
         }
 
-        // 绘制波形
-        function plotWaveform() {
-            const canvas = document.getElementById('waveCanvas');
-            const ctx = canvas.getContext('2d');
-            const waveInfo = document.getElementById('waveInfo');
+        // 绘制XY图
+        function plotXY() {
+            const xyInfo = document.getElementById('xyInfo');
+            const waveDisplay = document.querySelector('.wave-display');
             
             try {
                 if (!workbook || !worksheet) {
@@ -3331,11 +3521,17 @@
                 }
                 
                 // 获取输入参数
-                const samplingFreq = parseFloat(document.getElementById('samplingFreq').value);
+                const xColumn = parseInt(document.getElementById('xColumn').value);
+                const yColumnsSelect = document.getElementById('yColumns');
+                const selectedYColumns = Array.from(yColumnsSelect.selectedOptions).map(option => parseInt(option.value));
+                const typeColumn = parseInt(document.getElementById('typeColumn').value);
                 const startRow = parseInt(document.getElementById('startRow').value) - 1; // 转换为0索引
-                const selectedColumn = parseInt(document.getElementById('selectedColumn').value);
-                const duration = parseFloat(document.getElementById('duration').value);
                 const samples = parseInt(document.getElementById('samples').value);
+                const displayMode = document.getElementById('displayMode').value;
+                
+                if (selectedYColumns.length === 0) {
+                    throw new Error('请至少选择一个Y轴数据列');
+                }
                 
                 // 转换工作表数据
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -3344,143 +3540,428 @@
                     throw new Error('数据起始行超出范围');
                 }
                 
-                // 提取数据
-                data = [];
+                // 提取X轴数据
+                const xData = [];
                 for (let i = startRow; i < jsonData.length; i++) {
-                    const value = parseFloat(jsonData[i][selectedColumn]);
-                    if (!isNaN(value)) {
-                        data.push(value);
+                    const xValue = parseFloat(jsonData[i][xColumn]);
+                    if (!isNaN(xValue)) {
+                        xData.push(xValue);
                     }
                 }
                 
-                // 检查数据是否有效
-                if (data.length === 0) {
-                    // 尝试跳过表头行
-                    data = [];
-                    for (let i = startRow + 1; i < jsonData.length; i++) {
-                        const value = parseFloat(jsonData[i][selectedColumn]);
-                        if (!isNaN(value)) {
-                            data.push(value);
+                if (xData.length === 0) {
+                    throw new Error('X轴数据列中没有有效数据');
+                }
+                
+                // 提取每个Y轴数据列的数据
+                const yDataArray = [];
+                const yColumnNames = [];
+                for (const yColumn of selectedYColumns) {
+                    const yData = [];
+                    for (let i = startRow; i < jsonData.length; i++) {
+                        const yValue = parseFloat(jsonData[i][yColumn]);
+                        if (!isNaN(yValue)) {
+                            yData.push(yValue);
+                        }
+                    }
+                    yDataArray.push(yData);
+                    
+                    // 获取Y轴列名称
+                    const headerText = jsonData[0][yColumn] ? String(jsonData[0][yColumn]) : `列 ${yColumn + 1}`;
+                    const cleanedText = headerText.replace(/[^\x00-\x7F\u4e00-\u9fa5]/g, '');
+                    yColumnNames.push(cleanedText || `列 ${yColumn + 1}`);
+                }
+                
+                // 检查所有Y轴数据列是否有有效数据
+                for (let i = 0; i < yDataArray.length; i++) {
+                    if (yDataArray[i].length === 0) {
+                        throw new Error(`Y轴数据列 "${yColumnNames[i]}" 中没有有效数据`);
+                    }
+                }
+                
+                // 为不同Y轴数据列分配颜色
+                const colorPalette = [
+                    '#e74c3c', // 红色
+                    '#3498db', // 蓝色
+                    '#27ae60', // 绿色
+                    '#f39c12', // 橙色
+                    '#9b59b6', // 紫色
+                    '#1abc9c', // 青色
+                    '#e67e22', // 深橙色
+                    '#34495e', // 深灰色
+                    '#16a085', // 深青色
+                    '#8e44ad'  // 深紫色
+                ];
+                
+                // 计算要显示的数据点
+                const displayPoints = Math.min(samples, xData.length);
+                const step = Math.floor(xData.length / displayPoints);
+                
+                // 清除波形显示区域
+                if (waveDisplay) {
+                    waveDisplay.innerHTML = '';
+                }
+                
+                if (displayMode === 'single') {
+                    // 同一图表模式
+                    const canvas = document.createElement('canvas');
+                    canvas.id = 'xyCanvas';
+                    canvas.width = 1000;
+                    canvas.height = 400;
+                    if (waveDisplay) {
+                        waveDisplay.appendChild(canvas);
+                    }
+                    
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 绘制坐标轴
+                    const centerY = canvas.height / 2;
+                    const centerX = 50;
+                    const width = canvas.width - 100;
+                    const height = canvas.height - 40;
+                    
+                    // 确定X轴数据范围
+                    const xMax = Math.max(...xData);
+                    const xMin = Math.min(...xData);
+                    const xRange = xMax - xMin;
+                    
+                    // 确定Y轴数据范围（所有Y轴数据的最大值和最小值）
+                    let yMax = -Infinity;
+                    let yMin = Infinity;
+                    for (const yData of yDataArray) {
+                        const currentMax = Math.max(...yData);
+                        const currentMin = Math.min(...yData);
+                        if (currentMax > yMax) yMax = currentMax;
+                        if (currentMin < yMin) yMin = currentMin;
+                    }
+                    const yRange = yMax - yMin;
+                    
+                    // 添加一些边距，确保所有数据点都能显示
+                    const xPadding = xRange * 0.1;
+                    const yPadding = yRange * 0.1;
+                    const adjustedXMin = xMin - xPadding;
+                    const adjustedXMax = xMax + xPadding;
+                    const adjustedYMin = yMin - yPadding;
+                    const adjustedYMax = yMax + yPadding;
+                    const adjustedXRange = adjustedXMax - adjustedXMin;
+                    const adjustedYRange = adjustedYMax - adjustedYMin;
+                    
+                    // 绘制坐标轴
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, 20);
+                    ctx.lineTo(centerX, canvas.height - 20);
+                    ctx.lineTo(canvas.width - 20, canvas.height - 20);
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    // 绘制网格
+                    ctx.strokeStyle = '#eee';
+                    ctx.lineWidth = 0.5;
+                    
+                    // 水平网格线和刻度
+                    const ySteps = 10;
+                    for (let i = 0; i <= ySteps; i++) {
+                        const y = 20 + (i * height / ySteps);
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, y);
+                        ctx.lineTo(canvas.width - 20, y);
+                        ctx.stroke();
+                        
+                        // 绘制Y轴刻度
+                        const value = adjustedYMax - (i * adjustedYRange / ySteps);
+                        ctx.fillStyle = '#333';
+                        ctx.font = '10px Arial';
+                        ctx.textAlign = 'right';
+                        ctx.fillText(value.toFixed(2), centerX - 5, y + 3);
+                    }
+                    
+                    // 垂直网格线和刻度
+                    const xSteps = 10;
+                    for (let i = 0; i <= xSteps; i++) {
+                        const x = centerX + (i * width / xSteps);
+                        ctx.beginPath();
+                        ctx.moveTo(x, 20);
+                        ctx.lineTo(x, canvas.height - 20);
+                        ctx.stroke();
+                        
+                        // 绘制X轴刻度
+                        const value = adjustedXMin + (i * adjustedXRange / xSteps);
+                        ctx.fillStyle = '#333';
+                        ctx.font = '10px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(value.toFixed(2), x, canvas.height - 5);
+                    }
+                    
+                    // 绘制每个Y轴数据列的曲线
+                    for (let i = 0; i < yDataArray.length; i++) {
+                        const yData = yDataArray[i];
+                        const color = colorPalette[i % colorPalette.length];
+                        
+                        // 绘制连接线
+                        ctx.beginPath();
+                        for (let j = 0; j < displayPoints; j++) {
+                            const dataIndex = j * step;
+                            const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
+                            const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
+                            
+                            if (j === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        }
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        
+                        // 绘制数据点
+                        for (let j = 0; j < displayPoints; j++) {
+                            const dataIndex = j * step;
+                            const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
+                            const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
+                            
+                            ctx.beginPath();
+                            ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                            ctx.fillStyle = color;
+                            ctx.fill();
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    }
+                    
+                    // 绘制图例
+                    const legendX = canvas.width - 180;
+                    const legendY = 30;
+                    const legendItemHeight = 20;
+                    
+                    ctx.font = '12px Arial';
+                    ctx.fillStyle = '#333';
+                    ctx.fillText('图例:', legendX, legendY);
+                    
+                    for (let i = 0; i < yColumnNames.length; i++) {
+                        const y = legendY + (i + 1) * legendItemHeight;
+                        
+                        // 绘制颜色方块
+                        ctx.fillStyle = colorPalette[i % colorPalette.length];
+                        ctx.fillRect(legendX, y - 8, 12, 12);
+                        
+                        // 绘制列名称
+                        ctx.fillStyle = '#333';
+                        ctx.fillText(yColumnNames[i], legendX + 20, y);
+                    }
+                } else {
+                    // 不同图表模式
+                    for (let i = 0; i < yDataArray.length; i++) {
+                        const yData = yDataArray[i];
+                        const yColumnName = yColumnNames[i];
+                        
+                        // 创建图表容器
+                        const chartContainer = document.createElement('div');
+                        chartContainer.style.marginBottom = '30px';
+                        if (waveDisplay) {
+                            waveDisplay.appendChild(chartContainer);
+                        }
+                        
+                        // 创建图表标题
+                        const chartTitle = document.createElement('h3');
+                        chartTitle.textContent = `Y轴: ${yColumnName}`;
+                        chartTitle.style.textAlign = 'center';
+                        chartContainer.appendChild(chartTitle);
+                        
+                        // 创建画布
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 1000;
+                        canvas.height = 300;
+                        chartContainer.appendChild(canvas);
+                        
+                        const ctx = canvas.getContext('2d');
+                        
+                        // 绘制坐标轴
+                        const centerY = canvas.height / 2;
+                        const centerX = 50;
+                        const width = canvas.width - 100;
+                        const height = canvas.height - 40;
+                        
+                        // 确定X轴数据范围
+                        const xMax = Math.max(...xData);
+                        const xMin = Math.min(...xData);
+                        const xRange = xMax - xMin;
+                        
+                        // 确定Y轴数据范围
+                        const yMax = Math.max(...yData);
+                        const yMin = Math.min(...yData);
+                        const yRange = yMax - yMin;
+                        
+                        // 添加一些边距，确保所有数据点都能显示
+                        const xPadding = xRange * 0.1;
+                        const yPadding = yRange * 0.1;
+                        const adjustedXMin = xMin - xPadding;
+                        const adjustedXMax = xMax + xPadding;
+                        const adjustedYMin = yMin - yPadding;
+                        const adjustedYMax = yMax + yPadding;
+                        const adjustedXRange = adjustedXMax - adjustedXMin;
+                        const adjustedYRange = adjustedYMax - adjustedYMin;
+                        
+                        // 绘制坐标轴
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, 20);
+                        ctx.lineTo(centerX, canvas.height - 20);
+                        ctx.lineTo(canvas.width - 20, canvas.height - 20);
+                        ctx.strokeStyle = '#333';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        
+                        // 绘制网格
+                        ctx.strokeStyle = '#eee';
+                        ctx.lineWidth = 0.5;
+                        
+                        // 水平网格线和刻度
+                        const ySteps = 10;
+                        for (let j = 0; j <= ySteps; j++) {
+                            const y = 20 + (j * height / ySteps);
+                            ctx.beginPath();
+                            ctx.moveTo(centerX, y);
+                            ctx.lineTo(canvas.width - 20, y);
+                            ctx.stroke();
+                            
+                            // 绘制Y轴刻度
+                            const value = adjustedYMax - (j * adjustedYRange / ySteps);
+                            ctx.fillStyle = '#333';
+                            ctx.font = '10px Arial';
+                            ctx.textAlign = 'right';
+                            ctx.fillText(value.toFixed(2), centerX - 5, y + 3);
+                        }
+                        
+                        // 垂直网格线和刻度
+                        const xSteps = 10;
+                        for (let j = 0; j <= xSteps; j++) {
+                            const x = centerX + (j * width / xSteps);
+                            ctx.beginPath();
+                            ctx.moveTo(x, 20);
+                            ctx.lineTo(x, canvas.height - 20);
+                            ctx.stroke();
+                            
+                            // 绘制X轴刻度
+                            const value = adjustedXMin + (j * adjustedXRange / xSteps);
+                            ctx.fillStyle = '#333';
+                            ctx.font = '10px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(value.toFixed(2), x, canvas.height - 5);
+                        }
+                        
+                        // 提取数据类型
+                        const typeData = [];
+                        if (typeColumn !== -1) {
+                            for (let j = startRow; j < jsonData.length; j++) {
+                                const typeValue = jsonData[j][typeColumn];
+                                typeData.push(typeValue ? String(typeValue) : '未知');
+                            }
+                        } else {
+                            // 如果没有数据类型列，为所有点设置默认类型
+                            for (let j = 0; j < jsonData.length - startRow; j++) {
+                                typeData.push('默认');
+                            }
+                        }
+                        
+                        // 为不同数据类型分配颜色
+                        const typeColors = {};
+                        const uniqueTypes = [...new Set(typeData)];
+                        uniqueTypes.forEach((type, index) => {
+                            typeColors[type] = colorPalette[index % colorPalette.length];
+                        });
+                        
+                        // 先绘制连接线（按原始顺序，保持数据点之间的连接关系）
+                        ctx.beginPath();
+                        for (let j = 0; j < displayPoints; j++) {
+                            const dataIndex = j * step;
+                            const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
+                            const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
+                            
+                            if (j === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        }
+                        ctx.strokeStyle = '#333'; // 使用默认颜色绘制连接线
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        
+                        // 按数据类型绘制数据点
+                        for (let j = 0; j < displayPoints; j++) {
+                            const dataIndex = j * step;
+                            const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
+                            const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
+                            const pointType = typeData[dataIndex];
+                            const color = typeColors[pointType];
+                            
+                            // 绘制数据点
+                            ctx.beginPath();
+                            ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                            ctx.fillStyle = color;
+                            ctx.fill();
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                        
+                        // 绘制图例
+                        if (uniqueTypes.length > 1) {
+                            const legendX = canvas.width - 180;
+                            const legendY = 30;
+                            const legendItemHeight = 20;
+                            
+                            ctx.font = '12px Arial';
+                            ctx.fillStyle = '#333';
+                            ctx.fillText('图例:', legendX, legendY);
+                            
+                            uniqueTypes.forEach((type, index) => {
+                                const y = legendY + (index + 1) * legendItemHeight;
+                                
+                                // 绘制颜色方块
+                                ctx.fillStyle = typeColors[type];
+                                ctx.fillRect(legendX, y - 8, 12, 12);
+                                
+                                // 绘制类型名称
+                                ctx.fillStyle = '#333';
+                                ctx.fillText(type, legendX + 20, y);
+                            });
                         }
                     }
                 }
                 
-                if (data.length === 0) {
-                    throw new Error('所选列中没有有效数据');
-                }
-                
-                // 清除画布
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // 绘制坐标轴
-                const centerY = canvas.height / 2;
-                const centerX = 50;
-                const width = canvas.width - 100;
-                const height = canvas.height - 40;
-                
-                // 确定数据范围
-                const maxValue = Math.max(...data);
-                const minValue = Math.min(...data);
-                const valueRange = maxValue - minValue;
-                
-                // 添加一些边距，确保所有数据点都能显示
-                const padding = valueRange * 0.1;
-                const adjustedMin = minValue - padding;
-                const adjustedMax = maxValue + padding;
-                const adjustedRange = adjustedMax - adjustedMin;
-                
-                // 计算Y轴偏移
-                const offsetY = centerY - (adjustedMin + adjustedRange / 2) * (height / adjustedRange);
-                
-                // 计算采样间隔
-                const sampleInterval = 1 / samplingFreq;
-                const totalDuration = data.length * sampleInterval;
-                
-                // 绘制坐标轴
-                ctx.beginPath();
-                ctx.moveTo(centerX, 20);
-                ctx.lineTo(centerX, canvas.height - 20);
-                ctx.lineTo(canvas.width - 20, canvas.height - 20);
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                
-                // 绘制网格
-                ctx.strokeStyle = '#eee';
-                ctx.lineWidth = 0.5;
-                
-                // 水平网格线和刻度
-                const ySteps = 10;
-                for (let i = 0; i <= ySteps; i++) {
-                    const y = 20 + (i * height / ySteps);
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, y);
-                    ctx.lineTo(canvas.width - 20, y);
-                    ctx.stroke();
-                    
-                    // 绘制Y轴刻度
-                    const value = adjustedMax - (i * adjustedRange / ySteps);
-                    ctx.fillStyle = '#333';
-                    ctx.font = '10px Arial';
-                    ctx.textAlign = 'right';
-                    ctx.fillText(value.toFixed(2), centerX - 5, y + 3);
-                }
-                
-                // 垂直网格线和刻度
-                const xSteps = 10;
-                for (let i = 0; i <= xSteps; i++) {
-                    const x = centerX + (i * width / xSteps);
-                    ctx.beginPath();
-                    ctx.moveTo(x, 20);
-                    ctx.lineTo(x, canvas.height - 20);
-                    ctx.stroke();
-                    
-                    // 绘制X轴刻度
-                    const time = (i * totalDuration / xSteps).toFixed(2);
-                    ctx.fillStyle = '#333';
-                    ctx.font = '10px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(time, x, canvas.height - 5);
-                }
-                
-                // 绘制波形
-                ctx.beginPath();
-                
-                // 计算要显示的数据点
-                const displayPoints = Math.min(samples, data.length);
-                const step = Math.floor(data.length / displayPoints);
-                
-                for (let i = 0; i < displayPoints; i++) {
-                    const dataIndex = i * step;
-                    const x = centerX + (i / (displayPoints - 1)) * width;
-                    const y = offsetY - (data[dataIndex] - adjustedMin) * (height / adjustedRange);
-                    
-                    if (i === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                }
-                
-                ctx.strokeStyle = '#3498db';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // 更新波形信息
+                // 更新XY图信息
                 const html = `
-                    <h3>波形信息</h3>
+                    <h3>XY图信息</h3>
                     <div class="card">
-                        <p><strong>采样频率:</strong> ${samplingFreq.toFixed(2)} Hz</p>
-                        <p><strong>数据点数:</strong> ${data.length}</p>
-                        <p><strong>总时长:</strong> ${totalDuration.toFixed(2)} 秒</p>
-                        <p><strong>数据范围:</strong> ${minValue.toFixed(4)} - ${maxValue.toFixed(4)}</p>
+                        <p><strong>数据点数:</strong> ${xData.length}</p>
+                        <p><strong>X轴范围:</strong> ${Math.min(...xData).toFixed(4)} - ${Math.max(...xData).toFixed(4)}</p>
+                        <p><strong>Y轴数据列数:</strong> ${selectedYColumns.length}</p>
                         <p><strong>显示点数:</strong> ${displayPoints}</p>
+                        <p><strong>显示模式:</strong> ${displayMode === 'single' ? '同一图表' : '不同图表'}</p>
                     </div>
                 `;
-                waveInfo.innerHTML = '<p class="success">✅ 波形绘制成功！</p>' + html;
+                
+                // 添加信息显示
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'data-display';
+                infoDiv.innerHTML = '<p class="success">✅ XY图绘制成功！</p>' + html;
+                if (waveDisplay) {
+                    waveDisplay.appendChild(infoDiv);
+                }
                 
             } catch (error) {
-                waveInfo.innerHTML = '<p class="error">❌ 绘制失败: ' + error.message + '</p>';
+                // 恢复原始画布
+                if (waveDisplay) {
+                    waveDisplay.innerHTML = `
+                        <canvas id="xyCanvas" width="1000" height="400"></canvas>
+                        <div id="xyInfo" class="data-display">
+                            <p class="error">❌ 绘制失败: ${error.message}</p>
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -3496,9 +3977,19 @@
                 sheetSelector.style.display = 'none';
             }
             
-            const selectedColumn = document.getElementById('selectedColumn');
-            if (selectedColumn) {
-                selectedColumn.innerHTML = '';
+            const xColumn = document.getElementById('xColumn');
+            if (xColumn) {
+                xColumn.innerHTML = '';
+            }
+            
+            const yColumns = document.getElementById('yColumns');
+            if (yColumns) {
+                yColumns.innerHTML = '';
+            }
+            
+            const typeColumn = document.getElementById('typeColumn');
+            if (typeColumn) {
+                typeColumn.innerHTML = '<option value="-1">不使用数据类型</option>';
             }
             
             const paramsForm = document.getElementById('paramsForm');
@@ -3506,22 +3997,22 @@
                 paramsForm.reset();
             }
             
-            const waveInfo = document.getElementById('waveInfo');
-            if (waveInfo) {
-                waveInfo.innerHTML = '<p class="loading">请上传文件并设置参数后绘制波形</p>';
-            }
-            
-            // 清除画布
-            const canvas = document.getElementById('waveCanvas');
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 恢复原始画布和信息显示
+            const waveDisplay = document.querySelector('.wave-display');
+            if (waveDisplay) {
+                waveDisplay.innerHTML = `
+                    <canvas id="xyCanvas" width="1000" height="400"></canvas>
+                    <div id="xyInfo" class="data-display">
+                        <p class="loading">请上传文件并设置参数后绘制XY图</p>
+                    </div>
+                `;
             }
             
             // 重置全局变量
             workbook = null;
             worksheet = null;
-            data = [];
+            xData = [];
+            yData = [];
         }
         
         // 时间序列模拟功能
@@ -3530,6 +4021,7 @@
         let isSimulationRunning = false;
         let currentSimulationIndex = 0;
         let totalSimulationCount = 0;
+        let abortControllers = [];
         
         // 轨道区段和故障类型对应的图片映射
         const imageMapping = {
@@ -3914,11 +4406,11 @@
             // 更新UI
             document.getElementById('startSimulationBtn').disabled = true;
             document.getElementById('stopSimulationBtn').disabled = false;
-            document.getElementById('downloadDataBtn').disabled = true;
+            document.getElementById('downloadDataBtn').style.display = 'none';
             document.getElementById('resultContent').innerHTML = '<p class="loading">正在准备时间序列模拟...</p>';
-            document.getElementById('progressFill').style.width = '0%';
-            document.getElementById('progressFill').textContent = '0%';
-            document.getElementById('resultStats').textContent = `已完成: 0 / ${totalSimulationCount}`;
+            
+            // 显示时间序列模拟相关的下载按钮
+            showDownloadButtons('time_series');
             
             try {
                 // 执行模拟
@@ -3968,7 +4460,7 @@
                         processSimulationResult({ params, result });
                     } catch (error) {
                         console.error('模拟失败:', error);
-                        processSimulationResult({ params, error: error.message });
+                        processSimulationResult({ params, error: error });
                     }
                 }
                 
@@ -4008,6 +4500,7 @@
                 
                 // 实际API调用，添加超时处理
                 const controller = new AbortController();
+                abortControllers.push(controller);
                 const timeoutId = setTimeout(() => controller.abort(), 15000);
                 
                 try {
@@ -4022,6 +4515,11 @@
                     });
                     
                     clearTimeout(timeoutId);
+                    // 从数组中移除已完成的controller
+                    const index = abortControllers.indexOf(controller);
+                    if (index > -1) {
+                        abortControllers.splice(index, 1);
+                    }
                     
                     if (!response.ok) {
                         throw new Error(`API调用失败: ${response.status}`);
@@ -4036,6 +4534,11 @@
                     return result;
                 } catch (error) {
                     clearTimeout(timeoutId);
+                    // 从数组中移除已完成的controller
+                    const index = abortControllers.indexOf(controller);
+                    if (index > -1) {
+                        abortControllers.splice(index, 1);
+                    }
                     throw error;
                 }
             } catch (error) {
@@ -4050,11 +4553,26 @@
             
             if (simulation.error) {
                 // 处理错误
-                addResultItem('error', `模拟失败 (电压: ${simulation.params.voltage.toFixed(1)}V): ${simulation.error}`);
+                const errorMessage = simulation.error.message || simulation.error || '未知错误';
+                addResultItem('error', `模拟失败 (电压: ${(simulation.params.voltage || 0).toFixed(1)}V): ${errorMessage}`);
             } else {
                 // 处理成功结果
                 const result = simulation.result;
                 const params = simulation.params;
+                
+                // 确保result对象存在
+                if (!result) {
+                    addResultItem('error', `模拟失败 (电压: ${(params.voltage || 0).toFixed(1)}V): 无效的模拟结果`);
+                    return;
+                }
+                
+                // 确保voltage_results存在
+                const voltageResults = result.voltage_results || {
+                    send_end_track_voltage: 0,
+                    receive_end_track_voltage: 0,
+                    main_track_input_voltage: 0,
+                    main_track_output_voltage_1: 0
+                };
                 
                 // 构建结果对象
                 const resultData = {
@@ -4072,10 +4590,10 @@
                     error_value: params.error_value,
                     r1: params.r1,
                     r2: params.r2,
-                    send_end_track_voltage: result.voltage_results.send_end_track_voltage,
-                    receive_end_track_voltage: result.voltage_results.receive_end_track_voltage,
-                    main_track_input_voltage: result.voltage_results.main_track_input_voltage,
-                    main_track_output_voltage_1: result.voltage_results.main_track_output_voltage_1,
+                    send_end_track_voltage: voltageResults.send_end_track_voltage || 0,
+                    receive_end_track_voltage: voltageResults.receive_end_track_voltage || 0,
+                    main_track_input_voltage: voltageResults.main_track_input_voltage || 0,
+                    main_track_output_voltage_1: voltageResults.main_track_output_voltage_1 || 0,
                     send_end_track_current: result.current_results ? (result.current_results.send_end_track_current || 0) : 0,
                     receive_end_track_current: result.current_results ? (result.current_results.receive_end_track_current || 0) : 0,
                     main_track_input_current: result.current_results ? (result.current_results.main_track_input_current || 0) : 0,
@@ -4094,14 +4612,21 @@
                 const receiveEndCurrent = result.current_results ? (result.current_results.receive_end_track_current || 0).toFixed(4) : '0.0000';
                 const mainTrackInputCurrent = result.current_results ? (result.current_results.main_track_input_current || 0).toFixed(4) : '0.0000';
                 const mainTrackOutputCurrent = result.current_results ? (result.current_results.main_track_output_current_1 || 0).toFixed(4) : '0.0000';
-                addResultItem('success', `模拟成功 (电压: ${params.voltage.toFixed(1)}V) - 送端轨面电压: ${result.voltage_results.send_end_track_voltage.toFixed(2)}V, 受端轨面电压: ${result.voltage_results.receive_end_track_voltage.toFixed(2)}V, 主轨入电压: ${result.voltage_results.main_track_input_voltage.toFixed(2)}V, 轨出1电压: ${result.voltage_results.main_track_output_voltage_1.toFixed(2)}V, 送端轨面电流: ${sendEndCurrent}A, 受端轨面电流: ${receiveEndCurrent}A, 主轨入电流: ${mainTrackInputCurrent}A, 轨出1电流: ${mainTrackOutputCurrent}A, 输入阻抗: ${(result.input_impedance || 0).toFixed(2)}Ω, 输入电流: ${(result.input_current || 0).toFixed(4)}A`);
+                addResultItem('success', `模拟成功 (电压: ${(params.voltage || 0).toFixed(1)}V) - 送端轨面电压: ${(voltageResults.send_end_track_voltage || 0).toFixed(2)}V, 受端轨面电压: ${(voltageResults.receive_end_track_voltage || 0).toFixed(2)}V, 主轨入电压: ${(voltageResults.main_track_input_voltage || 0).toFixed(2)}V, 轨出1电压: ${(voltageResults.main_track_output_voltage_1 || 0).toFixed(2)}V, 送端轨面电流: ${sendEndCurrent}A, 受端轨面电流: ${receiveEndCurrent}A, 主轨入电流: ${mainTrackInputCurrent}A, 轨出1电流: ${mainTrackOutputCurrent}A, 输入阻抗: ${(result.input_impedance || 0).toFixed(2)}Ω, 输入电流: ${(result.input_current || 0).toFixed(4)}A`);
             }
             
             // 更新进度
             const progress = (currentSimulationIndex / totalSimulationCount) * 100;
-            document.getElementById('progressFill').style.width = `${progress}%`;
-            document.getElementById('progressFill').textContent = `${Math.round(progress)}%`;
-            document.getElementById('resultStats').textContent = `已完成: ${currentSimulationIndex} / ${totalSimulationCount}`;
+            // 检查元素是否存在，避免报错
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) {
+                progressFill.style.width = `${progress}%`;
+                progressFill.textContent = `${Math.round(progress)}%`;
+            }
+            const resultStats = document.getElementById('resultStats');
+            if (resultStats) {
+                resultStats.textContent = `已完成: ${currentSimulationIndex} / ${totalSimulationCount}`;
+            }
         }
         
         // 完成时间序列模拟
@@ -4111,14 +4636,16 @@
             // 更新UI
             document.getElementById('startSimulationBtn').disabled = false;
             document.getElementById('stopSimulationBtn').disabled = true;
-            document.getElementById('downloadDataBtn').disabled = simulationResults.length === 0;
             
             if (simulationResults.length > 0) {
                 addResultItem('success', `时间序列模拟完成！共生成 ${simulationResults.length} 条有效数据。`);
                 // 生成曲线图
                 drawAllVoltageCharts(simulationResults);
+                // 显示时间序列模拟相关的下载按钮
+                document.getElementById('downloadDataBtn').style.display = 'inline-block';
             } else if (currentSimulationIndex > 0) {
                 addResultItem('error', `时间序列模拟完成，但未生成任何有效数据。`);
+                document.getElementById('downloadDataBtn').style.display = 'none';
             }
         }
         
@@ -4126,10 +4653,25 @@
         function stopTimeSeriesSimulation() {
             isSimulationRunning = false;
             
+            // 取消所有正在进行的请求
+            abortControllers.forEach(controller => {
+                try {
+                    controller.abort();
+                } catch (error) {
+                    console.log('取消请求时发生错误:', error);
+                }
+            });
+            abortControllers = [];
+            
             // 更新UI
             document.getElementById('startSimulationBtn').disabled = false;
             document.getElementById('stopSimulationBtn').disabled = true;
-            document.getElementById('downloadDataBtn').disabled = simulationResults.length === 0;
+            
+            if (simulationResults.length > 0) {
+                document.getElementById('downloadDataBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('downloadDataBtn').style.display = 'none';
+            }
             
             addResultItem('error', `时间序列模拟已手动停止。已生成 ${simulationResults.length} 条数据。`);
         }
@@ -4242,12 +4784,49 @@
         
         // 清空结果
         function clearResults() {
+            // 取消所有正在进行的请求
+            abortControllers.forEach(controller => {
+                try {
+                    controller.abort();
+                } catch (error) {
+                    console.log('取消请求时发生错误:', error);
+                }
+            });
+            abortControllers = [];
+            
             simulationResults = [];
+            isSimulationRunning = false;
+            currentSimulationIndex = 0;
+            totalSimulationCount = 0;
+            
             document.getElementById('resultContent').innerHTML = '<p class="loading">请点击"开始时间序列模拟"按钮开始生成数据。</p>';
-            document.getElementById('progressFill').style.width = '0%';
-            document.getElementById('progressFill').textContent = '0%';
-            document.getElementById('resultStats').textContent = '已完成: 0 / 0';
-            document.getElementById('downloadDataBtn').disabled = true;
+            
+            // 检查元素是否存在，避免报错
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) {
+                progressFill.style.width = '0%';
+                progressFill.textContent = '0%';
+            }
+            const resultStats = document.getElementById('resultStats');
+            if (resultStats) {
+                resultStats.textContent = '已完成: 0 / 0';
+            }
+            
+            const downloadDataBtn = document.getElementById('downloadDataBtn');
+            if (downloadDataBtn) {
+                downloadDataBtn.disabled = true;
+                downloadDataBtn.style.display = 'none';
+            }
+            
+            const startSimulationBtn = document.getElementById('startSimulationBtn');
+            if (startSimulationBtn) {
+                startSimulationBtn.disabled = false;
+            }
+            
+            const stopSimulationBtn = document.getElementById('stopSimulationBtn');
+            if (stopSimulationBtn) {
+                stopSimulationBtn.disabled = true;
+            }
             
             // 清除所有图表
             const canvasIds = [
