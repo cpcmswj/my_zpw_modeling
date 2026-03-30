@@ -93,6 +93,11 @@ async def read_xy_plot(request: Request):
 async def read_time_series_simulation(request: Request):
     return templates.TemplateResponse("time_series_simulation.html", {"request": request})
 
+# 故障状态时间序列对比页面
+@app.get("/comparison-time-series", response_class=HTMLResponse)
+async def read_comparison_time_series(request: Request):
+    return templates.TemplateResponse("comparison_time_series.html", {"request": request})
+
 # 直接返回HTML内容的图片查看器页面
 @app.get("/image-viewer-direct", response_class=HTMLResponse)
 async def read_image_viewer_direct():

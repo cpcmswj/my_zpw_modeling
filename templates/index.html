@@ -836,7 +836,7 @@
                 <div class="floating-tab active" onclick="switchTab('integrated', event)">集成故障模拟</div>
                 <div class="floating-tab" onclick="switchTab('batch', event)">批量故障模拟</div>
                 <div class="floating-tab" onclick="switchTab('waveform', event)">波形导入</div>
-                <div class="floating-tab" onclick="switchTab('time_series', event)">时间序列模拟</div>
+                <div class="floating-tab" onclick="switchTab('time_series', event)">时序数据生成</div>
             </div>
             
             <!-- 集成故障模拟内容 -->
@@ -875,17 +875,17 @@
                 <div class="step-container">
                     <div class="step-header">
                         <div class="step-number">2</div>
-                        <div>选择错误类型</div>
+                        <div>选择故障类型</div>
                     </div>
                     <div class="step-content">
-                        <div class="step-title">步骤 2: 选择错误类型</div>
-                        <div class="step-description">请选择该铁道区段可能发生的错误类型，选择后将显示对应错误类型的示意图。</div>
+                        <div class="step-title">步骤 2: 选择故障类型</div>
+                        <div class="step-description">请选择该铁道区段可能发生的故障类型，选择后将显示对应错误类型的示意图。</div>
                         
                         <div class="form-row">
                             <div class="form-col">
-                                <label for="errorTypeSelect">选择错误类型:</label>
+                                <label for="errorTypeSelect">选择故障类型:</label>
                                 <select id="errorTypeSelect" name="errorTypeSelect" onchange="selectErrorTypeFromDropdown()">
-                                    <option value="">请选择错误类型</option>
+                                    <option value="">请选择故障类型</option>
                                     <!-- 选项将通过JavaScript动态生成 -->
                                 </select>
                             </div>
@@ -895,7 +895,7 @@
                         
                         <!-- 错误类型图片预览 -->
                         <div class="image-preview" id="sectionImagePreview" style="display: none;">
-                            <h4>错误类型示意图</h4>
+                            <h4>故障类型示意图</h4>
                             <img id="previewImage" class="preview-image" src="" alt="">
                             <div id="previewInfo" style="margin-top: 15px;"></div>
                         </div>
@@ -4475,9 +4475,9 @@
             document.getElementById('startSimulationBtn').disabled = true;
             document.getElementById('stopSimulationBtn').disabled = false;
             document.getElementById('downloadDataBtn').style.display = 'none';
-            document.getElementById('resultContent').innerHTML = '<p class="loading">正在准备时间序列模拟...</p>';
+            document.getElementById('resultContent').innerHTML = '<p class="loading">正在准备时序数据生成...</p>';
             
-            // 显示时间序列模拟相关的下载按钮
+            // 显示时序数据生成相关的下载按钮
             showDownloadButtons('time_series');
             
             try {
@@ -4710,10 +4710,18 @@
                 // 生成曲线图
                 drawAllVoltageCharts(simulationResults);
                 // 显示时序数据生成相关的下载按钮
-                document.getElementById('downloadDataBtn').style.display = 'inline-block';
+                const downloadBtn = document.getElementById('downloadDataBtn');
+                if (downloadBtn) {
+                    downloadBtn.style.display = 'inline-block';
+                    downloadBtn.disabled = false;
+                }
             } else if (currentSimulationIndex > 0) {
                 addResultItem('error', `时序数据生成完成，但未生成任何有效数据。`);
-                document.getElementById('downloadDataBtn').style.display = 'none';
+                const downloadBtn = document.getElementById('downloadDataBtn');
+                if (downloadBtn) {
+                    downloadBtn.style.display = 'none';
+                    downloadBtn.disabled = true;
+                }
             }
         }
         
@@ -4735,10 +4743,15 @@
             document.getElementById('startSimulationBtn').disabled = false;
             document.getElementById('stopSimulationBtn').disabled = true;
             
-            if (simulationResults.length > 0) {
-                document.getElementById('downloadDataBtn').style.display = 'inline-block';
-            } else {
-                document.getElementById('downloadDataBtn').style.display = 'none';
+            const downloadBtn = document.getElementById('downloadDataBtn');
+            if (downloadBtn) {
+                if (simulationResults.length > 0) {
+                    downloadBtn.style.display = 'inline-block';
+                    downloadBtn.disabled = false;
+                } else {
+                    downloadBtn.style.display = 'none';
+                    downloadBtn.disabled = true;
+                }
             }
             
             addResultItem('error', `时间序列模拟已手动停止。已生成 ${simulationResults.length} 条数据。`);
