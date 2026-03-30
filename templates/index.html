@@ -111,15 +111,20 @@
             flex-direction: column;
             gap: 15px;
             margin-top: 20px;
+            align-items: center;
         }
         
-        .login-form input {
+        .login-form input[type="text"],
+        .login-form input[type="password"] {
             padding: 10px;
             border: 1px solid #3498db;
             border-radius: 4px;
             font-size: 16px;
             background-color: #333;
             color: #fff;
+            width: 300px;
+            max-width: 100%;
+            box-sizing: border-box;
         }
         
         .login-form button {
@@ -130,6 +135,9 @@
             color: white;
             font-size: 16px;
             cursor: pointer;
+            width: 300px;
+            max-width: 100%;
+            box-sizing: border-box;
         }
         
         .login-form button:hover {
@@ -253,6 +261,8 @@
             color: white;
             transform: translateX(-5px);
         }
+        
+
         
         /* 集成系统样式 */
         .step-container {
@@ -617,7 +627,7 @@
         }
         canvas {
             border: 1px solid #3498db;
-            background-color: #333;
+            background-color: #fff;
             border-radius: 4px;
             margin: 10px 0;
         }
@@ -657,8 +667,26 @@
         .file-upload:hover {
             border-color: #2196f3;
         }
+        .file-upload h3, .file-upload p {
+            color: #fff;
+        }
+        .file-upload input[type="file"] {
+            color: #fff;
+        }
         .sheet-selector {
             margin: 10px 0;
+            color: #fff;
+        }
+        .sheet-selector label {
+            color: #fff;
+            margin-right: 10px;
+        }
+        .sheet-selector select {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #3498db;
+            padding: 5px;
+            border-radius: 4px;
         }
         .column-selectors {
             display: flex;
@@ -669,6 +697,34 @@
         .column-selector {
             flex: 1;
             min-width: 200px;
+        }
+        .column-selector label {
+            color: #fff;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .column-selector select {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #3498db;
+            padding: 5px;
+            border-radius: 4px;
+            width: 100%;
+        }
+        .column-selector small {
+            color: #ccc;
+            display: block;
+            margin-top: 5px;
+        }
+        .form-row label {
+            color: #fff;
+        }
+        .form-row select {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #3498db;
+            padding: 5px;
+            border-radius: 4px;
         }
         
         /* 弹窗样式 */
@@ -773,6 +829,7 @@
 
         </div>
         
+
         <div class="main-content">
             <!-- 悬浮窗切换 -->
             <div class="floating-tabs">
@@ -1308,9 +1365,9 @@
                 </div>
             </div>
             
-            <!-- 时间序列模拟内容 -->
+            <!-- 故障模拟时序数据生成内容 -->
             <div id="time_series" class="tab-content">
-                <h2>时间序列故障模拟</h2>
+                <h2>故障模拟的时序数据生成</h2>
                 
                 <!-- 基本设置 -->
                 <div class="section">
@@ -1346,7 +1403,7 @@
                     <div class="form-row" style="margin-top: 20px;">
                         <div class="form-col" style="flex: 2;">
                             <label>对应图片:</label>
-                            <div id="imageDisplay" style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; text-align: center; min-height: 400px; background-color: #f9f9f9; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
+                            <div id="imageDisplay" style="border: 1px solid #3498db; border-radius: 4px; padding: 10px; text-align: center; min-height: 400px; background-color: #333; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 300px; margin: 10px;">
                                     <h4>轨道区段图</h4>
                                     <img id="railwayZoneImage" src="/static/images/railway_zone.png" alt="轨道区段图" style="max-width: 100%; max-height: 300px;">
@@ -1354,9 +1411,40 @@
                                 <div style="flex: 1; min-width: 300px; margin: 10px;">
                                     <h4>故障示意图</h4>
                                     <img id="sectionErrorImage" src="" alt="选择轨道区段和故障类型后显示对应图片" style="max-width: 100%; max-height: 300px; display: none;">
-                                    <p id="imagePlaceholder" style="color: #666; margin-top: 120px;">请选择轨道区段和故障类型</p>
+                                    <p id="imagePlaceholder" style="color: #ccc; margin-top: 120px;">请选择轨道区段和故障类型</p>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 电压参数设置 -->
+                <div class="section">
+                    <h2>⚡ 电压参数设置</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="voltageLevel">电平档位:</label>
+                            <select id="voltageLevel" name="voltageLevel">
+                                <option value="1">档位1 (161-170V)</option>
+                                <option value="2">档位2 (146-154V)</option>
+                                <option value="3">档位3 (128-135V)</option>
+                                <option value="4">档位4 (104.5-110.5V)</option>
+                                <option value="5">档位5 (75-79.5V)</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label for="useRandomVoltage">
+                                <input type="checkbox" id="useRandomVoltage" name="useRandomVoltage" value="1">
+                                随机化电压值
+                            </label>
+                            <div style="margin-top: 5px; font-size: 14px; color: #666;">
+                                勾选后，将根据档位上下限随机生成电压值
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <label for="voltageCount">电压点数:</label>
+                            <input type="number" id="voltageCount" name="voltageCount" value="10" step="1" min="2" max="50">
                         </div>
                     </div>
                 </div>
@@ -1436,37 +1524,6 @@
                     </div>
                 </div>
                 
-                <!-- 电压参数设置 -->
-                <div class="section">
-                    <h2>⚡ 电压参数设置</h2>
-                    
-                    <div class="form-row">
-                        <div class="form-col">
-                            <label for="voltageLevel">电平档位:</label>
-                            <select id="voltageLevel" name="voltageLevel">
-                                <option value="1">档位1 (161-170V)</option>
-                                <option value="2">档位2 (146-154V)</option>
-                                <option value="3">档位3 (128-135V)</option>
-                                <option value="4">档位4 (104.5-110.5V)</option>
-                                <option value="5">档位5 (75-79.5V)</option>
-                            </select>
-                        </div>
-                        <div class="form-col">
-                            <label for="useRandomVoltage">
-                                <input type="checkbox" id="useRandomVoltage" name="useRandomVoltage" value="1">
-                                随机化电压值
-                            </label>
-                            <div style="margin-top: 5px; font-size: 14px; color: #666;">
-                                勾选后，将根据档位上下限随机生成电压值
-                            </div>
-                        </div>
-                        <div class="form-col">
-                            <label for="voltageCount">电压点数:</label>
-                            <input type="number" id="voltageCount" name="voltageCount" value="10" step="1" min="2" max="50">
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- 图表显示 -->
                 <div class="section">
                     <h2>📈 电压曲线图表</h2>
@@ -1506,7 +1563,7 @@
                 <div class="section">
                     <h2>🚀 操作控制</h2>
                     <div style="text-align: center;">
-                        <button id="startSimulationBtn" class="btn" onclick="startTimeSeriesSimulation()">开始时间序列模拟</button>
+                        <button id="startSimulationBtn" class="btn" onclick="startTimeSeriesSimulation()">开始时序数据生成</button>
                         <button id="stopSimulationBtn" class="btn secondary" onclick="stopTimeSeriesSimulation()" disabled>停止</button>
                         <button id="downloadDataBtn" class="btn secondary" onclick="downloadTimeSeriesData()" disabled>下载数据</button>
                         <button id="clearResultsBtn" class="btn secondary" onclick="clearResults()">清空结果</button>
@@ -1555,6 +1612,8 @@
 
         </div>
     </div>
+    
+
     
 
     
@@ -1703,6 +1762,11 @@
                 closeLoginModal();
             }
         }
+        
+
+        
+        // 切换轨道参数设置悬浮窗
+
         
         // 页面加载时检查登录状态
         document.addEventListener('DOMContentLoaded', function() {
@@ -2067,10 +2131,14 @@
         // 点击弹窗外部关闭
         window.onclick = function(event) {
             const warningModal = document.getElementById('warningModal');
+            const paramsWindow = document.getElementById('paramsWindow');
+            
             if (event.target == warningModal) {
                 closeWarningModal();
             }
         }
+        
+
         
         // 验证当前步骤
         function validateCurrentStep() {
@@ -4465,8 +4533,8 @@
                 }
                 
             } catch (error) {
-                console.error('时间序列模拟失败:', error);
-                addResultItem('error', `时间序列模拟失败: ${error.message}`);
+                console.error('时序数据生成失败:', error);
+                addResultItem('error', `时序数据生成失败: ${error.message}`);
             } finally {
                 // 完成模拟
                 finishTimeSeriesSimulation();
@@ -4638,13 +4706,13 @@
             document.getElementById('stopSimulationBtn').disabled = true;
             
             if (simulationResults.length > 0) {
-                addResultItem('success', `时间序列模拟完成！共生成 ${simulationResults.length} 条有效数据。`);
+                addResultItem('success', `时序数据生成完成！共生成 ${simulationResults.length} 条有效数据。`);
                 // 生成曲线图
                 drawAllVoltageCharts(simulationResults);
-                // 显示时间序列模拟相关的下载按钮
+                // 显示时序数据生成相关的下载按钮
                 document.getElementById('downloadDataBtn').style.display = 'inline-block';
             } else if (currentSimulationIndex > 0) {
-                addResultItem('error', `时间序列模拟完成，但未生成任何有效数据。`);
+                addResultItem('error', `时序数据生成完成，但未生成任何有效数据。`);
                 document.getElementById('downloadDataBtn').style.display = 'none';
             }
         }
