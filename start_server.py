@@ -35,7 +35,8 @@ define_pages = {
     'waveform_import': 'http://127.0.0.1:8000/waveform-import',
     'xy_plot': 'http://127.0.0.1:8000/xy-plot',
     'time_series': 'http://127.0.0.1:8000/time-series-simulation',
-    'comparison_time_series': 'http://127.0.0.1:8000/comparison-time-series'
+    'comparison_time_series': 'http://127.0.0.1:8000/comparison-time-series',
+    'register': 'http://127.0.0.1:8000/register'
 }
 
 def is_port_in_use(port):

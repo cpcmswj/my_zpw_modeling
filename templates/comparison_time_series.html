@@ -436,7 +436,7 @@
             
             // 生成电压序列
             const voltageValues = generateVoltageValues();
-            totalSimulationCount = voltageValues.length * 2; // 两个故障状态
+            totalSimulationCount = voltageValues.length; // 时序数据，只生成一组数据点
             
             if (totalSimulationCount <= 0) {
                 alert('无效的电压设置');
@@ -459,15 +459,20 @@
             document.getElementById('resultStats').textContent = '已完成: 0 / ' + totalSimulationCount;
             
             try {
-                // 生成第一个故障状态的时间序列数据
-                addResultItem('success', `开始生成故障状态 ${errorType1} 的时间序列数据...`);
+                // 计算故障切换点（前半部分使用故障类型1，后半部分使用故障类型2）
+                const switchPoint = Math.floor(voltageValues.length / 2);
+                addResultItem('success', `开始生成时序数据，前 ${switchPoint} 个点使用故障状态 ${errorType1}，后 ${voltageValues.length - switchPoint} 个点使用故障状态 ${errorType2}...`);
                 
-                for (const voltage of voltageValues) {
+                for (let i = 0; i < voltageValues.length; i++) {
                     if (!isSimulationRunning) break;
+                    
+                    const voltage = voltageValues[i];
+                    // 根据时序决定使用哪种故障类型
+                    const currentErrorType = i < switchPoint ? errorType1 : errorType2;
                     
                     const params = {
                         section_id: sectionId,
-                        error_type: errorType1,
+                        error_type: currentErrorType,
                         track_length: trackLength,
                         resistance: resistance,
                         inductance: inductance,
@@ -484,44 +489,12 @@
                     try {
                         const result = await simulateSingle(params);
                         if (result) {
-                            simulationResults1.push(result);
-                        }
-                    } catch (error) {
-                        console.error('模拟失败:', error);
-                        addResultItem('error', `模拟失败 (电压: ${voltage}V): ${error.message}`);
-                    }
-                    
-                    // 更新进度
-                    currentSimulationIndex++;
-                    updateProgress();
-                }
-                
-                // 生成第二个故障状态的时间序列数据
-                addResultItem('success', `开始生成故障状态 ${errorType2} 的时间序列数据...`);
-                
-                for (const voltage of voltageValues) {
-                    if (!isSimulationRunning) break;
-                    
-                    const params = {
-                        section_id: sectionId,
-                        error_type: errorType2,
-                        track_length: trackLength,
-                        resistance: resistance,
-                        inductance: inductance,
-                        capacitance: capacitance,
-                        leakage_resistance: leakageResistance,
-                        spt_cable_length: sptCableLength,
-                        error_value: errorValue,
-                        r1: r1,
-                        r2: r2,
-                        voltage: voltage,
-                        frequency: 1700
-                    };
-                    
-                    try {
-                        const result = await simulateSingle(params);
-                        if (result) {
-                            simulationResults2.push(result);
+                            // 根据故障类型将结果添加到对应的数组
+                            if (currentErrorType === errorType1) {
+                                simulationResults1.push(result);
+                            } else {
+                                simulationResults2.push(result);
+                            }
                         }
                     } catch (error) {
                         console.error('模拟失败:', error);
@@ -560,43 +533,80 @@
             formData.append('spt_cable_length', params.spt_cable_length);
             formData.append('r1', params.r1);
             formData.append('r2', params.r2);
-            formData.append('voltage', params.voltage);
+            formData.append('input_V', params.voltage);
             
             const abortController = new AbortController();
             abortControllers.push(abortController);
             
-            const response = await fetch('/simulate', {
-                method: 'POST',
-                body: formData,
-                signal: abortController.signal
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            try {
+                // 添加超时处理
+                const timeoutId = setTimeout(() => abortController.abort(), 15000);
+                
+                const response = await fetch('/api/calculate/track-circuit', {
+                    method: 'POST',
+                    body: formData,
+                    signal: abortController.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status !== 'success') {
+                    throw new Error(result.message || '模拟失败');
+                }
+                
+                // 构建结果对象
+                return {
+                    voltage: params.voltage,
+                    send_end_track_voltage: result.voltage_results?.send_end_track_voltage || 0,
+                    receive_end_track_voltage: result.voltage_results?.receive_end_track_voltage || 0,
+                    main_track_input_voltage: result.voltage_results?.main_track_input_voltage || 0,
+                    main_track_output_voltage_1: result.voltage_results?.main_track_output_voltage_1 || 0,
+                    send_end_track_current: result.current_results?.send_end_track_current || 0,
+                    receive_end_track_current: result.current_results?.receive_end_track_current || 0,
+                    main_track_input_current: result.current_results?.main_track_input_current || 0,
+                    main_track_output_current_1: result.current_results?.main_track_output_current_1 || 0,
+                    input_impedance: result.input_impedance || 0,
+                    input_current: result.input_current || 0,
+                    Z_rail: result.Z_rail || 0,
+                    Z_tuner: result.Z_tuner || 0
+                };
+            } catch (error) {
+                // 处理AbortError，不中断整个生成过程
+                if (error.name === 'AbortError') {
+                    console.log('请求已中止:', error);
+                    // 返回一个默认的结果对象，确保生成过程可以继续
+                    return {
+                        voltage: params.voltage,
+                        send_end_track_voltage: 0,
+                        receive_end_track_voltage: 0,
+                        main_track_input_voltage: 0,
+                        main_track_output_voltage_1: 0,
+                        send_end_track_current: 0,
+                        receive_end_track_current: 0,
+                        main_track_input_current: 0,
+                        main_track_output_current_1: 0,
+                        input_impedance: 0,
+                        input_current: 0,
+                        Z_rail: 0,
+                        Z_tuner: 0
+                    };
+                } else {
+                    // 重新抛出其他错误
+                    throw error;
+                }
+            } finally {
+                // 清理abortController
+                const index = abortControllers.indexOf(abortController);
+                if (index > -1) {
+                    abortControllers.splice(index, 1);
+                }
             }
-            
-            const result = await response.json();
-            
-            if (result.status !== 'success') {
-                throw new Error(result.message || '模拟失败');
-            }
-            
-            // 构建结果对象
-            return {
-                voltage: params.voltage,
-                send_end_track_voltage: result.data.send_end_track_voltage || 0,
-                receive_end_track_voltage: result.data.receive_end_track_voltage || 0,
-                main_track_input_voltage: result.data.main_track_input_voltage || 0,
-                main_track_output_voltage_1: result.data.main_track_output_voltage_1 || 0,
-                send_end_track_current: result.data.send_end_track_current || 0,
-                receive_end_track_current: result.data.receive_end_track_current || 0,
-                main_track_input_current: result.data.main_track_input_current || 0,
-                main_track_output_current_1: result.data.main_track_output_current_1 || 0,
-                input_impedance: result.data.input_impedance || 0,
-                input_current: result.data.input_current || 0,
-                Z_rail: result.data.Z_rail || 0,
-                Z_tuner: result.data.Z_tuner || 0
-            };
         }
         
         // 更新进度
@@ -626,7 +636,29 @@
         
         // 绘制对比图表
         function drawComparisonCharts() {
-            const voltageValues = simulationResults1.map(r => r.voltage);
+            // 合并所有电压值，确保时序完整
+            const allVoltageValues = [];
+            simulationResults1.forEach(r => allVoltageValues.push(r.voltage));
+            simulationResults2.forEach(r => allVoltageValues.push(r.voltage));
+            
+            // 获取故障类型
+            const errorType1 = parseInt(document.getElementById('errorType1').value);
+            const errorType2 = parseInt(document.getElementById('errorType2').value);
+            
+            // 故障类型名称映射
+            const errorTypeNames = {
+                0: '无故障',
+                1: '接收端调谐单元1断路',
+                2: '发送端调谐单元1断路',
+                3: '接收端空心线圈断路',
+                4: '接收端空芯线圈短路',
+                5: '接收端调谐单元2断路',
+                6: '补偿电容3断路',
+                7: '补偿电容3短路'
+            };
+            
+            const errorTypeName1 = errorTypeNames[errorType1] || `故障类型 ${errorType1}`;
+            const errorTypeName2 = errorTypeNames[errorType2] || `故障类型 ${errorType2}`;
             
             // 定义电压类型配置
             const voltageConfigs = [
@@ -640,12 +672,13 @@
             voltageConfigs.forEach(config => {
                 const values1 = simulationResults1.map(r => r[config.key]).filter(v => v);
                 const values2 = simulationResults2.map(r => r[config.key]).filter(v => v);
-                drawComparisonChart(config.canvasId, config.title, voltageValues, values1, values2);
+                // 使用合并后的电压值作为x轴
+                drawComparisonChart(config.canvasId, config.title, allVoltageValues, values1, values2, errorTypeName1, errorTypeName2);
             });
         }
         
         // 绘制对比图表
-        function drawComparisonChart(canvasId, title, voltageValues, values1, values2) {
+        function drawComparisonChart(canvasId, title, voltageValues, values1, values2, errorTypeName1, errorTypeName2) {
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
             
@@ -661,10 +694,24 @@
             const chartWidth = canvas.width - 2 * padding;
             const chartHeight = canvas.height - 2 * padding;
             
-            // 计算电压范围
-            let allValues = [...voltageValues, ...values1, ...values2];
-            const minValue = Math.min(...allValues) - 5;
-            const maxValue = Math.max(...allValues) + 5;
+            // 计算电压范围 - 只考虑故障状态数据，确保更易观察两种数据的区别
+            let allValues = [...values1, ...values2];
+            if (allValues.length === 0) {
+                allValues = [0, 100]; // 默认范围
+            }
+            
+            let minValue = Math.min(...allValues) - 2;
+            let maxValue = Math.max(...allValues) + 2;
+            
+            // 确保y轴范围至少有一定的跨度，避免过于紧凑
+            const minRange = 10;
+            const currentRange = maxValue - minValue;
+            if (currentRange < minRange) {
+                const midPoint = (minValue + maxValue) / 2;
+                const halfRange = minRange / 2;
+                minValue = midPoint - halfRange;
+                maxValue = midPoint + halfRange;
+            }
             
             // 绘制坐标轴
             ctx.beginPath();
@@ -692,8 +739,6 @@
             // 垂直网格线
             if (voltageValues.length > 1) {
                 const xStep = chartWidth / (voltageValues.length - 1);
-                const maxTicks = 10;
-                const tickInterval = Math.ceil(voltageValues.length / maxTicks);
                 
                 for (let i = 0; i < voltageValues.length; i++) {
                     const x = padding + i * xStep;
@@ -720,11 +765,9 @@
                 ctx.fillText(value.toFixed(1), padding - 40, y + 4);
             }
             
-            // X轴刻度
+            // X轴刻度 - 按序列显示数据点
             if (voltageValues.length > 1) {
                 const xStep = chartWidth / (voltageValues.length - 1);
-                const maxTicks = 10;
-                const tickInterval = Math.ceil(voltageValues.length / maxTicks);
                 
                 for (let i = 0; i < voltageValues.length; i++) {
                     const x = padding + i * xStep;
@@ -733,41 +776,30 @@
                     ctx.lineTo(x, canvas.height - padding + 5);
                     ctx.strokeStyle = '#333';
                     ctx.stroke();
-                    if (i % tickInterval === 0 || i === voltageValues.length - 1) {
-                        ctx.fillText(voltageValues[i].toFixed(1), x - 15, canvas.height - padding + 20);
-                    }
+                    // 显示序列数字
+                    ctx.fillText((i + 1).toString(), x - 5, canvas.height - padding + 20);
                 }
             }
             
-            // 绘制输入电压曲线
-            if (voltageValues.length > 1) {
-                const xStep = chartWidth / (voltageValues.length - 1);
-                
-                ctx.beginPath();
-                ctx.moveTo(padding, canvas.height - padding - ((voltageValues[0] - minValue) / (maxValue - minValue)) * chartHeight);
-                
-                for (let i = 1; i < voltageValues.length; i++) {
-                    const x = padding + i * xStep;
-                    const y = canvas.height - padding - ((voltageValues[i] - minValue) / (maxValue - minValue)) * chartHeight;
-                    ctx.lineTo(x, y);
-                }
-                
-                ctx.strokeStyle = '#3498db';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
+            // 移除输入电压曲线的绘制，只显示故障状态的电压数据
             
-            // 绘制故障状态1曲线
-            if (values1.length > 1) {
-                const xStep = chartWidth / (values1.length - 1);
-                
+            // 计算切换点
+            const switchPoint = values1.length;
+            const totalPoints = voltageValues.length;
+            const xStep = chartWidth / (totalPoints - 1);
+            
+            // 绘制故障状态1曲线（前半部分）
+            if (values1.length > 0) {
+                // 绘制曲线
                 ctx.beginPath();
-                ctx.moveTo(padding, canvas.height - padding - ((values1[0] - minValue) / (maxValue - minValue)) * chartHeight);
-                
-                for (let i = 1; i < values1.length; i++) {
+                for (let i = 0; i < values1.length; i++) {
                     const x = padding + i * xStep;
                     const y = canvas.height - padding - ((values1[i] - minValue) / (maxValue - minValue)) * chartHeight;
-                    ctx.lineTo(x, y);
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
                 }
                 
                 ctx.strokeStyle = '#e74c3c';
@@ -788,17 +820,18 @@
                 }
             }
             
-            // 绘制故障状态2曲线
-            if (values2.length > 1) {
-                const xStep = chartWidth / (values2.length - 1);
-                
+            // 绘制故障状态2曲线（后半部分）
+            if (values2.length > 0) {
+                // 绘制曲线
                 ctx.beginPath();
-                ctx.moveTo(padding, canvas.height - padding - ((values2[0] - minValue) / (maxValue - minValue)) * chartHeight);
-                
-                for (let i = 1; i < values2.length; i++) {
-                    const x = padding + i * xStep;
+                for (let i = 0; i < values2.length; i++) {
+                    const x = padding + (switchPoint + i) * xStep;
                     const y = canvas.height - padding - ((values2[i] - minValue) / (maxValue - minValue)) * chartHeight;
-                    ctx.lineTo(x, y);
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
                 }
                 
                 ctx.strokeStyle = '#27ae60';
@@ -807,7 +840,7 @@
                 
                 // 绘制数据点
                 for (let i = 0; i < values2.length; i++) {
-                    const x = padding + i * xStep;
+                    const x = padding + (switchPoint + i) * xStep;
                     const y = canvas.height - padding - ((values2[i] - minValue) / (maxValue - minValue)) * chartHeight;
                     ctx.beginPath();
                     ctx.arc(x, y, 5, 0, 2 * Math.PI);
@@ -823,30 +856,25 @@
             ctx.font = '14px Arial';
             ctx.fillStyle = '#333';
             ctx.textAlign = 'center';
-            ctx.fillText('输入电压 (V)', canvas.width / 2, canvas.height - 15);
+            ctx.fillText('序列', canvas.width / 2, canvas.height - 15);
             ctx.save();
             ctx.translate(30, canvas.height / 2);
             ctx.rotate(-Math.PI / 2);
             ctx.fillText('电压 (V)', 0, 0);
             ctx.restore();
             
-            // 绘制图例
+            // 绘制图例 - 显示具体故障类型
             ctx.font = '14px Arial';
-            ctx.fillStyle = '#3498db';
+            ctx.fillStyle = '#e74c3c';
             ctx.fillRect(padding + 10, padding + 10, 20, 20);
             ctx.fillStyle = '#333';
             ctx.textAlign = 'left';
-            ctx.fillText('输入电压', padding + 40, padding + 25);
-            
-            ctx.fillStyle = '#e74c3c';
-            ctx.fillRect(padding + 150, padding + 10, 20, 20);
-            ctx.fillStyle = '#333';
-            ctx.fillText('故障状态 1', padding + 180, padding + 25);
+            ctx.fillText(`故障类型1: ${errorTypeName1}`, padding + 40, padding + 25);
             
             ctx.fillStyle = '#27ae60';
-            ctx.fillRect(padding + 290, padding + 10, 20, 20);
+            ctx.fillRect(padding + 250, padding + 10, 20, 20);
             ctx.fillStyle = '#333';
-            ctx.fillText('故障状态 2', padding + 320, padding + 25);
+            ctx.fillText(`故障类型2: ${errorTypeName2}`, padding + 280, padding + 25);
         }
         
         // 下载对比数据
@@ -896,13 +924,21 @@
         
         // 清空结果
         function clearResults() {
+            // 重置状态
             simulationResults1 = [];
             simulationResults2 = [];
+            isSimulationRunning = false;
+            currentSimulationIndex = 0;
+            totalSimulationCount = 0;
+            abortControllers = [];
+            
+            // 更新UI
             document.getElementById('resultContent').innerHTML = '<p class="loading">请点击"生成对比数据"按钮开始生成数据。</p>';
             document.getElementById('progressFill').style.width = '0%';
             document.getElementById('progressFill').textContent = '0%';
             document.getElementById('resultStats').textContent = '已完成: 0 / 0';
             document.getElementById('downloadDataBtn').disabled = true;
+            document.getElementById('generateDataBtn').disabled = false;
             
             // 清空图表
             const canvasIds = ['sendEndVoltageChart', 'receiveEndVoltageChart', 'mainTrackInputVoltageChart', 'mainTrackOutputVoltageChart'];

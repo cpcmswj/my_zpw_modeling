@@ -871,7 +871,7 @@
                     </div>
                 </div>
                 
-                <!-- 步骤 2: 选择错误类型 -->
+                <!-- 步骤 2: 选择故障类型 -->
                 <div class="step-container">
                     <div class="step-header">
                         <div class="step-number">2</div>
@@ -879,7 +879,7 @@
                     </div>
                     <div class="step-content">
                         <div class="step-title">步骤 2: 选择故障类型</div>
-                        <div class="step-description">请选择该铁道区段可能发生的故障类型，选择后将显示对应错误类型的示意图。</div>
+                        <div class="step-description">请选择该铁道区段可能发生的故障类型，选择后将显示对应故障类型的示意图。</div>
                         
                         <div class="form-row">
                             <div class="form-col">
@@ -893,7 +893,7 @@
                         
                         <div id="errorTypeValidation" class="validation-message" style="display: none;"></div>
                         
-                        <!-- 错误类型图片预览 -->
+                        <!-- 故障类型图片预览 -->
                         <div class="image-preview" id="sectionImagePreview" style="display: none;">
                             <h4>故障类型示意图</h4>
                             <img id="previewImage" class="preview-image" src="" alt="">
@@ -1099,8 +1099,8 @@
                         </div>
                     </div>
                     
-                    <!-- 错误类型选择 -->
-                    <h3>错误类型选择</h3>
+                    <!-- 故障类型选择 -->
+                    <h3>故障类型选择</h3>
                     <div style="margin-bottom: 15px;">
                         <label for="useCustomProb" style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
                             <input type="checkbox" id="useCustomProb" name="useCustomProb" checked onchange="toggleProbabilityInputs()">
@@ -1319,6 +1319,13 @@
                                     <option value="-1">不使用数据类型</option>
                                 </select>
                             </div>
+                            <div class="column-selector">
+                                <label for="excludeType">排除数据类型:</label>
+                                <select id="excludeType" multiple size="3">
+                                    <option value="">不排除任何类型</option>
+                                </select>
+                                <small style="display: block; margin-top: 5px; color: #666;">提示：按住Ctrl键可选择多个选项</small>
+                            </div>
                         </div>
                         
                         <div class="form-row">
@@ -1385,7 +1392,7 @@
                             </select>
                         </div>
                         <div class="form-col">
-                            <label for="errorType">错误类型选择:</label>
+                            <label for="errorType">故障类型选择:</label>
                             <select id="errorType" name="errorType" onchange="updateImageDisplay()">
                                 <option value="0">0 - 无故障</option>
                                 <option value="1">1 - 接收端调谐单元1断路</option>
@@ -1420,7 +1427,7 @@
                 
                 <!-- 电压参数设置 -->
                 <div class="section">
-                    <h2>⚡ 电压参数设置</h2>
+                    <h2>⚡ 输入电压参数设置</h2>
                     
                     <div class="form-row">
                         <div class="form-col">
@@ -1439,11 +1446,11 @@
                                 随机化电压值
                             </label>
                             <div style="margin-top: 5px; font-size: 14px; color: #666;">
-                                勾选后，将根据档位上下限随机生成电压值
+                                勾选后，在选定的上下限内随机选定电压值进行仿真
                             </div>
                         </div>
                         <div class="form-col">
-                            <label for="voltageCount">电压点数:</label>
+                            <label for="voltageCount">电压点数（对应生成数据点的个数）:</label>
                             <input type="number" id="voltageCount" name="voltageCount" value="10" step="1" min="2" max="50">
                         </div>
                     </div>
@@ -1686,6 +1693,10 @@
                         <button type="submit" class="btn">登录</button>
                         <div class="login-error" id="loginError" style="display: none;">用户名或密码错误</div>
                     </form>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <p style="color: #ccc; margin-bottom: 10px;">还没有账号？</p>
+                        <a href="/register" class="btn" style="background-color: #27ae60; text-decoration: none;">立即注册</a>
+                    </div>
                 </div>
             `;
         }
@@ -1872,7 +1883,7 @@
             }
         };
         
-        // 错误类型数据
+        // 故障类型数据
         let errorTypes = [
             { value: 0, name: "0 - 无故障", description: "正常运行状态，无故障" },
             { value: 1, name: "1 - 接收端调谐单元1断路", description: "接收端调谐单元1发生断路故障" },
@@ -1919,11 +1930,11 @@
             }
         }
         
-        // 初始化错误类型下拉菜单
+        // 初始化故障类型下拉菜单
         function initErrorTypeDropdown() {
             const errorTypeSelect = document.getElementById('errorTypeSelect');
             if (errorTypeSelect) {
-                errorTypeSelect.innerHTML = '<option value="">请选择错误类型</option>';
+                errorTypeSelect.innerHTML = '<option value="">请选择故障类型</option>';
                 errorTypes.forEach(type => {
                     const option = document.createElement('option');
                     option.value = type.value;
@@ -1955,7 +1966,7 @@
             }
         }
         
-        // 从下拉菜单选择错误类型
+        // 从下拉菜单选择故障类型
         function selectErrorTypeFromDropdown() {
             const errorTypeSelect = document.getElementById('errorTypeSelect');
             if (errorTypeSelect) {
@@ -2057,31 +2068,31 @@
             document.getElementById('nextBtn').disabled = false;
         }
         
-        // 选择错误类型
+        // 选择故障类型
         function selectErrorType(errorValue) {
             // 更新状态
             selectedErrorType = parseInt(errorValue);
             
             // 更新验证信息
             const errorTypeValidation = document.getElementById('errorTypeValidation');
-            errorTypeValidation.textContent = '✅ 已选择错误类型';
+            errorTypeValidation.textContent = '✅ 已选择故障类型';
             errorTypeValidation.className = 'validation-message success';
             errorTypeValidation.style.display = 'block';
             
-            // 显示对应错误类型的示意图
+            // 显示对应故障类型的示意图
             showErrorTypeImage(selectedErrorType);
             
             // 启用下一步按钮
             document.getElementById('nextBtn').disabled = false;
         }
         
-        // 显示错误类型图片
+        // 显示故障类型图片
         function showErrorTypeImage(errorTypeValue) {
-            // 根据错误类型显示对应的图片
+            // 根据故障类型显示对应的图片
             const errorImagePath = `/static/images/错误展示${errorTypeValue}.png`;
             const errorType = errorTypes.find(type => type.value === errorTypeValue);
             
-            // 更新预览图片，独立显示错误类型图片
+            // 更新预览图片，独立显示故障类型图片
             const previewImage = document.getElementById('previewImage');
             const previewInfo = document.getElementById('previewInfo');
             const sectionImagePreview = document.getElementById('sectionImagePreview');
@@ -2163,11 +2174,11 @@
                 case 2:
                     // 当selectedErrorType为0（无故障）时，验证也应该通过
                     if (selectedErrorType === null || selectedErrorType === undefined) {
-                        showWarningModal('警告', '请选择一个错误类型');
+                        showWarningModal('警告', '请选择一个故障类型');
                         isValid = false;
                     } else {
                         const errorTypeValidation = document.getElementById('errorTypeValidation');
-                        errorTypeValidation.textContent = '✅ 已选择错误类型';
+                        errorTypeValidation.textContent = '✅ 已选择故障类型';
                         errorTypeValidation.className = 'validation-message success';
                         errorTypeValidation.style.display = 'block';
                     }
@@ -2239,7 +2250,7 @@
             }
             document.getElementById('sectionValidation').style.display = 'none';
             
-            // 重置错误类型选择
+            // 重置故障类型选择
             const errorTypeSelect = document.getElementById('errorTypeSelect');
             if (errorTypeSelect) {
                 errorTypeSelect.value = '';
@@ -2500,7 +2511,7 @@
             html += '<h4>模拟参数</h4>';
             html += '<div class="result-grid">';
             html += `<div class="result-item"><span class="result-label">轨道区段:</span> <span class="result-value">${result.data.section_name}</span></div>`;
-            html += `<div class="result-item"><span class="result-label">错误类型:</span> <span class="result-value">${errorTypes.find(e => e.value === result.data.error_type).name}</span></div>`;
+            html += `<div class="result-item"><span class="result-label">故障类型:</span> <span class="result-value">${errorTypes.find(e => e.value === result.data.error_type).name}</span></div>`;
             html += `<div class="result-item"><span class="result-label">轨道长度:</span> <span class="result-value">${(result.data.length || 0).toFixed(2)} m</span></div>`;
             html += `<div class="result-item"><span class="result-label">频率:</span> <span class="result-value">${result.data.frequency} Hz</span></div>`;
             html += '</div>';
@@ -2626,7 +2637,7 @@
             
             // 添加模拟参数
             csvContent += '模拟参数,轨道区段,' + simulationResult.data.section_name + '\n';
-            csvContent += '模拟参数,错误类型,' + errorTypes.find(e => e.value === simulationResult.data.error_type).name + '\n';
+            csvContent += '模拟参数,故障类型,' + errorTypes.find(e => e.value === simulationResult.data.error_type).name + '\n';
             csvContent += '模拟参数,轨道长度,' + (simulationResult.data.length || 0).toFixed(2) + ' m\n';
             csvContent += '模拟参数,频率,' + simulationResult.data.frequency + ' Hz\n';
             csvContent += '模拟参数,钢轨电阻,' + (simulationResult.data.resistance || 0).toFixed(6) + ' Ω/m\n';
@@ -2801,7 +2812,7 @@
             const randomSectionId = selectedSections[Math.floor(Math.random() * selectedSections.length)];
             const section = railwaySectionsBatch[randomSectionId];
             
-            // 获取选中的错误类型及其概率
+            // 获取选中的故障类型及其概率
             const useCustomProb = document.getElementById('useCustomProb').checked;
             const useRandomProb = document.getElementById('randomProbability').checked;
             const selectedErrorTypesWithProb = Array.from(document.querySelectorAll('input[name="errorTypes"]:checked')).map(cb => {
@@ -2812,7 +2823,7 @@
                     const probInput = document.getElementById(`error${errorType}Prob`);
                     prob = probInput ? parseFloat(probInput.value) : 1;
                 } else if (useRandomProb) {
-                    // 为每个选中的错误类型生成随机概率
+                    // 为每个选中的故障类型生成随机概率
                     prob = Math.random() * 100;
                 }
                 
@@ -2820,11 +2831,11 @@
             });
             
             if (selectedErrorTypesWithProb.length === 0) {
-                alert('请至少选择一个错误类型');
+                alert('请至少选择一个故障类型');
                 return null;
             }
             
-            // 根据概率随机选择错误类型
+            // 根据概率随机选择故障类型
             const randomErrorType = weightedRandom(selectedErrorTypesWithProb);
             
             // 随机生成参数
@@ -3174,7 +3185,7 @@
             
             if (simulation.error) {
                 // 处理错误
-                addResultItem('error', `模拟失败 (${simulation.params.section_id}, 错误类型: ${simulation.params.error_type}): ${simulation.error}`);
+                addResultItem('error', `模拟失败 (${simulation.params.section_id}, 故障类型: ${simulation.params.error_type}): ${simulation.error}`);
             } else {
                 // 处理成功结果
                 const result = simulation.result;
@@ -3182,7 +3193,7 @@
                 
                 // 确保result对象存在
                 if (!result) {
-                    addResultItem('error', `模拟失败 (${params.section_id}, 错误类型: ${params.error_type}): 无效的模拟结果`);
+                    addResultItem('error', `模拟失败 (${params.section_id}, 故障类型: ${params.error_type}): 无效的模拟结果`);
                     return;
                 }
                 
@@ -3232,7 +3243,7 @@
                 const receiveEndCurrent = result.current_results ? (result.current_results.receive_end_track_current || 0).toFixed(4) : '0.0000';
                 const mainTrackInputCurrent = result.current_results ? (result.current_results.main_track_input_current || 0).toFixed(4) : '0.0000';
                 const mainTrackOutputCurrent = result.current_results ? (result.current_results.main_track_output_current_1 || 0).toFixed(4) : '0.0000';
-                addResultItem('success', `模拟成功 (${params.section_id}, 错误类型: ${params.error_type}) - 送端轨面电压: ${(voltageResults.send_end_track_voltage || 0).toFixed(2)}V, 受端轨面电压: ${(voltageResults.receive_end_track_voltage || 0).toFixed(2)}V, 主轨入电压: ${(voltageResults.main_track_input_voltage || 0).toFixed(2)}V, 轨出1电压: ${(voltageResults.main_track_output_voltage_1 || 0).toFixed(2)}V, 送端轨面电流: ${sendEndCurrent}A, 受端轨面电流: ${receiveEndCurrent}A, 主轨入电流: ${mainTrackInputCurrent}A, 轨出1电流: ${mainTrackOutputCurrent}A, 输入阻抗: ${(result.input_impedance || 0).toFixed(2)}Ω, 输入电流: ${(result.input_current || 0).toFixed(4)}A`);
+                addResultItem('success', `模拟成功 (${params.section_id}, 故障类型: ${params.error_type}) - 送端轨面电压: ${(voltageResults.send_end_track_voltage || 0).toFixed(2)}V, 受端轨面电压: ${(voltageResults.receive_end_track_voltage || 0).toFixed(2)}V, 主轨入电压: ${(voltageResults.main_track_input_voltage || 0).toFixed(2)}V, 轨出1电压: ${(voltageResults.main_track_output_voltage_1 || 0).toFixed(2)}V, 送端轨面电流: ${sendEndCurrent}A, 受端轨面电流: ${receiveEndCurrent}A, 主轨入电流: ${mainTrackInputCurrent}A, 轨出1电流: ${mainTrackOutputCurrent}A, 输入阻抗: ${(result.input_impedance || 0).toFixed(2)}Ω, 输入电流: ${(result.input_current || 0).toFixed(4)}A`);
             }
             
             // 检查是否完成，但只在批量模拟仍在运行时调用finishBatchSimulation
@@ -3306,7 +3317,7 @@
             }
             
             // 构建CSV内容
-            let csvContent = '时间戳,轨道区段ID,轨道区段名称,错误类型,错误类型名称,轨道长度(m),钢轨电阻(Ω/m),钢轨电感(H/m),漏泄电容(F/m),钢轨漏泄电阻(Ω/km),SPT电缆长度(km),电平档位,错误值,衰耗盘端子1,衰耗盘端子2,送端轨面电压(V),受端轨面电压(V),主轨入电压(V),轨出1电压(V),送端轨面电流(A),受端轨面电流(A),主轨入电流(A),轨出1电流(A),输入阻抗(Ω),输入电流(A),钢轨阻抗(Ω),调谐单元阻抗(Ω)\n';
+            let csvContent = '时间戳,轨道区段ID,轨道区段名称,故障类型,故障类型名称,轨道长度(m),钢轨电阻(Ω/m),钢轨电感(H/m),漏泄电容(F/m),钢轨漏泄电阻(Ω/km),SPT电缆长度(km),电平档位,错误值,衰耗盘端子1,衰耗盘端子2,送端轨面电压(V),受端轨面电压(V),主轨入电压(V),轨出1电压(V),送端轨面电流(A),受端轨面电流(A),主轨入电流(A),轨出1电流(A),输入阻抗(Ω),输入电流(A),钢轨阻抗(Ω),调谐单元阻抗(Ω)\n';
             
             // 添加数据行
             batchResults.forEach(result => {
@@ -3430,6 +3441,46 @@
             const sheetNameSelect = document.getElementById('sheetName');
             if (sheetNameSelect) {
                 sheetNameSelect.addEventListener('change', handleSheetChange);
+            }
+            
+            // 监听数据类型列选择，动态填充排除数据类型下拉菜单
+            const typeColumnSelect = document.getElementById('typeColumn');
+            if (typeColumnSelect) {
+                typeColumnSelect.addEventListener('change', function() {
+                    const typeColumn = parseInt(this.value);
+                    const excludeTypeSelect = document.getElementById('excludeType');
+                    if (excludeTypeSelect) {
+                        if (typeColumn === -1) {
+                            // 如果不使用数据类型，清空排除类型选择器
+                            excludeTypeSelect.innerHTML = '<option value="">不排除任何类型</option>';
+                        } else if (workbook && worksheet) {
+                            // 如果选择了数据类型列，提取并填充数据类型
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                            const startRow = parseInt(document.getElementById('startRow').value) - 1;
+                            
+                            // 提取数据类型
+                            const typeData = [];
+                            for (let j = startRow; j < jsonData.length; j++) {
+                                const typeValue = jsonData[j][typeColumn];
+                                if (typeValue) {
+                                    typeData.push(String(typeValue));
+                                }
+                            }
+                            
+                            // 获取唯一的数据类型
+                            const uniqueTypes = [...new Set(typeData)];
+                            
+                            // 填充排除类型选择器
+                            excludeTypeSelect.innerHTML = '<option value="">不排除任何类型</option>';
+                            uniqueTypes.forEach(type => {
+                                const option = document.createElement('option');
+                                option.value = type;
+                                option.textContent = type;
+                                excludeTypeSelect.appendChild(option);
+                            });
+                        }
+                    }
+                });
             }
         });
 
@@ -3593,6 +3644,8 @@
                 const yColumnsSelect = document.getElementById('yColumns');
                 const selectedYColumns = Array.from(yColumnsSelect.selectedOptions).map(option => parseInt(option.value));
                 const typeColumn = parseInt(document.getElementById('typeColumn').value);
+                const excludeTypeSelect = document.getElementById('excludeType');
+                const excludedTypes = Array.from(excludeTypeSelect.selectedOptions).map(option => option.value).filter(value => value !== '');
                 const startRow = parseInt(document.getElementById('startRow').value) - 1; // 转换为0索引
                 const samples = parseInt(document.getElementById('samples').value);
                 const displayMode = document.getElementById('displayMode').value;
@@ -3665,6 +3718,20 @@
                 const displayPoints = Math.min(samples, xData.length);
                 const step = Math.floor(xData.length / displayPoints);
                 
+                // 提取数据类型
+                const typeData = [];
+                if (typeColumn !== -1) {
+                    for (let j = startRow; j < jsonData.length; j++) {
+                        const typeValue = jsonData[j][typeColumn];
+                        typeData.push(typeValue ? String(typeValue) : '未知');
+                    }
+                } else {
+                    // 如果没有数据类型列，为所有点设置默认类型
+                    for (let j = 0; j < jsonData.length - startRow; j++) {
+                        typeData.push('默认');
+                    }
+                }
+                
                 // 清除波形显示区域
                 if (waveDisplay) {
                     waveDisplay.innerHTML = '';
@@ -3693,16 +3760,33 @@
                     const xMin = Math.min(...xData);
                     const xRange = xMax - xMin;
                     
-                    // 确定Y轴数据范围（所有Y轴数据的最大值和最小值）
-                    let yMax = -Infinity;
-                    let yMin = Infinity;
-                    for (const yData of yDataArray) {
-                        const currentMax = Math.max(...yData);
-                        const currentMin = Math.min(...yData);
-                        if (currentMax > yMax) yMax = currentMax;
-                        if (currentMin < yMin) yMin = currentMin;
-                    }
-                    const yRange = yMax - yMin;
+                    // 确定Y轴数据范围（只考虑未被排除的数据点）
+                        let yMax = -Infinity;
+                        let yMin = Infinity;
+                        for (let i = 0; i < yDataArray.length; i++) {
+                            const yData = yDataArray[i];
+                            for (let j = 0; j < displayPoints; j++) {
+                                const dataIndex = j * step;
+                                
+                                // 检查是否需要排除该数据点
+                                if (typeColumn !== -1) {
+                                    const pointType = typeData[dataIndex];
+                                    if (excludedTypes.includes(pointType)) {
+                                        continue;
+                                    }
+                                }
+                                
+                                const yValue = yData[dataIndex];
+                                if (yValue > yMax) yMax = yValue;
+                                if (yValue < yMin) yMin = yValue;
+                            }
+                        }
+                        // 防止所有数据点都被排除的情况
+                        if (yMax === -Infinity || yMin === Infinity) {
+                            yMax = 1;
+                            yMin = 0;
+                        }
+                        const yRange = yMax - yMin;
                     
                     // 添加一些边距，确保所有数据点都能显示
                     const xPadding = xRange * 0.1;
@@ -3762,42 +3846,63 @@
                     }
                     
                     // 绘制每个Y轴数据列的曲线
-                    for (let i = 0; i < yDataArray.length; i++) {
-                        const yData = yDataArray[i];
-                        const color = colorPalette[i % colorPalette.length];
-                        
-                        // 绘制连接线
-                        ctx.beginPath();
-                        for (let j = 0; j < displayPoints; j++) {
-                            const dataIndex = j * step;
-                            const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
-                            const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
+                        for (let i = 0; i < yDataArray.length; i++) {
+                            const yData = yDataArray[i];
+                            const color = colorPalette[i % colorPalette.length];
                             
-                            if (j === 0) {
-                                ctx.moveTo(x, y);
-                            } else {
-                                ctx.lineTo(x, y);
+                            // 绘制连接线
+                            ctx.beginPath();
+                            let lastDrawnPoint = null;
+                            for (let j = 0; j < displayPoints; j++) {
+                                const dataIndex = j * step;
+                                
+                                // 检查是否需要排除该数据点
+                                if (typeColumn !== -1) {
+                                    const pointType = typeData[dataIndex];
+                                    if (excludedTypes.includes(pointType)) {
+                                        lastDrawnPoint = null;
+                                        continue;
+                                    }
+                                }
+                                
+                                const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
+                                const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
+                                
+                                if (lastDrawnPoint === null) {
+                                    ctx.moveTo(x, y);
+                                } else {
+                                    ctx.lineTo(x, y);
+                                }
+                                lastDrawnPoint = { x, y };
+                            }
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+                            
+                            // 绘制数据点
+                            for (let j = 0; j < displayPoints; j++) {
+                                const dataIndex = j * step;
+                                
+                                // 检查是否需要排除该数据点
+                                if (typeColumn !== -1) {
+                                    const pointType = typeData[dataIndex];
+                                    if (excludedTypes.includes(pointType)) {
+                                        continue;
+                                    }
+                                }
+                                
+                                const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
+                                const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
+                                
+                                ctx.beginPath();
+                                ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                                ctx.fillStyle = color;
+                                ctx.fill();
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 1;
+                                ctx.stroke();
                             }
                         }
-                        ctx.strokeStyle = color;
-                        ctx.lineWidth = 2;
-                        ctx.stroke();
-                        
-                        // 绘制数据点
-                        for (let j = 0; j < displayPoints; j++) {
-                            const dataIndex = j * step;
-                            const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
-                            const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
-                            
-                            ctx.beginPath();
-                            ctx.arc(x, y, 3, 0, 2 * Math.PI);
-                            ctx.fillStyle = color;
-                            ctx.fill();
-                            ctx.strokeStyle = color;
-                            ctx.lineWidth = 1;
-                            ctx.stroke();
-                        }
-                    }
                     
                     // 绘制图例
                     const legendX = canvas.width - 180;
@@ -3857,9 +3962,29 @@
                         const xMin = Math.min(...xData);
                         const xRange = xMax - xMin;
                         
-                        // 确定Y轴数据范围
-                        const yMax = Math.max(...yData);
-                        const yMin = Math.min(...yData);
+                        // 确定Y轴数据范围（只考虑未被排除的数据点）
+                        let yMax = -Infinity;
+                        let yMin = Infinity;
+                        for (let j = 0; j < displayPoints; j++) {
+                            const dataIndex = j * step;
+                            
+                            // 检查是否需要排除该数据点
+                            if (typeColumn !== -1) {
+                                const pointType = typeData[dataIndex];
+                                if (excludedTypes.includes(pointType)) {
+                                    continue;
+                                }
+                            }
+                            
+                            const yValue = yData[dataIndex];
+                            if (yValue > yMax) yMax = yValue;
+                            if (yValue < yMin) yMin = yValue;
+                        }
+                        // 防止所有数据点都被排除的情况
+                        if (yMax === -Infinity || yMin === Infinity) {
+                            yMax = 1;
+                            yMin = 0;
+                        }
                         const yRange = yMax - yMin;
                         
                         // 添加一些边距，确保所有数据点都能显示
@@ -3919,19 +4044,7 @@
                             ctx.fillText(value.toFixed(2), x, canvas.height - 5);
                         }
                         
-                        // 提取数据类型
-                        const typeData = [];
-                        if (typeColumn !== -1) {
-                            for (let j = startRow; j < jsonData.length; j++) {
-                                const typeValue = jsonData[j][typeColumn];
-                                typeData.push(typeValue ? String(typeValue) : '未知');
-                            }
-                        } else {
-                            // 如果没有数据类型列，为所有点设置默认类型
-                            for (let j = 0; j < jsonData.length - startRow; j++) {
-                                typeData.push('默认');
-                            }
-                        }
+
                         
                         // 为不同数据类型分配颜色
                         const typeColors = {};
@@ -3940,29 +4053,84 @@
                             typeColors[type] = colorPalette[index % colorPalette.length];
                         });
                         
-                        // 先绘制连接线（按原始顺序，保持数据点之间的连接关系）
-                        ctx.beginPath();
-                        for (let j = 0; j < displayPoints; j++) {
-                            const dataIndex = j * step;
-                            const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
-                            const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
-                            
-                            if (j === 0) {
-                                ctx.moveTo(x, y);
-                            } else {
-                                ctx.lineTo(x, y);
+                        // 先绘制连接线（只连接相同数据类型的点，排除指定类型）
+                        if (typeColumn !== -1) {
+                            // 如果选择了数据类型，只连接相同类型的点
+                            for (let j = 0; j < displayPoints; j++) {
+                                const dataIndex = j * step;
+                                const currentType = typeData[dataIndex];
+                                
+                                // 检查是否需要排除该数据类型
+                                if (excludedTypes.includes(currentType)) {
+                                    continue;
+                                }
+                                
+                                // 找到连续的相同类型的点
+                                let k = j;
+                                while (k < displayPoints - 1) {
+                                    const nextIndex = (k + 1) * step;
+                                    const nextType = typeData[nextIndex];
+                                    if (nextType === currentType && !excludedTypes.includes(nextType)) {
+                                        k++;
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                
+                                // 绘制这段连续相同类型的点之间的连接线
+                                if (k > j) {
+                                    ctx.beginPath();
+                                    for (let m = j; m <= k; m++) {
+                                        const idx = m * step;
+                                        const x = centerX + ((xData[idx] - adjustedXMin) / adjustedXRange) * width;
+                                        const y = 20 + height - ((yData[idx] - adjustedYMin) / adjustedYRange) * height;
+                                        
+                                        if (m === j) {
+                                            ctx.moveTo(x, y);
+                                        } else {
+                                            ctx.lineTo(x, y);
+                                        }
+                                    }
+                                    ctx.strokeStyle = typeColors[currentType]; // 使用数据类型对应的颜色
+                                    ctx.lineWidth = 2;
+                                    ctx.stroke();
+                                }
+                                
+                                j = k;
                             }
+                        } else {
+                            // 如果没有选择数据类型，连接所有点
+                            ctx.beginPath();
+                            let lastDrawnPoint = null;
+                            for (let j = 0; j < displayPoints; j++) {
+                                const dataIndex = j * step;
+                                const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
+                                const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
+                                
+                                if (lastDrawnPoint === null) {
+                                    ctx.moveTo(x, y);
+                                } else {
+                                    ctx.lineTo(x, y);
+                                }
+                                lastDrawnPoint = { x, y };
+                            }
+                            ctx.strokeStyle = '#333'; // 使用默认颜色绘制连接线
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
                         }
-                        ctx.strokeStyle = '#333'; // 使用默认颜色绘制连接线
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
                         
-                        // 按数据类型绘制数据点
+                        // 按数据类型绘制数据点（排除指定类型）
                         for (let j = 0; j < displayPoints; j++) {
                             const dataIndex = j * step;
+                            const pointType = typeData[dataIndex];
+                            
+                            // 检查是否需要排除该数据类型
+                            if (excludedTypes.includes(pointType)) {
+                                continue;
+                            }
+                            
                             const x = centerX + ((xData[dataIndex] - adjustedXMin) / adjustedXRange) * width;
                             const y = 20 + height - ((yData[dataIndex] - adjustedYMin) / adjustedYRange) * height;
-                            const pointType = typeData[dataIndex];
                             const color = typeColors[pointType];
                             
                             // 绘制数据点
@@ -3975,8 +4143,9 @@
                             ctx.stroke();
                         }
                         
-                        // 绘制图例
-                        if (uniqueTypes.length > 1) {
+                        // 绘制图例（排除指定类型）
+                        const visibleTypes = uniqueTypes.filter(type => !excludedTypes.includes(type));
+                        if (visibleTypes.length > 1) {
                             const legendX = canvas.width - 180;
                             const legendY = 30;
                             const legendItemHeight = 20;
@@ -3985,7 +4154,7 @@
                             ctx.fillStyle = '#333';
                             ctx.fillText('图例:', legendX, legendY);
                             
-                            uniqueTypes.forEach((type, index) => {
+                            visibleTypes.forEach((type, index) => {
                                 const y = legendY + (index + 1) * legendItemHeight;
                                 
                                 // 绘制颜色方块
@@ -4510,7 +4679,7 @@
                         section_type: sectionType,
                         frequency: frequency,
                         error_type: errorType,
-                        error_type_name: errorTypes.find(e => e.value === errorType)?.name || `错误类型 ${errorType}`,
+                        error_type_name: errorTypes.find(e => e.value === errorType)?.name || `故障类型 ${errorType}`,
                         track_length: trackLength,
                         resistance: resistance,
                         inductance: inductance,
@@ -4791,8 +4960,8 @@
                 '输入电压(V)',
                 '轨道区段ID',
                 '轨道区段名称',
-                '错误类型',
-                '错误类型名称',
+                '故障类型',
+                '故障类型名称',
                 '轨道长度(m)',
                 '钢轨电阻(Ω/m)',
                 '钢轨电感(H/m)',

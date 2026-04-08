@@ -98,6 +98,11 @@ async def read_time_series_simulation(request: Request):
 async def read_comparison_time_series(request: Request):
     return templates.TemplateResponse("comparison_time_series.html", {"request": request})
 
+# 用户注册页面
+@app.get("/register", response_class=HTMLResponse)
+async def read_register(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
 # 直接返回HTML内容的图片查看器页面
 @app.get("/image-viewer-direct", response_class=HTMLResponse)
 async def read_image_viewer_direct():
@@ -983,6 +988,59 @@ async def login_api(
             status_code=500
         )
 
+# 用户注册API端点
+@app.post("/api/register")
+async def register_api(
+    username: str = Form(...),
+    password: str = Form(...)
+):
+    try:
+        import csv
+        import os
+        
+        print(f"接收到注册请求: username={username}")
+        
+        # 读取CSV文件
+        csv_path = os.path.join("static", "username_code.csv")
+        
+        # 检查文件是否存在，如果不存在则创建
+        if not os.path.exists(csv_path):
+            # 创建文件并写入表头
+            with open(csv_path, 'w', encoding='utf-8', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(['username', 'code'])
+        
+        # 检查用户名是否已存在
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            next(reader, None)  # 跳过表头
+            for row in reader:
+                if len(row) >= 1 and row[0].strip() == username:
+                    return JSONResponse(
+                        {"status": "error", "message": "用户名已存在"},
+                        status_code=400
+                    )
+        
+        # 添加新用户到CSV文件
+        with open(csv_path, 'a', encoding='utf-8', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([username, password])
+        
+        print(f"用户注册成功: {username}")
+        return JSONResponse({
+            "status": "success",
+            "message": "注册成功",
+            "user": {
+                "username": username
+            }
+        })
+    except Exception as e:
+        print(f"注册错误: {e}")
+        return JSONResponse(
+            {"status": "error", "message": "注册失败"},
+            status_code=500
+        )
+
 # 批量模拟CSV下载API端点
 @app.post("/api/batch-download")
 async def batch_download_api(data: dict = Body(...)):
@@ -1010,8 +1068,8 @@ async def batch_download_api(data: dict = Body(...)):
             '时间戳',
             '轨道区段ID',
             '轨道区段名称',
-            '错误类型',
-            '错误类型名称',
+            '故障类型',
+            '故障类型名称',
             '轨道长度(m)',
             '钢轨电阻(Ω/m)',
             '钢轨电感(H/m)',
