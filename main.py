@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import numpy as np
+import os
 
 # 使用简单的密码哈希实现（避免bcrypt的72字节限制）
 import hashlib
@@ -67,6 +68,9 @@ app = FastAPI()
 # 配置模板和静态文件
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+# 获取端口配置
+PORT = int(os.environ.get("PORT", 8000))
 
 # 根路径，返回新的首页
 @app.get("/", response_class=HTMLResponse)
