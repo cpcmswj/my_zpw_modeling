@@ -4,6 +4,51 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import numpy as np
 
+# 使用简单的密码哈希实现（避免bcrypt的72字节限制）
+import hashlib
+import secrets
+
+class PasswordHasher:
+    def hash(self, password):
+        """对密码进行哈希处理"""
+        salt = secrets.token_hex(16)
+        hashed = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode('utf-8'),
+            salt.encode('utf-8'),
+            100000
+        )
+        return f"$pbkdf2$100000${salt}${hashed.hex()}"
+    
+    def verify(self, password, hashed):
+        """验证密码"""
+        try:
+            # 检查是否是哈希密码
+            if hashed.startswith('$pbkdf2$'):
+                parts = hashed.split('$')
+                if len(parts) == 5:
+                    iterations = int(parts[2])
+                    salt = parts[3]
+                    stored_hash = parts[4]
+                    
+                    # 计算哈希
+                    computed_hash = hashlib.pbkdf2_hmac(
+                        'sha256',
+                        password.encode('utf-8'),
+                        salt.encode('utf-8'),
+                        iterations
+                    )
+                    return computed_hash.hex() == stored_hash
+            # 兼容旧的明文密码
+            return password == hashed
+        except:
+            # 如果解析失败，尝试作为明文密码处理
+            return password == hashed
+
+# 创建密码哈希器实例
+pwd_context = PasswordHasher()
+print("[OK] 密码哈希器初始化成功")
+
 # 导入jisuan_guidao.py中的函数和类
 from jisuan_guidao import (
     Variable,
@@ -963,9 +1008,13 @@ async def login_api(
                     if len(parts) >= 2:
                         csv_username = parts[0].strip()
                         csv_password = parts[1].strip()
-                        print(f"CSV用户: {csv_username}, 密码: {csv_password}")
-                        print(f"比较结果: username匹配={csv_username == username}, password匹配={csv_password == password}")
-                        if csv_username == username and csv_password == password:
+                        print(f"CSV用户: {csv_username}")
+                        print(f"用户名匹配: {csv_username == username}")
+                        # 验证密码（使用哈希验证，限制密码长度为72字节）
+                        truncated_password = password[:72]  # 截断密码长度
+                        password_match = pwd_context.verify(truncated_password, csv_password)
+                        print(f"密码匹配: {password_match}")
+                        if csv_username == username and password_match:
                             print("登录成功！")
                             return JSONResponse({
                                 "status": "success",
@@ -997,34 +1046,50 @@ async def register_api(
     try:
         import csv
         import os
+        import traceback
         
         print(f"接收到注册请求: username={username}")
         
         # 读取CSV文件
         csv_path = os.path.join("static", "username_code.csv")
+        print(f"用户数据文件路径: {csv_path}")
         
         # 检查文件是否存在，如果不存在则创建
         if not os.path.exists(csv_path):
+            print("用户数据文件不存在，创建新文件")
             # 创建文件并写入表头
             with open(csv_path, 'w', encoding='utf-8', newline='') as file:
                 writer = csv.writer(file)
                 writer.writerow(['username', 'code'])
         
         # 检查用户名是否已存在
+        print("检查用户名是否已存在")
         with open(csv_path, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
             next(reader, None)  # 跳过表头
             for row in reader:
                 if len(row) >= 1 and row[0].strip() == username:
+                    print(f"用户名已存在: {username}")
                     return JSONResponse(
                         {"status": "error", "message": "用户名已存在"},
                         status_code=400
                     )
         
+        # 对密码进行哈希处理（限制密码长度为72字节）
+        print("对密码进行哈希处理")
+        # 确保密码不超过72字节
+        if len(password) > 72:
+            print(f"密码长度超过72字节，截断为72字节")
+            password = password[:72]
+        print(f"处理后的密码长度: {len(password)}")
+        hashed_password = pwd_context.hash(password)
+        print(f"哈希后的密码: {hashed_password}")
+        
         # 添加新用户到CSV文件
+        print("添加新用户到CSV文件")
         with open(csv_path, 'a', encoding='utf-8', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([username, password])
+            writer.writerow([username, hashed_password])
         
         print(f"用户注册成功: {username}")
         return JSONResponse({
@@ -1036,8 +1101,9 @@ async def register_api(
         })
     except Exception as e:
         print(f"注册错误: {e}")
+        traceback.print_exc()
         return JSONResponse(
-            {"status": "error", "message": "注册失败"},
+            {"status": "error", "message": f"注册失败: {str(e)}"},
             status_code=500
         )
 

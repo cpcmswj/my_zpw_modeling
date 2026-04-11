@@ -149,12 +149,25 @@ def start_server():
         
         # 检查服务器是否启动成功
         if server_process.poll() is not None:
-            print("❌ 服务器启动失败！")
+            print("[ERROR] 服务器启动失败！")
             stdout, stderr = server_process.communicate()
+            print(f"标准输出：{stdout}")
             print(f"错误信息：{stderr}")
             return None
         
-        print("✅ 服务器已成功启动！")
+        # 查看服务器进程状态
+        print(f"服务器进程ID: {server_process.pid}")
+        # 尝试获取进程状态
+        try:
+            import psutil
+            process = psutil.Process(server_process.pid)
+            print(f"服务器进程状态: {process.status()}")
+        except ImportError:
+            print("[WARNING] psutil模块未安装，无法获取进程状态")
+        except Exception as e:
+            print(f"[WARNING] 获取进程状态失败: {e}")
+        
+        print("[OK] 服务器已成功启动！")
         print(f"服务器地址：http://{host}:{port}/")
         print("要停止服务器，请按 Ctrl+C 或关闭终端窗口")
         print("=" * 50)
@@ -167,7 +180,7 @@ def start_server():
         return server_process
         
     except Exception as e:
-        print(f"❌ 启动服务器时出错：{e}")
+        print(f"[ERROR] 启动服务器时出错：{e}")
         import traceback
         traceback.print_exc()
         return None
@@ -183,13 +196,13 @@ def open_pages(pages_to_open):
     for page_name in pages_to_open:
         if page_name in define_pages:
             url = define_pages[page_name]
-            print(f"🔗 打开页面：{page_name} -> {url}")
+            print(f"[LINK] 打开页面：{page_name} -> {url}")
             webbrowser.open(url)
             time.sleep(0.5)  # 延迟打开，避免浏览器冲突
         else:
-            print(f"❌ 未知页面：{page_name}")
+            print(f"[ERROR] 未知页面：{page_name}")
     
-    print("✅ 所有页面已打开！")
+    print("[OK] 所有页面已打开！")
     print("=" * 50)
 
 def show_help():
@@ -255,13 +268,13 @@ def main():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("\n\n正在停止服务器...")
-        server_process.terminate()
-        try:
-            server_process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            server_process.kill()
-        print("✅ 服务器已停止！")
+            print("\n\n正在停止服务器...")
+            server_process.terminate()
+            try:
+                server_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                server_process.kill()
+            print("[OK] 服务器已停止！")
 
 if __name__ == "__main__":
     main()
