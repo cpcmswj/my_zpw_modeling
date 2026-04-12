@@ -363,6 +363,8 @@
                 <a href="/" class="btn">返回首页</a>
                 <a href="/integrated-system" class="btn">集成故障模拟</a>
                 <a href="/batch-simulation" class="btn">批量故障模拟</a>
+                <a href="/waveform-import" class="btn">波形导入</a>
+                <a href="/time-series-simulation" class="btn">时间序列模拟</a>
                 <a href="/fsk-signal-viewer" class="btn">FSK信号查看器</a>
             </div>
         </div>
@@ -469,6 +471,7 @@
                     <button class="tab-button" onclick="openTab(event, 'detailedParams')">详细参数</button>
                     <button class="tab-button" onclick="openTab(event, 'debugInfo')">调试信息</button>
                     <button class="tab-button" onclick="openTab(event, 'timelineView')">时间线视图</button>
+                    <button class="tab-button" onclick="openTab(event, 'parameterTables')">参数表格</button>
                 </div>
                 
                 <div id="voltageResults" class="tab-content active">
@@ -500,6 +503,14 @@
                         </div>
                         <div class="flex-item">
                             <div class="parameter-card">
+                                <h4>SPT电缆参数</h4>
+                                <div id="sptCableParamsContent">
+                                    <p class="loading">请运行模拟以查看参数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-item">
+                            <div class="parameter-card">
                                 <h4>传输矩阵</h4>
                                 <div id="matrixParamsContent">
                                     <p class="loading">请运行模拟以查看参数</p>
@@ -523,6 +534,43 @@
                         <p class="loading">请运行模拟以查看时间线</p>
                     </div>
                 </div>
+                
+                <div id="parameterTables" class="tab-content">
+                    <div class="result-container">
+                        <div class="result-title">参数表格</div>
+                        <div class="result-content">
+                            <h3>综合参数表 (frequency_parameters_table)</h3>
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                <thead>
+                                    <tr style="background-color: #3498db; color: white;">
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">序号</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">频率(Hz)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">补偿电容(F)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">变压器变比</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">调谐区电阻(Ω)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">调谐区感抗(Ω)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">变压器输入阻抗(Ω)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">SPT传输常数(dB/km)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">SPT特性阻抗(Ω)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">SPT阻抗角(°)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">钢轨阻抗(Ω/km)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">钢轨阻抗角(°)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">机械绝缘节电感(uH)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">机械绝缘节电阻(mΩ)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="frequencyParametersTableBody">
+                                    <!-- 表格内容将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                            
+                            <h3>轨道电路传输长度参数表 (track_circuit_length_table)</h3>
+                            <div id="trackCircuitLengthTableContainer">
+                                <!-- 表格内容将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- 步骤详情区域 -->
@@ -533,6 +581,37 @@
                 </div>
             </div>
         </div>
+        
+        <!-- 调整表图片展示 -->
+        <div class="section">
+            <h2>📋 调整表图片</h2>
+            <div style="display: flex; flex-direction: column; gap: 40px; margin-top: 20px;">
+                <div class="image-card" style="background-color: white; border: 1px solid #ddd; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h4 style="text-align: center; margin-bottom: 20px; color: #3498db; font-size: 18px;">1700hz调整表</h4>
+                    <div style="display: flex; justify-content: center;">
+                        <img src="/static/images/1700hz调整表.png" alt="1700hz调整表" style="max-width: 100%; max-height: 600px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; padding: 15px; background-color: #f9f9f9;">
+                    </div>
+                </div>
+                <div class="image-card" style="background-color: white; border: 1px solid #ddd; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h4 style="text-align: center; margin-bottom: 20px; color: #3498db; font-size: 18px;">2000hz调整表</h4>
+                    <div style="display: flex; justify-content: center;">
+                        <img src="/static/images/2000hz调整表.png" alt="2000hz调整表" style="max-width: 100%; max-height: 600px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; padding: 15px; background-color: #f9f9f9;">
+                    </div>
+                </div>
+                <div class="image-card" style="background-color: white; border: 1px solid #ddd; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h4 style="text-align: center; margin-bottom: 20px; color: #3498db; font-size: 18px;">2300hz调整表</h4>
+                    <div style="display: flex; justify-content: center;">
+                        <img src="/static/images/2300hz调整表.png" alt="2300hz调整表" style="max-width: 100%; max-height: 600px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; padding: 15px; background-color: #f9f9f9;">
+                    </div>
+                </div>
+                <div class="image-card" style="background-color: white; border: 1px solid #ddd; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h4 style="text-align: center; margin-bottom: 20px; color: #3498db; font-size: 18px;">2600hz调整表</h4>
+                    <div style="display: flex; justify-content: center;">
+                        <img src="/static/images/2600hz调整表.png" alt="2600hz调整表" style="max-width: 100%; max-height: 600px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; padding: 15px; background-color: #f9f9f9;">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <script>
@@ -540,6 +619,61 @@
         let debugSimulationRunning = false;
         let debugSimulationData = null;
         let debugSteps = [];
+        
+        // 根据频率计算钢轨参数（对应Python中的get_rail_parameters函数）
+        function getRailParameters(frequency) {
+            // 钢轨阻抗和阻抗角查表
+            const railParametersTable = {
+                1700: {
+                    "impedance": 0.18,  // Ω/m
+                    "impedance_angle": 75  // 度
+                },
+                2000: {
+                    "impedance": 0.19,  // Ω/m
+                    "impedance_angle": 76  // 度
+                },
+                2300: {
+                    "impedance": 0.20,  // Ω/m
+                    "impedance_angle": 77  // 度
+                },
+                2600: {
+                    "impedance": 0.21,  // Ω/m
+                    "impedance_angle": 78  // 度
+                }
+            };
+            
+            // 如果频率在表格中，直接使用对应的值
+            if (railParametersTable[frequency]) {
+                const params = railParametersTable[frequency];
+                const impedance = params.impedance;
+                const impedance_angle = params.impedance_angle;
+                const impedance_angle_rad = impedance_angle * Math.PI / 180;
+                
+                // 计算每米电阻和电感
+                const resist_per_meter = impedance * Math.cos(impedance_angle_rad);
+                const induct_per_meter = impedance * Math.sin(impedance_angle_rad) / (2 * Math.PI * frequency);
+                
+                return { resist_per_meter, induct_per_meter };
+            } else {
+                // 兜底返回默认值
+                return { resist_per_meter: 0.1, induct_per_meter: 1.0e-3 };
+            }
+        }
+        
+        // 根据故障位置更新频率、电阻和电感
+        function updateParametersByErrorPosition() {
+            const errorPosition = document.getElementById('errorPosition').value;
+            let frequency = 1700; // 默认频率
+            
+            if (errorPosition === '57G' || errorPosition === '3DG') {
+                frequency = 2300;
+            }
+            
+            // 根据频率计算钢轨参数并更新输入框
+            const railParams = getRailParameters(frequency);
+            document.getElementById('resistance').value = railParams.resist_per_meter.toFixed(4);
+            document.getElementById('inductance').value = railParams.induct_per_meter.toExponential(4);
+        }
         
         // 切换标签页
         function openTab(evt, tabName) {
@@ -768,10 +902,13 @@
             // 显示电压结果
             displayVoltageResults(result);
             
+            // 显示电流结果
+            displayCurrentResults(result);
+            
             updateProgress(70, '正在显示详细参数...');
             
             // 显示详细参数
-            displayDetailedParams(result);
+            await displayDetailedParams(result);
             
             updateProgress(80, '正在构建时间线...');
             
@@ -815,8 +952,253 @@
             document.getElementById('voltageResultContent').innerHTML = html;
         }
         
+        // 显示电流结果
+        function displayCurrentResults(result) {
+            const currentResults = result.current_results || {};
+            
+            let html = '<div class="parameter-grid">';
+            html += '<div class="parameter-card">';
+            html += '<h4>电流结果</h4>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">送端轨面电流:</span>';
+            html += `<span class="parameter-value">${(currentResults.send_end_track_current || 0).toFixed(4)} A</span>`;
+            html += '</div>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">受端轨面电流:</span>';
+            html += `<span class="parameter-value">${(currentResults.receive_end_track_current || 0).toFixed(4)} A</span>`;
+            html += '</div>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">主轨入电流:</span>';
+            html += `<span class="parameter-value">${(currentResults.main_track_input_current || 0).toFixed(4)} A</span>`;
+            html += '</div>';
+            html += '<div class="parameter-item">';
+            html += '<span class="parameter-name">轨出1电流:</span>';
+            html += `<span class="parameter-value">${(currentResults.main_track_output_current_1 || 0).toFixed(4)} A</span>`;
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            
+            // 检查是否存在currentResultContent元素，如果不存在则创建
+            const currentResultContent = document.getElementById('currentResultContent');
+            if (currentResultContent) {
+                currentResultContent.innerHTML = html;
+            } else {
+                // 创建新的结果容器
+                const voltageResultContent = document.getElementById('voltageResultContent');
+                if (voltageResultContent) {
+                    const newDiv = document.createElement('div');
+                    newDiv.id = 'currentResultContent';
+                    newDiv.innerHTML = html;
+                    voltageResultContent.parentNode.insertBefore(newDiv, voltageResultContent.nextSibling);
+                }
+            }
+        }
+        
+        // 综合参数表（来自jisuan_guidao.py）
+        const frequencyParametersTable = [
+            [1, 1700, 55e-6, 12, 8.3e-3, 31.4e-3, 36, 0.63, 396, -39, 14.08, 85.2, 29.6, 29.6],
+            [2, 2000, 50e-6, 10, 10.1e-3, 35.2e-3, 43.2, 0.68, 367, -38, 16.44, 85.44, 28.44, 33.58],
+            [3, 2300, 46e-6, 10, 11.9e-3, 39e-3, 48.6, 0.72, 343, -37, 18.708, 85.62, 28.32, 33.75],
+            [4, 2600, 40e-6, 9, 13.6e-3, 42.6e-3, 55, 0.75, 325, -36, 21.147, 85.78, 28.25, 35.7]
+        ];
+        
+        // 轨道电路传输长度参数表（来自jisuan_guidao.py）
+        const trackCircuitLengthTable = [
+            // 道碴电阻=1.0Ω·km
+            [
+                // 电缆长度=10km
+                [1.5, 1.5, 1.5, 1.46],
+                // 电缆长度=12.5km
+                [1.5, 1.4, 1.4, 1.3],
+                // 电缆长度=15km
+                [1.4, 1.4, 1.3, 1.3]
+            ],
+            // 道碴电阻=1.2Ω·km
+            [
+                // 电缆长度=10km
+                [1.75, 1.7, 1.65, 1.6],
+                // 电缆长度=12.5km
+                [1.6, 1.6, 1.6, 1.5],
+                // 电缆长度=15km
+                [1.5, 1.5, 1.4, 1.4]
+            ],
+            // 道碴电阻=1.5Ω·km
+            [
+                // 电缆长度=10km
+                [1.9, 1.9, 1.8, 1.8],
+                // 电缆长度=12.5km
+                [1.8, 1.8, 1.8, 1.7],
+                // 电缆长度=15km
+                [1.7, 1.6, 1.6, 1.5]
+            ]
+        ];
+        
+        // 填充综合参数表
+        function populateFrequencyParametersTable() {
+            const tableBody = document.getElementById('frequencyParametersTableBody');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = '';
+            
+            frequencyParametersTable.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[0]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[1]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[2].toExponential(2)}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[3]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[4].toExponential(2)}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[5].toExponential(2)}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[6]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[7]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[8]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[9]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[10]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[11]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[12]}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${row[13]}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+        
+        // 填充轨道电路传输长度参数表
+        function populateTrackCircuitLengthTable() {
+            const container = document.getElementById('trackCircuitLengthTableContainer');
+            if (!container) return;
+            
+            const ballastResistances = [1.0, 1.2, 1.5];
+            const cableLengths = [10, 12.5, 15];
+            const frequencies = [1700, 2000, 2300, 2600];
+            
+            let html = '';
+            
+            ballastResistances.forEach((ballastResist, brIndex) => {
+                html += `<h4>道碴电阻: ${ballastResist} Ω·km</h4>`;
+                html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">`;
+                html += `<thead>`;
+                html += `<tr style="background-color: #3498db; color: white;">`;
+                html += `<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">电缆长度 (km)</th>`;
+                frequencies.forEach(freq => {
+                    html += `<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${freq} Hz</th>`;
+                });
+                html += `</tr>`;
+                html += `</thead>`;
+                html += `<tbody>`;
+                
+                cableLengths.forEach((cableLength, clIndex) => {
+                    html += `<tr>`;
+                    html += `<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${cableLength}</td>`;
+                    frequencies.forEach((freq, fIndex) => {
+                        html += `<td style="border: 1px solid #ddd; padding: 8px;">${trackCircuitLengthTable[brIndex][clIndex][fIndex]}</td>`;
+                    });
+                    html += `</tr>`;
+                });
+                
+                html += `</tbody>`;
+                html += `</table>`;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 初始化参数表格
+        function initParameterTables() {
+            populateFrequencyParametersTable();
+            populateTrackCircuitLengthTable();
+        }
+        
+        // 页面加载完成后初始化参数表格
+        document.addEventListener('DOMContentLoaded', function() {
+            initParameterTables();
+        });
+        
+        // 根据频率查表获取SPT电缆参数
+        function findSPTCableParameters(frequency) {
+            for (const item of frequencyParametersTable) {
+                if (item[1] === frequency) {
+                    return {
+                        gammaCable: item[7], // 传输常数 (dB/km)
+                        impedance: item[8], // 特性阻抗 (Ω)
+                        impedanceAngle: item[9] // 阻抗角 (°)
+                    };
+                }
+            }
+            return {
+                gammaCable: 0.63, // 默认值 (1700Hz)
+                impedance: 396, // 默认值 (1700Hz)
+                impedanceAngle: -39 // 默认值 (1700Hz)
+            };
+        }
+        
+        // 计算SPT电缆参数（调用后端API）
+        async function calculateSPTCableParams(length, frequency) {
+            try {
+                // 构建表单数据
+                const formData = new FormData();
+                formData.append('length', length);
+                formData.append('frequency', frequency);
+                
+                // 发送API请求
+                const response = await fetch('/api/calculate/spt-cable', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status !== 'success') {
+                    throw new Error(result.message || '计算失败');
+                }
+                
+                const data = result.data;
+                
+                // 构建返回对象
+                return {
+                    gammaCable: data.gamma_cable, // 传输常数 (dB/km)
+                    impedance: data.impedance, // 特性阻抗 (Ω)
+                    impedanceAngle: data.impedance_angle, // 阻抗角 (°)
+                    resistance: data.resistance, // 总电阻 (Ω)
+                    inductance: data.inductance, // 总电感 (H)
+                    unitResistance: data.unit_resistance, // 单位长度电阻 (Ω/km)
+                    unitInductance: data.unit_inductance, // 单位长度电感 (H/km)
+                    length: data.length, // 长度 (km)
+                    frequency: data.frequency, // 频率 (Hz)
+                    matrix: [
+                        [data.matrix.a, data.matrix.b],
+                        [data.matrix.c, data.matrix.d]
+                    ] // 传输矩阵
+                };
+            } catch (error) {
+                console.error('计算SPT电缆参数失败:', error);
+                // 失败时返回默认值
+                return {
+                    gammaCable: 0.63, // 默认值 (1700Hz)
+                    impedance: 396, // 默认值 (1700Hz)
+                    impedanceAngle: -39, // 默认值 (1700Hz)
+                    resistance: 0, // 默认值
+                    inductance: 0, // 默认值
+                    unitResistance: 0, // 默认值
+                    unitInductance: 0, // 默认值
+                    length: length, // 长度 (km)
+                    frequency: frequency, // 频率 (Hz)
+                    matrix: [[1, 0], [0, 1]] // 单位矩阵
+                };
+            }
+        }
+        
+        // 计算SPT电缆传输矩阵（使用API返回的结果）
+        async function calculateSPTCableMatrix(frequency, length) {
+            const sptParams = await calculateSPTCableParams(length, frequency);
+            return sptParams.matrix;
+        }
+        
         // 显示详细参数
-        function displayDetailedParams(result) {
+        async function displayDetailedParams(result) {
             const inputParams = result.input_params;
             const sectionInfo = result.section_info;
             const errorInfo = result.error_info;
@@ -865,6 +1247,55 @@
             
             document.getElementById('electricalParamsContent').innerHTML = electricalHtml;
             
+            // 显示SPT电缆参数
+            const sptLength = inputParams.spt_cable_length || 10; // 默认10km
+            const frequency = inputParams.frequency || 1700; // 默认1700Hz
+            const sptParams = await calculateSPTCableParams(sptLength, frequency);
+            
+            let sptHtml = '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">电缆长度:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.length} km</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">传输常数:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.gammaCable} dB/km</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">特性阻抗:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.impedance} Ω</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">阻抗角:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.impedanceAngle} °</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">总电阻:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.resistance.toFixed(4)} Ω</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">总电感:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.inductance.toExponential(4)} H</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">单位长度电阻:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.unitResistance.toFixed(4)} Ω/km</span>`;
+            sptHtml += '</div>';
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">单位长度电感:</span>';
+            sptHtml += `<span class="parameter-value">${sptParams.unitInductance.toExponential(4)} H/km</span>`;
+            sptHtml += '</div>';
+            
+            // 显示SPT电缆传输矩阵
+            sptHtml += '<div class="parameter-item">';
+            sptHtml += '<span class="parameter-name">传输矩阵:</span>';
+            sptHtml += '</div>';
+            sptHtml += '<div class="matrix-display">';
+            sptHtml += `[${sptParams.matrix[0][0].toFixed(4)}, ${sptParams.matrix[0][1].toFixed(4)}]\n`;
+            sptHtml += `[${sptParams.matrix[1][0].toFixed(4)}, ${sptParams.matrix[1][1].toFixed(4)}]`;
+            sptHtml += '</div>';
+            
+            document.getElementById('sptCableParamsContent').innerHTML = sptHtml;
+            
             // 显示矩阵参数
             let matrixHtml = '<div class="parameter-item">';
             matrixHtml += '<span class="parameter-name">传输矩阵:</span>';
@@ -888,6 +1319,7 @@
             debugHtml += `轨道区段: ${sectionInfo.name}\n`;
             debugHtml += `故障类型: ${errorInfo.type} - ${errorInfo.name}\n`;
             debugHtml += `输入参数: ${JSON.stringify(inputParams, null, 2)}\n`;
+            debugHtml += `SPT电缆参数: ${JSON.stringify(sptParams, null, 2)}\n`;
             debugHtml += `电压结果: ${JSON.stringify(result.voltage_results, null, 2)}\n`;
             
             document.getElementById('debugInfoContent').textContent = debugHtml;
@@ -1055,6 +1487,24 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化页面
             console.log('开发者调试页面已加载');
+            
+            // 添加故障位置选择事件监听器
+            document.getElementById('errorPosition').addEventListener('change', updateParametersByErrorPosition);
+            
+            // 添加轨道长度输入验证
+            const trackLengthInput = document.getElementById('trackLength');
+            if (trackLengthInput) {
+                trackLengthInput.addEventListener('change', function() {
+                    const value = parseFloat(this.value);
+                    if (isNaN(value)) {
+                        alert('⚠️ 警告：请输入合法的实数值！');
+                        this.value = 100; // 重置为默认值
+                    }
+                });
+            }
+            
+            // 初始化时根据默认故障位置更新参数
+            updateParametersByErrorPosition();
         });
     </script>
 </body>

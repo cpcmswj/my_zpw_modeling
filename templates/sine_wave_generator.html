@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正弦波波形生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h2 {
+            color: #3498db;
+            margin: 20px 0 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn.secondary {
+            background-color: #95a5a6;
+        }
+        .btn.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .form-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .wave-display {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .data-display {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            min-height: 100px;
+            border: 1px solid #ddd;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .loading { color: #7f8c8d; font-style: italic; }
+        .control-buttons {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .time-display {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>正弦波波形生成器</h1>
+        <div style="margin-bottom: 20px; text-align: center;">
+            <a href="/" class="btn">返回首页</a>
+        </div>
+        
+        <h2>参数输入</h2>
+        <form id="waveForm" onsubmit="event.preventDefault(); updateWaveParameters();">
+            <h3>波形参数</h3>
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="amplitude">幅值 (V):</label>
+                    <input type="number" id="amplitude" value="1.0" step="0.1" min="0.1">
+                </div>
+                <div class="form-col">
+                    <label for="frequency">频率 (Hz):</label>
+                    <input type="number" id="frequency" value="1.0" step="0.1" min="0.1">
+                </div>
+                <div class="form-col">
+                    <label for="phase">相角 (度):</label>
+                    <input type="number" id="phase" value="0" step="1" min="-360" max="360">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="duration">显示时长 (秒):</label>
+                    <input type="number" id="duration" value="2" step="0.1" min="0.1" max="10">
+                </div>
+                <div class="form-col">
+                    <label for="samples">采样点数:</label>
+                    <input type="number" id="samples" value="500" step="100" min="100" max="2000">
+                </div>
+            </div>
+            <div class="control-buttons">
+                <button type="submit" class="btn">更新波形参数</button>
+                <button type="button" class="btn secondary" onclick="resetWave()">重置</button>
+                <button type="button" class="btn" onclick="togglePlayPause()">开始</button>
+            </div>
+        </form>
+        
+        <h2>波形显示</h2>
+        <div class="wave-display">
+            <div class="time-display" id="timeDisplay">当前时间: 0.00s</div>
+            <canvas id="waveCanvas" width="1000" height="400"></canvas>
+            <div id="waveInfo" class="data-display">
+                <p class="success">✅ 波形正在动态显示中</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        // 全局变量
+        let animationId = null;
+        let startTime = Date.now();
+        let currentTime = 0;
+        let isPlaying = false;
+        
+        // 波形参数
+        let waveParameters = {
+            amplitude: 1.0,
+            frequency: 1.0,
+            phase: 0,
+            duration: 2.0,
+            samples: 500
+        };
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化波形参数
+            updateWaveParameters();
+            // 开始动态波形显示
+            startAnimation();
+        });
+
+        // 更新波形参数
+        function updateWaveParameters() {
+            try {
+                // 获取输入参数
+                waveParameters.amplitude = parseFloat(document.getElementById('amplitude').value);
+                waveParameters.frequency = parseFloat(document.getElementById('frequency').value);
+                waveParameters.phase = parseFloat(document.getElementById('phase').value);
+                waveParameters.duration = parseFloat(document.getElementById('duration').value);
+                waveParameters.samples = parseInt(document.getElementById('samples').value);
+                
+                // 更新波形信息
+                updateWaveInfo();
+            } catch (error) {
+                document.getElementById('waveInfo').innerHTML = '<p class="error">❌ 参数错误: ' + error.message + '</p>';
+            }
+        }
+
+        // 更新波形信息
+        function updateWaveInfo() {
+            const html = `
+                <h3>当前波形参数</h3>
+                <div class="card">
+                    <p><strong>幅值:</strong> ${waveParameters.amplitude.toFixed(2)} V</p>
+                    <p><strong>频率:</strong> ${waveParameters.frequency.toFixed(2)} Hz</p>
+                    <p><strong>相角:</strong> ${waveParameters.phase.toFixed(2)} 度</p>
+                    <p><strong>显示时长:</strong> ${waveParameters.duration.toFixed(2)} 秒</p>
+                    <p><strong>采样点数:</strong> ${waveParameters.samples}</p>
+                </div>
+            `;
+            document.getElementById('waveInfo').innerHTML = '<p class="success">✅ 波形参数已更新！</p>' + html;
+        }
+
+        // 开始动画
+        function startAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            startTime = Date.now() - currentTime * 1000;
+            animate();
+        }
+
+        // 动画函数
+        function animate() {
+            if (!isPlaying) {
+                animationId = requestAnimationFrame(animate);
+                return;
+            }
+            
+            // 计算当前时间
+            currentTime = (Date.now() - startTime) / 1000;
+            
+            // 绘制波形
+            drawWave();
+            
+            // 更新时间显示
+            document.getElementById('timeDisplay').textContent = `当前时间: ${currentTime.toFixed(2)}s`;
+            
+            // 继续动画
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // 绘制波形
+        function drawWave() {
+            const canvas = document.getElementById('waveCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制坐标轴
+            const centerY = canvas.height / 2;
+            const centerX = 50;
+            const width = canvas.width - 100;
+            const height = canvas.height - 40;
+            
+            // 绘制坐标轴
+            ctx.beginPath();
+            ctx.moveTo(centerX, 20);
+            ctx.lineTo(centerX, canvas.height - 20);
+            ctx.lineTo(canvas.width - 20, canvas.height - 20);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // 绘制网格
+            ctx.strokeStyle = '#eee';
+            ctx.lineWidth = 0.5;
+            
+            // 水平网格线
+            for (let i = 0; i <= 10; i++) {
+                const y = 20 + (i * height / 10);
+                ctx.beginPath();
+                ctx.moveTo(centerX, y);
+                ctx.lineTo(canvas.width - 20, y);
+                ctx.stroke();
+            }
+            
+            // 垂直网格线
+            for (let i = 0; i <= 10; i++) {
+                const x = centerX + (i * width / 10);
+                ctx.beginPath();
+                ctx.moveTo(x, 20);
+                ctx.lineTo(x, canvas.height - 20);
+                ctx.stroke();
+            }
+            
+            // 计算正弦波数据
+            const data = [];
+            const phaseRad = waveParameters.phase * Math.PI / 180;
+            const maxAmplitude = waveParameters.amplitude;
+            
+            for (let i = 0; i < waveParameters.samples; i++) {
+                // 计算相对时间，使波形看起来是连续的
+                const t = currentTime - (i / waveParameters.samples) * waveParameters.duration;
+                const value = waveParameters.amplitude * Math.sin(2 * Math.PI * waveParameters.frequency * t + phaseRad);
+                data.push(value);
+            }
+            
+            // 绘制正弦波
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - data[0] * (height / 2 / maxAmplitude));
+            
+            for (let i = 1; i < waveParameters.samples; i++) {
+                const x = centerX + (i / (waveParameters.samples - 1)) * width;
+                const y = centerY - data[i] * (height / 2 / maxAmplitude);
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // 重置波形
+        function resetWave() {
+            // 重置表单
+            document.getElementById('waveForm').reset();
+            // 重置时间
+            currentTime = 0;
+            startTime = Date.now();
+            // 重置播放状态
+            isPlaying = false;
+            const button = document.querySelector('button[onclick="togglePlayPause()"]');
+            button.textContent = "开始";
+            // 更新参数
+            updateWaveParameters();
+        }
+
+        // 开始/暂停
+        function togglePlayPause() {
+            isPlaying = !isPlaying;
+            const button = document.querySelector('button[onclick="togglePlayPause()"]');
+            if (isPlaying) {
+                // 开始时重置时间
+                currentTime = 0;
+                startTime = Date.now();
+                button.textContent = "暂停";
+            } else {
+                button.textContent = "开始";
+            }
+        }
+    </script>
+</body>
+</html>

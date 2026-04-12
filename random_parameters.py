@@ -67,6 +67,17 @@ VOLTAGE_LEVEL_RANGES = {
     5: {'min': 75, 'max': 79.5}         # 档位5: 75-79.5V
 }
 
+# 轨道电路长度区间表
+# 格式：[区间编号, 下限(m), 上限(m)]
+TRACK_CIRCUIT_LENGTH_RANGES = {}
+# 生成300~350, 351~400……直到1401~1450的区间
+for i in range(0, 23):
+    lower = 300 + i * 50
+    upper = 350 + i * 50
+    if i > 0:
+        lower += 1
+    TRACK_CIRCUIT_LENGTH_RANGES[i+1] = {'min': lower, 'max': upper}
+
 def generate_random_SPT_cable_params(frequency, variation=0.1):
     """生成随机的SPT电缆参数
     
@@ -190,6 +201,31 @@ def generate_random_voltage_level_params(level):
     
     return voltage
 
+def generate_random_track_circuit_length(range_number):
+    """根据区间编号生成随机的轨道电路长度
+    
+    参数：
+        range_number: int, 区间编号，取值为1-23
+                     1: 300~350m
+                     2: 351~400m
+                     ...
+                     23: 1401~1450m
+    
+    返回：
+        float: 随机生成的轨道电路长度(m)
+    """
+    if range_number not in TRACK_CIRCUIT_LENGTH_RANGES:
+        raise ValueError(f"不支持的区间编号: {range_number}，支持的编号为: {list(TRACK_CIRCUIT_LENGTH_RANGES.keys())}")
+    
+    length_range = TRACK_CIRCUIT_LENGTH_RANGES[range_number]
+    min_length = length_range['min']
+    max_length = length_range['max']
+    
+    # 生成随机长度值
+    length = random.uniform(min_length, max_length)
+    
+    return length
+
 if __name__ == "__main__":
     # 测试生成随机SPT电缆参数
     print("=== 测试随机SPT电缆参数生成 ===")
@@ -231,3 +267,12 @@ if __name__ == "__main__":
         voltage = generate_random_voltage_level_params(level)
         range_info = VOLTAGE_LEVEL_RANGES[level]
         print(f"  档位{level}: 电压={voltage:.2f}V (范围: {range_info['min']}-{range_info['max']}V)")
+    
+    # 测试生成随机轨道电路长度
+    print("\n=== 测试随机轨道电路长度生成 ===")
+    # 测试几个不同的区间
+    test_ranges = [1, 5, 10, 15, 20, 23]
+    for range_num in test_ranges:
+        length = generate_random_track_circuit_length(range_num)
+        range_info = TRACK_CIRCUIT_LENGTH_RANGES[range_num]
+        print(f"  区间{range_num}: 长度={length:.2f}m (范围: {range_info['min']}-{range_info['max']}m)")

@@ -30,7 +30,7 @@ print("最小值:", np.min(arr))
 #向量点积
 print("向量点积:", np.dot(arr, arr))
 #向量叉积
-print("向量叉积:", np.cross(arr, arr))
+#print("向量叉积:", np.cross(arr, arr))
 
 #开方
 print("开方:", np.sqrt(arr))
@@ -52,3 +52,7 @@ print("复数乘法:", np.array([1+2j, 3+4j]) * np.array([1-2j, 3-4j]))
 print("复数共轭:", np.conj(np.array([1+2j, 3+4j])))
 print("复数模:", np.abs(np.array([1+2j, 3+4j])))
 print("复数相位:", np.angle(np.array([1+2j, 3+4j])))
+
+print("sinh:", np.sinh(6.3))
+print("cosh:", np.cosh(6.3))
+print("tanh:", np.tanh(6.3))
