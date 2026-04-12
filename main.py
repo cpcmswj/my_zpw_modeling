@@ -1348,4 +1348,13 @@ async def batch_download_xlsx_api(data: dict = Body(...)):
         )
 
 # 启动应用的命令（用于开发环境）
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=PORT,
+        reload=False,
+        workers=1
+    )
 # 运行：uvicorn main:app --reload
