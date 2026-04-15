@@ -1,3 +1,23 @@
-numpy
-pandas
-matplotlib
+# Web框架和服务器
+fastapi==0.128.0
+uvicorn==0.40.0
+gunicorn==23.0.0
+uvloop==0.21.0
+
+# 模板引擎和数据处理
+Jinja2==3.1.4
+pydantic==2.12.5
+pydantic-core==2.41.5
+python-multipart==0.0.22
+
+# 数值计算和数据处理
+numpy==1.26.4
+pandas==2.2.2
+matplotlib==3.8.4
+
+# 其他依赖
+anyio==4.12.0
+typing-extensions==4.15.0
+pywebio==1.7.0
+pywebio-battery==0.1.5
+openpyxl==3.1.5
