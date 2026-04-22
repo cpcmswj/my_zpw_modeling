@@ -36,6 +36,7 @@ define_pages = {
     'xy_plot': 'http://127.0.0.1:8000/xy-plot',
     'time_series': 'http://127.0.0.1:8000/time-series-simulation',
     'comparison_time_series': 'http://127.0.0.1:8000/comparison-time-series',
+    'track_parameters': 'http://127.0.0.1:8000/track-parameters',
     'register': 'http://127.0.0.1:8000/register'
 }
 

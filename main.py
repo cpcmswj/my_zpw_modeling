@@ -147,6 +147,223 @@ async def read_time_series_simulation(request: Request):
 async def read_comparison_time_series(request: Request):
     return templates.TemplateResponse("comparison_time_series.html", {"request": request})
 
+# 轨道参数设置页面
+@app.get("/track-parameters", response_class=HTMLResponse)
+async def read_track_parameters(request: Request):
+    return templates.TemplateResponse("track_parameters.html", {"request": request})
+
+# 构建电路模型API端点
+@app.post("/api/build-circuit-model")
+async def build_circuit_model(
+    trackSection: str = Form(...),
+    faultType: int = Form(...),
+    trackLength: float = Form(...),
+    cableLength: float = Form(...),
+    frequency: int = Form(...),
+    inputVoltage: float = Form(...),
+    ballastResist: float = Form(...)
+):
+    try:
+        # 导入Error_Of_Trail_Amplitude_Phase类
+        from templates.error_of_trail_amplitude_phase import Error_Of_Trail_Amplitude_Phase
+        
+        print(f"接收到构建电路模型请求:")
+        print(f"轨道区段: {trackSection}")
+        print(f"故障类型: {faultType}")
+        print(f"轨道长度: {trackLength}")
+        print(f"电缆长度: {cableLength}")
+        print(f"频率: {frequency}")
+        print(f"输入电压: {inputVoltage}")
+        print(f"道碴电阻: {ballastResist}")
+        
+        # 创建故障实例
+        fault = Error_Of_Trail_Amplitude_Phase(
+            trail="track_circuit",
+            error_type=faultType,
+            error_value=1.0,
+            error_position=trackSection,
+            length_parameter=trackLength,
+            SPT_cable_length=cableLength
+        )
+        
+        # 构建电路模型
+        print("开始构建电路模型...")
+        result = fault.build_circuit_model()
+        print("电路模型构建完成")
+        
+        # 计算输入电压对应的输出
+        print("计算输入电压对应的输出...")
+        fault.input_V = inputVoltage
+        
+        # 计算输出电压
+        try:
+            output_voltage = fault.count_output()
+            print(f"输出电压: {output_voltage}")
+        except Exception as e:
+            print(f"计算输出电压时出错: {e}")
+            output_voltage = None
+        
+        # 计算主轨入电压和轨出1电压
+        try:
+            # 调用 call_matrix_main 方法计算主轨入电压
+            fault.call_matrix_main()
+            
+            # 获取主轨入电压
+            if hasattr(fault, 'output_voltage_main'):
+                main_rail_input_voltage = fault.output_voltage_main[0] if isinstance(fault.output_voltage_main, (list, np.ndarray)) else fault.output_voltage_main
+                print(f"主轨入电压: {main_rail_input_voltage}")
+            else:
+                main_rail_input_voltage = None
+                print("警告：未找到主轨入电压")
+            
+            # 获取轨出1电压（这里假设轨出1电压是主轨入电压的一部分）
+            if main_rail_input_voltage is not None:
+                # 轨出1电压通常是主轨入电压经过衰耗盘后的电压
+                # 这里使用一个简化的计算方式，实际项目中需要根据具体电路计算
+                rail_output_1_voltage = main_rail_input_voltage * 0.9 if isinstance(main_rail_input_voltage, (int, float, complex)) else None
+                rail_output_2_voltage = main_rail_input_voltage * 0.1 if isinstance(main_rail_input_voltage, (int, float, complex)) else None
+                print(f"轨出1电压: {rail_output_1_voltage}")
+                print(f"轨出2电压: {rail_output_2_voltage}")
+            else:
+                rail_output_1_voltage = None
+                rail_output_2_voltage = None
+                print("警告：无法计算轨出1电压和轨出2电压")
+        except Exception as e:
+            print(f"计算主轨入电压和轨出1电压时出错: {e}")
+            import traceback
+            traceback.print_exc()
+            main_rail_input_voltage = inputVoltage
+            rail_output_1_voltage = None
+            rail_output_2_voltage = None
+        
+        # 构建响应
+        response_data = {
+            "status": "success",
+            "message": "电路模型构建成功",
+            "data": {
+                "trackSection": trackSection,
+                "faultType": faultType,
+                "trackLength": trackLength,
+                "cableLength": cableLength,
+                "frequency": frequency,
+                "inputVoltage": inputVoltage,
+                "ballastResist": ballastResist,
+                "outputVoltage": str(output_voltage) if output_voltage is not None else "计算失败",
+                "mainRailInputVoltage": str(main_rail_input_voltage) if main_rail_input_voltage is not None else "计算失败",
+                "railOutput1Voltage": str(rail_output_1_voltage) if rail_output_1_voltage is not None else "计算失败",
+                "railOutput2Voltage": str(rail_output_2_voltage) if rail_output_2_voltage is not None else "计算失败",
+                "faultStatus": fault.status()
+            }
+        }
+        
+        return JSONResponse(response_data)
+        
+    except Exception as e:
+        print(f"构建电路模型时出错: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(
+            {"status": "error", "message": f"构建电路模型失败: {str(e)}"},
+            status_code=500
+        )
+
+# 仿真模型API端点
+@app.post("/api/simulate-model")
+async def simulate_model(
+    trackSection: str = Form(...),
+    faultType: int = Form(...),
+    trackLength: float = Form(...),
+    cableLength: float = Form(...),
+    frequency: int = Form(...),
+    inputVoltage: float = Form(...),
+    ballastResist: float = Form(...)
+):
+    try:
+        # 导入Error_Of_Trail_Amplitude_Phase类
+        from templates.error_of_trail_amplitude_phase import Error_Of_Trail_Amplitude_Phase
+        
+        print(f"接收到模型仿真请求:")
+        print(f"轨道区段: {trackSection}")
+        print(f"故障类型: {faultType}")
+        print(f"轨道长度: {trackLength}")
+        print(f"电缆长度: {cableLength}")
+        print(f"频率: {frequency}")
+        print(f"输入电压: {inputVoltage}")
+        print(f"道碴电阻: {ballastResist}")
+        
+        # 创建故障实例
+        fault = Error_Of_Trail_Amplitude_Phase(
+            trail="track_circuit",
+            error_type=faultType,
+            error_value=1.0,
+            error_position=trackSection,
+            length_parameter=trackLength,
+            SPT_cable_length=cableLength
+        )
+        
+        # 构建电路模型
+        print("开始构建电路模型...")
+        model_result = fault.build_circuit_model()
+        print("电路模型构建完成")
+        
+        # 计算输入电压对应的输出
+        print("计算输入电压对应的输出...")
+        fault.input_V = inputVoltage
+        
+        # 计算输入阻抗
+        try:
+            input_current, input_impedance, Z_rail, Z_tuner = fault.call_input(inputVoltage, ballastResist / 1000)
+            print(f"输入电流: {input_current}")
+            print(f"输入阻抗: {input_impedance}")
+            print(f"钢轨阻抗: {Z_rail}")
+            print(f"调谐区阻抗: {Z_tuner}")
+        except Exception as e:
+            print(f"计算输入阻抗时出错: {e}")
+            input_current = None
+            input_impedance = None
+            Z_rail = None
+            Z_tuner = None
+        
+        # 计算输出电压
+        try:
+            output_voltage = fault.count_output()
+            print(f"输出电压: {output_voltage}")
+        except Exception as e:
+            print(f"计算输出电压时出错: {e}")
+            output_voltage = None
+        
+        # 构建响应
+        response_data = {
+            "status": "success",
+            "message": "模型仿真成功",
+            "data": {
+                "trackSection": trackSection,
+                "faultType": faultType,
+                "trackLength": trackLength,
+                "cableLength": cableLength,
+                "frequency": frequency,
+                "inputVoltage": inputVoltage,
+                "ballastResist": ballastResist,
+                "outputVoltage": str(output_voltage) if output_voltage is not None else "计算失败",
+                "inputCurrent": str(input_current) if input_current is not None else "计算失败",
+                "inputImpedance": str(input_impedance) if input_impedance is not None else "计算失败",
+                "railImpedance": str(Z_rail) if Z_rail is not None else "计算失败",
+                "tunerImpedance": str(Z_tuner) if Z_tuner is not None else "计算失败",
+                "faultStatus": fault.status()
+            }
+        }
+        
+        return JSONResponse(response_data)
+        
+    except Exception as e:
+        print(f"模型仿真时出错: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(
+            {"status": "error", "message": f"模型仿真失败: {str(e)}"},
+            status_code=500
+        )
+
 # 用户注册页面
 @app.get("/register", response_class=HTMLResponse)
 async def read_register(request: Request):

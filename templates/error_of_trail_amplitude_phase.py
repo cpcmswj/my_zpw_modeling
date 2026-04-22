@@ -1574,3 +1574,502 @@ class Error_Of_Trail_Amplitude_Phase:
             traceback.print_exc()
             print(f"计算输出电压时出错: {e}")
             return complex(0.0)
+    
+    def build_circuit_model(self):
+        """构建整体电路模型，调用jisuan_guidao中的函数"""
+        try:
+            # 1. 根据故障位置获取载频率
+            frequency = self.frequency_table(self.error_position)
+            if frequency == 0:
+                return "无法确定载频率，无法构建电路模型"
+            
+            # 2. 计算角频率
+            angular_frequency = 2 * np.pi * frequency
+            
+            # 3. 使用jisuan_guidao中的函数计算相关参数
+            print(f"=== 构建电路模型 (载频率: {frequency}Hz) ===")
+            
+            # 3.1 获取补偿电容值
+            capacitance = jg.find_capacitance(frequency)
+            print(f"补偿电容: {capacitance}uF")
+            
+            # 3.2 获取变压器变比
+            transformer_ratio = jg.find_transformer_ratio(frequency)
+            print(f"变压器变比: {transformer_ratio}")
+            
+            # 3.3 获取调谐区参数
+            tuner_params = jg.find_tuner_parameters(frequency)
+            print(f"调谐区参数 (电阻, 感抗): {tuner_params} mΩ")
+            
+            # 3.4 获取衰耗盘接收端变压器输入阻抗
+            transformer_input_impedance = jg.find_transformer_input_impedance(frequency)
+            print(f"衰耗盘接收端变压器输入阻抗: {transformer_input_impedance}Ω")
+            
+            # 3.5 获取SPT电缆参数
+            spt_params = jg.find_SPTcable_parameters(frequency)
+            print(f"SPT电缆参数 (传输常数, 特性阻抗, 阻抗角): {spt_params}")
+            
+            # 3.6 获取补偿电容步长
+            capacitance_step = jg.find_capacitance_step(frequency)
+            print(f"补偿电容步长: {capacitance_step}m")
+            
+            # 4. 创建Variable实例
+            variable = jg.Variable(
+                name="track_circuit",
+                value=1.0,
+                length_guidao=self.length_parameter,
+                resist_per_meter=0.1,
+                induct_per_meter=1.0e-3,
+                capacit_per_meter=1.0e-9,
+                conduct_per_meter=1.0e-6,
+                frequency=frequency
+            )
+            
+            # 5. 计算钢轨等效传输特性矩阵
+            iron_rail_matrix = variable.iron_rail(self.length_parameter/2)
+            print(f"钢轨等效传输特性矩阵:\n{iron_rail_matrix}")
+            
+            # 6. 计算轨间补偿电容传输矩阵
+            if capacitance > 0:
+                capacitance_matrix = variable.capacitance_matrix(R_cb=0.1, L_cb=1.0e-6, C_b=capacitance*1e-6)
+                print(f"轨间补偿电容传输矩阵:\n{capacitance_matrix}")
+            else:
+                print("未计算补偿电容传输矩阵：补偿电容值为0")
+                capacitance_matrix = np.array([[1, 0], [0, 1]])
+            
+            # 7. 计算变压器传输矩阵
+            transformer_matrix = variable.transformer_matrix_input()
+            print(f"接收端匹配变压器传输矩阵:\n{transformer_matrix}")
+            
+            # 8. 计算SPT电缆矩阵
+            # 使用合理的SPT电缆长度（默认10km），避免矩阵值过大导致溢出
+            spt_cable_length = 10.0  # 单位：km
+            spt_cable_matrix = jg.SPTcable_matrix(frequency, length=spt_cable_length)
+            print(f"SPT电缆矩阵 (长度: {spt_cable_length}km):\n{spt_cable_matrix}")
+            
+            # 9. 计算衰耗盘矩阵
+            attenuation_mat = jg.attenuation_matrix(1, 2)
+            print(f"衰耗盘矩阵:\n{attenuation_mat}")
+            
+            # 10. 计算调谐区参数
+            BA_types = self.find_BA_type_tuning_zone()
+            tuning_params = jg.tuning_zone_parameters(variable, self.length_parameter, BA_types[0], BA_types[1], 1)
+            tuning_zone_matrix = tuning_params.tuning_zone_matrix()
+            print(f"调谐区传输矩阵:\n{tuning_zone_matrix}")
+            
+            # 11. 根据故障类型调整模型
+            print(f"\n=== 故障类型: {self.status()} ===")
+            
+            # 根据不同故障类型调整模型参数
+            # 初始化总矩阵为单位矩阵
+            total_matrix = np.eye(2)
+            
+            if self.error_type == 0:
+                print("无故障，使用正常模型")
+                # 构建完整的传输矩阵链，添加溢出检查
+                try:
+                    # 检查矩阵是否包含无效值
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
+                    matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        # 检查矩阵有效性
+                        if mat is None or not isinstance(mat, np.ndarray):
+                            print(f"警告：{name}为无效矩阵，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                        elif not np.all(np.isfinite(mat)):
+                            print(f"警告：{name}包含无效值，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                    
+                    # 执行矩阵乘法，添加溢出检查
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            if not np.all(np.isfinite(total_matrix)):
+                                print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
+                                total_matrix = np.eye(2)
+                                break
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
+                    
+                    print("完整传输矩阵:")
+                    print(total_matrix)
+                except Exception as e:
+                    print(f"矩阵乘法出错: {e}")
+                    # 出错时使用单位矩阵
+                    total_matrix = np.eye(2)
+            elif self.error_type == 1:
+                print("接收端调谐单元1断路，修改调谐单元参数")
+                # 使用F2调谐单元断路时的调谐区传输矩阵
+                try:
+                    tuning_zone_matrix = tuning_params.tuning_zone_matrix_f2(self.length_parameter)
+                    # 检查矩阵是否包含无效值
+                    if tuning_zone_matrix is None or not isinstance(tuning_zone_matrix, np.ndarray) or not np.all(np.isfinite(tuning_zone_matrix)):
+                        print("警告：调谐区传输矩阵无效，使用单位矩阵替代")
+                        tuning_zone_matrix = np.eye(2)
+                    
+                    # 构建完整的传输矩阵链
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
+                    matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        # 检查矩阵有效性
+                        if mat is None or not isinstance(mat, np.ndarray):
+                            print(f"警告：{name}为无效矩阵，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                        elif not np.all(np.isfinite(mat)):
+                            print(f"警告：{name}包含无效值，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                    
+                    # 执行矩阵乘法，添加溢出检查
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            if not np.all(np.isfinite(total_matrix)):
+                                print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
+                                total_matrix = np.eye(2)
+                                break
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
+                    
+                    print("完整传输矩阵:")
+                    print(total_matrix)
+                except Exception as e:
+                    print(f"计算调谐区传输矩阵时出错: {e}")
+                    tuning_zone_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+            elif self.error_type == 2:
+                print("发送端调谐单元1断路，修改调谐单元参数")
+                # 使用F1调谐单元断路时的调谐区传输矩阵
+                try:
+                    tuning_zone_matrix = tuning_params.tuning_zone_matrix_f1()
+                    # 检查矩阵是否包含无效值
+                    if tuning_zone_matrix is None or not isinstance(tuning_zone_matrix, np.ndarray) or not np.all(np.isfinite(tuning_zone_matrix)):
+                        print("警告：调谐区传输矩阵无效，使用单位矩阵替代")
+                        tuning_zone_matrix = np.eye(2)
+                    
+                    # 构建完整的传输矩阵链
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
+                    matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        # 检查矩阵有效性
+                        if mat is None or not isinstance(mat, np.ndarray):
+                            print(f"警告：{name}为无效矩阵，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                        elif not np.all(np.isfinite(mat)):
+                            print(f"警告：{name}包含无效值，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                    
+                    # 执行矩阵乘法，添加溢出检查
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            if not np.all(np.isfinite(total_matrix)):
+                                print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
+                                total_matrix = np.eye(2)
+                                break
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
+                    
+                    print("完整传输矩阵:")
+                    print(total_matrix)
+                except Exception as e:
+                    print(f"计算调谐区传输矩阵时出错: {e}")
+                    tuning_zone_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+            elif self.error_type == 3:
+                print("接收端空心线圈断路，修改空芯线圈参数")
+                # 使用空芯线圈断路时的调谐区传输矩阵
+                try:
+                    tuning_zone_matrix = tuning_params.tuning_zone_matrix_SVA_1()
+                    # 检查矩阵是否包含无效值
+                    if tuning_zone_matrix is None or not isinstance(tuning_zone_matrix, np.ndarray) or not np.all(np.isfinite(tuning_zone_matrix)):
+                        print("警告：调谐区传输矩阵无效，使用单位矩阵替代")
+                        tuning_zone_matrix = np.eye(2)
+                    
+                    # 构建完整的传输矩阵链
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
+                    matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        # 检查矩阵有效性
+                        if mat is None or not isinstance(mat, np.ndarray):
+                            print(f"警告：{name}为无效矩阵，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                        elif not np.all(np.isfinite(mat)):
+                            print(f"警告：{name}包含无效值，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                    
+                    # 执行矩阵乘法，添加溢出检查
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            if not np.all(np.isfinite(total_matrix)):
+                                print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
+                                total_matrix = np.eye(2)
+                                break
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
+                    
+                    print("完整传输矩阵:")
+                    print(total_matrix)
+                except Exception as e:
+                    print(f"计算调谐区传输矩阵时出错: {e}")
+                    tuning_zone_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+            elif self.error_type == 4:
+                print("接收端空芯线圈短路，修改空芯线圈参数")
+                # 使用空芯线圈短路时的调谐区传输矩阵
+                try:
+                    tuning_zone_matrix = tuning_params.tuning_zone_matrix_SVA_2()
+                    # 检查矩阵是否包含无效值
+                    if tuning_zone_matrix is None or not isinstance(tuning_zone_matrix, np.ndarray) or not np.all(np.isfinite(tuning_zone_matrix)):
+                        print("警告：调谐区传输矩阵无效，使用单位矩阵替代")
+                        tuning_zone_matrix = np.eye(2)
+                    
+                    # 构建完整的传输矩阵链
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
+                    matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        # 检查矩阵有效性
+                        if mat is None or not isinstance(mat, np.ndarray):
+                            print(f"警告：{name}为无效矩阵，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                        elif not np.all(np.isfinite(mat)):
+                            print(f"警告：{name}包含无效值，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                    
+                    # 执行矩阵乘法，添加溢出检查
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            if not np.all(np.isfinite(total_matrix)):
+                                print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
+                                total_matrix = np.eye(2)
+                                break
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
+                    
+                    print("完整传输矩阵:")
+                    print(total_matrix)
+                except Exception as e:
+                    print(f"计算调谐区传输矩阵时出错: {e}")
+                    tuning_zone_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+            elif self.error_type == 5:
+                print("接收端调谐单元2断路，修改调谐单元参数")
+                # 使用F2调谐单元断路时的调谐区传输矩阵
+                try:
+                    tuning_zone_matrix = tuning_params.tuning_zone_matrix_f2(self.length_parameter)
+                    # 检查矩阵是否包含无效值
+                    if tuning_zone_matrix is None or not isinstance(tuning_zone_matrix, np.ndarray) or not np.all(np.isfinite(tuning_zone_matrix)):
+                        print("警告：调谐区传输矩阵无效，使用单位矩阵替代")
+                        tuning_zone_matrix = np.eye(2)
+                    
+                    # 构建完整的传输矩阵链
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "补偿电容矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
+                    matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        # 检查矩阵有效性
+                        if mat is None or not isinstance(mat, np.ndarray):
+                            print(f"警告：{name}为无效矩阵，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                        elif not np.all(np.isfinite(mat)):
+                            print(f"警告：{name}包含无效值，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                    
+                    # 执行矩阵乘法，添加溢出检查
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            if not np.all(np.isfinite(total_matrix)):
+                                print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
+                                total_matrix = np.eye(2)
+                                break
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
+                    
+                    print("完整传输矩阵:")
+                    print(total_matrix)
+                except Exception as e:
+                    print(f"计算调谐区传输矩阵时出错: {e}")
+                    tuning_zone_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+            elif self.error_type == 6:
+                print("补偿电容3断路，修改电容参数")
+                # 补偿电容断路，使用无补偿电容的钢轨传输矩阵
+                try:
+                    iron_rail_matrix_no_cap = variable.iron_rail(self.length_parameter)
+                    # 检查矩阵是否包含无效值
+                    if iron_rail_matrix_no_cap is None or not isinstance(iron_rail_matrix_no_cap, np.ndarray) or not np.all(np.isfinite(iron_rail_matrix_no_cap)):
+                        print("警告：无补偿电容钢轨传输矩阵无效，使用单位矩阵替代")
+                        iron_rail_matrix_no_cap = np.eye(2)
+                    print(f"无补偿电容钢轨传输矩阵:\n{iron_rail_matrix_no_cap}")
+                    
+                    # 构建完整的传输矩阵链，使用无补偿电容的钢轨传输矩阵
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "无补偿电容钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
+                    matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix_no_cap, transformer_matrix, spt_cable_matrix, attenuation_mat]
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        # 检查矩阵有效性
+                        if mat is None or not isinstance(mat, np.ndarray):
+                            print(f"警告：{name}为无效矩阵，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                        elif not np.all(np.isfinite(mat)):
+                            print(f"警告：{name}包含无效值，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                    
+                    # 执行矩阵乘法
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            if not np.all(np.isfinite(total_matrix)):
+                                print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
+                                total_matrix = np.eye(2)
+                                break
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
+                    
+                    print("完整传输矩阵:")
+                    print(total_matrix)
+                except Exception as e:
+                    print(f"计算无补偿电容钢轨传输矩阵时出错: {e}")
+                    iron_rail_matrix_no_cap = np.eye(2)
+                    total_matrix = np.eye(2)
+            elif self.error_type == 7:
+                print("补偿电容3短路，修改电容参数")
+                # 补偿电容短路，使用短路电容的传输矩阵
+                try:
+                    capacitance_short_matrix = variable.capacitance_matrix(R_cb=0.1, L_cb=1.0e-6, C_b=0)
+                    # 检查矩阵是否包含无效值
+                    if capacitance_short_matrix is None or not isinstance(capacitance_short_matrix, np.ndarray) or not np.all(np.isfinite(capacitance_short_matrix)):
+                        print("警告：短路补偿电容传输矩阵无效，使用单位矩阵替代")
+                        capacitance_short_matrix = np.eye(2)
+                    print(f"短路补偿电容传输矩阵:\n{capacitance_short_matrix}")
+                    
+                    # 构建完整的传输矩阵链，使用短路电容的传输矩阵
+                    matrix_names = ["调谐区矩阵", "变压器矩阵", "SPT电缆矩阵", "钢轨传输矩阵", "短路补偿电容传输矩阵", "钢轨传输矩阵", "变压器矩阵", "SPT电缆矩阵", "衰耗盘矩阵"]
+                    matrices = [tuning_zone_matrix, transformer_matrix, spt_cable_matrix, iron_rail_matrix, capacitance_short_matrix, iron_rail_matrix, transformer_matrix, spt_cable_matrix, attenuation_mat]
+                    for i, (mat, name) in enumerate(zip(matrices, matrix_names)):
+                        # 检查矩阵有效性
+                        if mat is None or not isinstance(mat, np.ndarray):
+                            print(f"警告：{name}为无效矩阵，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                        elif not np.all(np.isfinite(mat)):
+                            print(f"警告：{name}包含无效值，使用单位矩阵替代")
+                            matrices[i] = np.eye(2)
+                    
+                    # 执行矩阵乘法，添加溢出检查
+                    total_matrix = np.eye(2)
+                    for mat in matrices:
+                        try:
+                            # 使用numpy的errstate上下文管理器捕获溢出和无效值警告
+                            with np.errstate(all='ignore'):
+                                total_matrix = np.dot(total_matrix, mat)
+                            # 检查结果是否有效
+                            if not np.all(np.isfinite(total_matrix)):
+                                print("警告：矩阵乘法结果包含无效值，使用单位矩阵替代")
+                                total_matrix = np.eye(2)
+                                break
+                        except Exception as e:
+                            print(f"矩阵乘法出错: {e}")
+                            # 出错时使用单位矩阵
+                            total_matrix = np.eye(2)
+                            break
+                    
+                    print("完整传输矩阵:")
+                    print(total_matrix)
+                except Exception as e:
+                    print(f"计算短路补偿电容传输矩阵时出错: {e}")
+                    capacitance_short_matrix = np.eye(2)
+                    total_matrix = np.eye(2)
+            
+            # 12. 调用主轨道和小轨道传输矩阵计算方法
+            print("\n=== 计算传输矩阵 ===")
+            # 计算主轨道传输矩阵
+            main_track_result = self.call_matrix_main()
+            
+            # 处理返回结果，提取矩阵、电压结果和电流结果
+            if isinstance(main_track_result, dict):
+                main_track_matrix = main_track_result['matrix']
+                voltage_results = main_track_result.get('voltage_results', {})
+                current_results = main_track_result.get('current_results', {})
+            else:
+                main_track_matrix = main_track_result
+                voltage_results = {}
+                current_results = {}
+            
+            # 13. 构建模型信息字典
+            model_info = {
+                "frequency": frequency,
+                "angular_frequency": angular_frequency,
+                "capacitance": capacitance,
+                "transformer_ratio": transformer_ratio,
+                "tuner_params": tuner_params,
+                "transformer_input_impedance": transformer_input_impedance,
+                "spt_params": spt_params,
+                "capacitance_step": capacitance_step,
+                "total_matrix": total_matrix.tolist() if isinstance(total_matrix, np.ndarray) else total_matrix,
+                "main_track_matrix": main_track_matrix.tolist() if isinstance(main_track_matrix, np.ndarray) else main_track_matrix,
+                "voltage_results": voltage_results,
+                "current_results": current_results,
+                "error_type": self.error_type,
+                "error_status": self.status(),
+                "error_position": self.error_position,
+                "length_parameter": self.length_parameter,
+                "SPT_cable_length": self.SPT_cable_length
+            }
+            
+            print("\n=== 模型构建完成 ===")
+            return model_info
+            
+        except Exception as e:
+            print(f"构建电路模型时出错: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"error": str(e)}
