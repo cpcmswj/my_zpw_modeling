@@ -472,6 +472,9 @@ class Error_Of_Trail_Amplitude_Phase:
                         iron_rail_inv_matrix = np.eye(2)
                     
                     self.output_voltage_surface2 = np.dot(iron_rail_inv_matrix, self.output_voltage_surface1)
+                    
+                    # 设置主轨入电压属性，用于外部访问
+                    self.output_voltage_main = self.output_voltage_surface1[0]
                     # 检查结果是否有效
                     if not np.all(np.isfinite(self.output_voltage_surface2)):
                         print("警告：受端轨面电压电流矩阵计算结果包含无效值，使用默认值替代")

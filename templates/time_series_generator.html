@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时序数据生成</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-top: 60px;
+        }
+
+        h1 {
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #999;
+            font-size: 18px;
+        }
+
+        .main-content {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            border: 2px solid #3498db;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn:disabled {
+            background-color: #7f8c8d;
+            cursor: not-allowed;
+        }
+
+        .btn.secondary {
+            background-color: #95a5a6;
+        }
+
+        .btn.secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .btn.danger {
+            background-color: #e74c3c;
+        }
+
+        .btn.danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-primary {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #219653;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #27ae60;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            margin-top: 5px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .status-message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .success {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .error {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .info {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .side-floating-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 200px;
+            border: none;
+            border-radius: 0 10px 10px 0;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .side-floating-btn:hover {
+            width: 80px;
+        }
+
+        .side-floating-btn-left {
+            left: 0;
+            background-color: #3498db;
+        }
+
+        .side-floating-btn-right {
+            right: 0;
+            background-color: #27ae60;
+        }
+
+        .left-menu {
+            position: fixed;
+            left: -300px;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background-color: #1e1e1e;
+            border-right: 2px solid #3498db;
+            transition: left 0.3s ease;
+            z-index: 2000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .left-menu.active {
+            left: 0;
+        }
+
+        .right-menu {
+            position: fixed;
+            right: -500px;
+            top: 0;
+            width: 500px;
+            height: 100vh;
+            background-color: #1e1e1e;
+            border-left: 2px solid #3498db;
+            transition: right 0.3s ease;
+            z-index: 2000;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .right-menu.active {
+            right: 0;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1500;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .menu-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #3498db;
+            background-color: #333;
+            color: #fff;
+            box-sizing: border-box;
+        }
+
+        .save-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .save-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .selection-status {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-label {
+            font-weight: bold;
+            color: #999;
+        }
+
+        .status-value {
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .result-section {
+            margin-top: 30px;
+        }
+
+        .result-section h2 {
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .result-content {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #3498db;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .result-item.success {
+            background-color: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid #27ae60;
+        }
+
+        .result-item.error {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+        }
+
+        .result-item.info {
+            background-color: rgba(52, 152, 219, 0.2);
+            border-left: 4px solid #3498db;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .login-section {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .login-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .login-btn:hover {
+            background-color: #219653;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .access-denied {
+            background-color: #000;
+            color: #e74c3c;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+            border: 2px solid #3498db;
+        }
+
+        .access-denied h3 {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-section" id="userInfoSection" style="display: none;">
+        <div class="user-info">
+            <span id="userName">用户</span>
+            <button class="logout-btn" onclick="logout()">登出</button>
+        </div>
+    </div>
+
+    <button class="side-floating-btn side-floating-btn-left" onclick="openLeftMenu()">选择区段/故障类型</button>
+    <button class="side-floating-btn side-floating-btn-right" onclick="openParameterWindow()">参数设置</button>
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="left-menu" id="leftMenu">
+        <div class="menu-header">
+            <h2 class="menu-title">选择轨道区段和故障类型</h2>
+            <button class="close-btn" onclick="closeLeftMenu()">&times;</button>
+        </div>
+        <div class="form-group">
+            <label for="trackSection">轨道区段:</label>
+            <select id="trackSection" name="trackSection" onchange="onTrackSectionChange()">
+                <option value="">请选择轨道区段</option>
+                <option value="69G">69G</option>
+                <option value="X1LQG">X1LQG</option>
+                <option value="IG1">IG1</option>
+                <option value="57G">57G</option>
+                <option value="3DG">3DG</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="faultType">故障类型:</label>
+            <select id="faultType" name="faultType">
+                <option value="0">无故障</option>
+                <option value="1">接收端调谐单元1断路</option>
+                <option value="2">发送端调谐单元1断路</option>
+                <option value="3">接收端空心线圈断路</option>
+                <option value="4">接收端空芯线圈短路</option>
+                <option value="5">接收端调谐单元2断路</option>
+                <option value="6">补偿电容3断路</option>
+                <option value="7">补偿电容3短路</option>
+            </select>
+        </div>
+        <button class="save-btn" onclick="saveSelection()">保存选择</button>
+    </div>
+
+    <div class="right-menu" id="rightMenu">
+        <div class="menu-header">
+            <h2 class="menu-title">参数设置</h2>
+            <button class="close-btn" onclick="closeParameterWindow()">&times;</button>
+        </div>
+        <div class="form-group">
+            <label for="trackName">轨道名称:</label>
+            <input type="text" id="trackName" name="trackName" value="测试轨道">
+        </div>
+        <div class="form-group">
+            <label for="trackLength">轨道长度 (m):</label>
+            <input type="number" id="trackLength" name="trackLength" value="1200.0" step="0.1">
+        </div>
+        <div class="form-group">
+            <label for="resistance">电阻 (Ω/m):</label>
+            <input type="number" id="resistance" name="resistance" value="0.1" step="0.01">
+        </div>
+        <div class="form-group">
+            <label for="inductance">电感 (H/m):</label>
+            <input type="number" id="inductance" name="inductance" value="0.001" step="0.0001">
+        </div>
+        <div class="form-group">
+            <label for="capacitance">电容 (F/m):</label>
+            <input type="number" id="capacitance" name="capacitance" value="1e-9" step="1e-10">
+        </div>
+        <div class="form-group">
+            <label for="leakageResistance">漏电阻抗 (Ω·km):</label>
+            <input type="number" id="leakageResistance" name="leakageResistance" value="1.0" step="0.1">
+        </div>
+        <div class="form-group">
+            <label for="cableLength">电缆长度 (km):</label>
+            <input type="number" id="cableLength" name="cableLength" value="10.0" step="0.1">
+        </div>
+        <div class="form-group">
+            <label for="errorValue">故障值:</label>
+            <input type="number" id="errorValue" name="errorValue" value="1.0" step="0.1">
+        </div>
+        <div class="form-group">
+            <label for="r1">R1:</label>
+            <input type="number" id="r1" name="r1" value="1" step="1">
+        </div>
+        <div class="form-group">
+            <label for="r2">R2:</label>
+            <input type="number" id="r2" name="r2" value="1" step="1">
+        </div>
+        <div class="form-group">
+            <label for="voltageLevel">发送端电压档位:</label>
+            <select id="voltageLevel" name="voltageLevel">
+                <option value="1">1档 (161-170V)</option>
+                <option value="2">2档 (146-154V)</option>
+                <option value="3" selected>3档 (128-135V)</option>
+                <option value="4">4档 (104.5-110.5V)</option>
+                <option value="5">5档 (75-79.5V)</option>
+                <option value="6">6档 (75-170V)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="voltageCount">数据个数:</label>
+            <input type="number" id="voltageCount" name="voltageCount" value="15" min="1" max="100" step="1">
+        </div>
+        <div class="form-group">
+            <label for="useRandomVoltage">随机电压:</label>
+            <input type="checkbox" id="useRandomVoltage" name="useRandomVoltage">
+        </div>
+        <button class="save-btn" onclick="saveParameters()">保存参数</button>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>时序数据生成</h1>
+            <p class="subtitle">铁路轨道电路故障模拟系统</p>
+        </header>
+
+        <div class="main-content">
+            <div class="controls">
+                <button class="btn btn-primary" id="startSimulationBtn" onclick="startTimeSeriesSimulation()">开始时序数据生成</button>
+                <button class="btn btn-danger" id="stopSimulationBtn" onclick="stopTimeSeriesSimulation()" disabled>停止生成</button>
+                <button class="btn btn-secondary" onclick="clearResults()">清空结果</button>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">准备开始...</div>
+            </div>
+
+            <div class="selection-status">
+                <div class="status-item">
+                    <span class="status-label">轨道区段:</span>
+                    <span class="status-value" id="trackSectionValue">未选择</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">故障类型:</span>
+                    <span class="status-value" id="faultTypeValue">未选择</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">仿真进度:</span>
+                    <span class="status-value" id="resultStats">0 / 0</span>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h2>生成结果</h2>
+                <div class="result-content" id="resultContent">
+                    <p>请设置参数并点击"开始时序数据生成"按钮</p>
+                </div>
+
+                <div class="download-buttons" id="downloadButtons" style="display: none;">
+                    <button class="btn" onclick="downloadCSV()">下载 CSV 文件</button>
+                    <button class="btn" onclick="downloadJSON()">下载 JSON 文件</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isLoggedIn = false;
+        let currentUser = null;
+
+        const faultTypeNames = {
+            '0': '无故障',
+            '1': '接收端调谐单元1断路',
+            '2': '发送端调谐单元1断路',
+            '3': '接收端空心线圈断路',
+            '4': '接收端空芯线圈短路',
+            '5': '接收端调谐单元2断路',
+            '6': '补偿电容3断路',
+            '7': '补偿电容3短路'
+        };
+
+        const trackSectionParams = {
+            '69G': { trackLength: 1200.0, cableLength: 10.0 },
+            'X1LQG': { trackLength: 1100.0, cableLength: 8.0 },
+            'IG1': { trackLength: 1300.0, cableLength: 12.0 },
+            '57G': { trackLength: 1000.0, cableLength: 9.0 },
+            '3DG': { trackLength: 1150.0, cableLength: 11.0 }
+        };
+
+        let currentSelection = { trackSection: '', faultType: '0' };
+
+        let trackParameters = {
+            trackName: "测试轨道",
+            trackLength: 1200.0,
+            resistance: 0.1,
+            inductance: 0.001,
+            capacitance: 1e-9,
+            leakageResistance: 1.0,
+            cableLength: 10.0,
+            errorValue: 1.0,
+            r1: 1,
+            r2: 1
+        };
+
+        let simulationResults = [];
+        let isSimulationRunning = false;
+        let currentSimulationIndex = 0;
+        let totalSimulationCount = 0;
+        let abortControllers = [];
+
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                isLoggedIn = true;
+                updateLoginUI();
+            } else {
+                isLoggedIn = false;
+                currentUser = null;
+                updateLoginUI();
+                showLoginPrompt();
+            }
+        }
+
+        function updateLoginUI() {
+            const userInfoSection = document.getElementById('userInfoSection');
+            const userName = document.getElementById('userName');
+            if (isLoggedIn && currentUser) {
+                userInfoSection.style.display = 'block';
+                userName.textContent = currentUser.username;
+            } else {
+                userInfoSection.style.display = 'none';
+            }
+        }
+
+        function showLoginPrompt() {
+            const container = document.querySelector('.container');
+            container.innerHTML = `
+                <div class="access-denied">
+                    <h3>访问被拒绝</h3>
+                    <p>请先登录以使用仿真系统功能</p>
+                    <form class="login-form" onsubmit="event.preventDefault(); login()">
+                        <div>
+                            <label for="loginUsername">用户名:</label>
+                            <input type="text" id="loginUsername" name="loginUsername" required>
+                        </div>
+                        <div>
+                            <label for="loginPassword">密码:</label>
+                            <input type="password" id="loginPassword" name="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn">登录</button>
+                        <div class="login-error" id="loginError" style="display: none;">用户名或密码错误</div>
+                    </form>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <p style="color: #ccc; margin-bottom: 10px;">还没有账号？</p>
+                        <a href="/register" class="btn" style="background-color: #27ae60; text-decoration: none;">立即注册</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'include'
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    isLoggedIn = true;
+                    currentUser = { username: username };
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    window.location.reload();
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            currentUser = null;
+            localStorage.removeItem('user');
+            window.location.reload();
+        }
+
+        function openLeftMenu() {
+            document.getElementById('leftMenu').classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+        }
+
+        function closeLeftMenu() {
+            document.getElementById('leftMenu').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        function onTrackSectionChange() {
+            const section = document.getElementById('trackSection').value;
+            if (section && trackSectionParams[section]) {
+                const params = trackSectionParams[section];
+                document.getElementById('trackLength').value = params.trackLength;
+                document.getElementById('cableLength').value = params.cableLength;
+            }
+        }
+
+        function saveSelection() {
+            const section = document.getElementById('trackSection').value;
+            const faultType = document.getElementById('faultType').value;
+            if (!section) {
+                showStatusMessage('请选择轨道区段！', 'error');
+                return;
+            }
+            currentSelection.trackSection = section;
+            currentSelection.faultType = faultType;
+            document.getElementById('trackSectionValue').textContent = section;
+            document.getElementById('faultTypeValue').textContent = faultTypeNames[faultType];
+            showStatusMessage('选择已保存！', 'success');
+            closeLeftMenu();
+        }
+
+        function openParameterWindow() {
+            document.getElementById('trackName').value = trackParameters.trackName;
+            document.getElementById('trackLength').value = trackParameters.trackLength;
+            document.getElementById('resistance').value = trackParameters.resistance;
+            document.getElementById('inductance').value = trackParameters.inductance;
+            document.getElementById('capacitance').value = trackParameters.capacitance;
+            document.getElementById('leakageResistance').value = trackParameters.leakageResistance;
+            document.getElementById('cableLength').value = trackParameters.cableLength;
+            document.getElementById('errorValue').value = trackParameters.errorValue;
+            document.getElementById('r1').value = trackParameters.r1;
+            document.getElementById('r2').value = trackParameters.r2;
+            document.getElementById('rightMenu').classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+        }
+
+        function closeParameterWindow() {
+            document.getElementById('rightMenu').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        function saveParameters() {
+            trackParameters = {
+                trackName: document.getElementById('trackName').value,
+                trackLength: parseFloat(document.getElementById('trackLength').value),
+                resistance: parseFloat(document.getElementById('resistance').value),
+                inductance: parseFloat(document.getElementById('inductance').value),
+                capacitance: parseFloat(document.getElementById('capacitance').value),
+                leakageResistance: parseFloat(document.getElementById('leakageResistance').value),
+                cableLength: parseFloat(document.getElementById('cableLength').value),
+                errorValue: parseFloat(document.getElementById('errorValue').value),
+                r1: parseInt(document.getElementById('r1').value),
+                r2: parseInt(document.getElementById('r2').value)
+            };
+            showStatusMessage('参数已保存！', 'success');
+            closeParameterWindow();
+        }
+
+        function showStatusMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `status-message ${type}`;
+            messageDiv.textContent = message;
+            const container = document.querySelector('.main-content');
+            container.appendChild(messageDiv);
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+                setTimeout(() => { container.removeChild(messageDiv); }, 300);
+            }, 3000);
+        }
+
+        function getVoltageRange(level) {
+            switch(level) {
+                case 1:
+                    return { min: 161, max: 170 };
+                case 2:
+                    return { min: 146, max: 154 };
+                case 3:
+                    return { min: 128, max: 135 };
+                case 4:
+                    return { min: 104.5, max: 110.5 };
+                case 5:
+                    return { min: 75, max: 79.5 };
+                default:
+                    return { min: 75, max: 170 };
+            }
+        }
+
+        function generateVoltageValues() {
+            const voltageLevel = parseInt(document.getElementById('voltageLevel').value);
+            const useRandomVoltage = document.getElementById('useRandomVoltage').checked;
+            const voltageCount = parseInt(document.getElementById('voltageCount').value);
+            
+            const range = getVoltageRange(voltageLevel);
+            const voltageValues = [];
+            
+            if (useRandomVoltage) {
+                // 生成随机电压值
+                for (let i = 0; i < voltageCount; i++) {
+                    const voltage = range.min + Math.random() * (range.max - range.min);
+                    voltageValues.push(parseFloat(voltage.toFixed(1)));
+                }
+                // 排序
+                voltageValues.sort((a, b) => a - b);
+            } else {
+                // 生成均匀分布的电压值
+                const step = (range.max - range.min) / (voltageCount - 1);
+                for (let i = 0; i < voltageCount; i++) {
+                    const voltage = range.min + i * step;
+                    voltageValues.push(parseFloat(voltage.toFixed(1)));
+                }
+            }
+            
+            return voltageValues;
+        }
+
+        function clearResults() {
+            document.getElementById('resultContent').innerHTML = '<p>请设置参数并点击"开始时序数据生成"按钮</p>';
+            document.getElementById('downloadButtons').style.display = 'none';
+            simulationResults = [];
+            document.getElementById('resultStats').textContent = '0 / 0';
+        }
+
+        function addResultItem(type, message) {
+            const resultContent = document.getElementById('resultContent');
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item ${type}`;
+            resultItem.textContent = message;
+            resultContent.appendChild(resultItem);
+            resultContent.scrollTop = resultContent.scrollHeight;
+        }
+
+        function stopTimeSeriesSimulation() {
+            isSimulationRunning = false;
+            abortControllers.forEach(controller => { controller.abort(); });
+            abortControllers = [];
+        }
+
+        async function simulateSingle(params) {
+            const formData = new FormData();
+            formData.append('trail', `time_series_${Date.now()}_${Math.floor(Math.random() * 1000)}`);
+            formData.append('error_type', params.error_type);
+            formData.append('error_value', params.error_value);
+            formData.append('error_position', params.section_id);
+            formData.append('track_length', params.track_length);
+            formData.append('resist_per_meter', params.resistance);
+            formData.append('induct_per_meter', params.inductance);
+            formData.append('capacit_per_meter', params.capacitance);
+            formData.append('conduct_per_meter', 1.0 / (params.leakage_resistance * 1000));
+            formData.append('frequency', params.frequency);
+            formData.append('spt_cable_length', params.spt_cable_length);
+            formData.append('r1', params.r1);
+            formData.append('r2', params.r2);
+            formData.append('input_V', params.voltage);
+
+            try {
+                if (!isSimulationRunning) throw new Error('模拟已停止');
+                const controller = new AbortController();
+                abortControllers.push(controller);
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                try {
+                    const response = await fetch('/api/calculate/track-circuit', {
+                        method: 'POST',
+                        body: formData,
+                        signal: controller.signal,
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    clearTimeout(timeoutId);
+                    const index = abortControllers.indexOf(controller);
+                    if (index > -1) abortControllers.splice(index, 1);
+                    if (!response.ok) throw new Error(`API调用失败: ${response.status}`);
+                    const result = await response.json();
+                    if (result.status !== 'success') throw new Error(result.message || '模拟失败');
+                    return result;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    const index = abortControllers.indexOf(controller);
+                    if (index > -1) abortControllers.splice(index, 1);
+                    throw error;
+                }
+            } catch (error) {
+                console.error('模拟失败:', error);
+                throw error;
+            }
+        }
+
+        function processSimulationResult(simulation) {
+            currentSimulationIndex++;
+            if (simulation.error) {
+                const errorMessage = simulation.error.message || simulation.error || '未知错误';
+                addResultItem('error', `模拟失败 (电压: ${(simulation.params.voltage || 0).toFixed(1)}V): ${errorMessage}`);
+            } else {
+                const result = simulation.result;
+                const params = simulation.params;
+                if (!result) {
+                    addResultItem('error', `模拟失败 (电压: ${(params.voltage || 0).toFixed(1)}V): 无效的模拟结果`);
+                    return;
+                }
+                const voltageResults = result.voltage_results || {
+                    send_end_track_voltage: 0,
+                    receive_end_track_voltage: 0,
+                    main_track_input_voltage: 0,
+                    main_track_output_voltage_1: 0
+                };
+                const resultData = {
+                    voltage: params.voltage,
+                    section_id: params.section_id,
+                    error_type: params.error_type,
+                    track_length: params.track_length,
+                    send_end_track_voltage: voltageResults.send_end_track_voltage || 0,
+                    receive_end_track_voltage: voltageResults.receive_end_track_voltage || 0,
+                    main_track_input_voltage: voltageResults.main_track_input_voltage || 0,
+                    main_track_output_voltage_1: voltageResults.main_track_output_voltage_1 || 0,
+                    input_impedance: result.input_impedance || 0,
+                    input_current: result.input_current || 0,
+                    timestamp: new Date().toISOString()
+                };
+                simulationResults.push(resultData);
+                addResultItem('success', `模拟成功 (电压: ${(params.voltage || 0).toFixed(1)}V) - 送端轨面电压: ${(voltageResults.send_end_track_voltage || 0).toFixed(2)}V, 受端轨面电压: ${(voltageResults.receive_end_track_voltage || 0).toFixed(2)}V, 主轨入电压: ${(voltageResults.main_track_input_voltage || 0).toFixed(2)}V, 轨出1电压: ${(voltageResults.main_track_output_voltage_1 || 0).toFixed(2)}V`);
+            }
+            const progress = (currentSimulationIndex / totalSimulationCount) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('resultStats').textContent = `${currentSimulationIndex} / ${totalSimulationCount}`;
+        }
+
+        function finishTimeSeriesSimulation() {
+            isSimulationRunning = false;
+            document.getElementById('startSimulationBtn').disabled = false;
+            document.getElementById('stopSimulationBtn').disabled = true;
+            document.getElementById('progressText').textContent = '时序数据生成完成！';
+            if (simulationResults.length > 0) {
+                document.getElementById('downloadButtons').style.display = 'flex';
+                addResultItem('success', `时序数据生成完成！共生成 ${simulationResults.length} 条有效数据。`);
+            } else {
+                addResultItem('error', '时序数据生成完成，但未生成任何有效数据。');
+            }
+        }
+
+        async function startTimeSeriesSimulation() {
+            if (!currentSelection.trackSection) {
+                showStatusMessage('请先选择轨道区段和故障类型！', 'error');
+                return;
+            }
+            const sectionId = currentSelection.trackSection;
+            const errorType = parseInt(currentSelection.faultType);
+            const { trackLength, resistance, inductance, capacitance, leakageResistance, cableLength, errorValue, r1, r2 } = trackParameters;
+
+            const voltageValues = generateVoltageValues();
+            totalSimulationCount = voltageValues.length;
+            if (totalSimulationCount <= 0) {
+                alert('无效的电压设置');
+                return;
+            }
+
+            simulationResults = [];
+            isSimulationRunning = true;
+            currentSimulationIndex = 0;
+
+            document.getElementById('startSimulationBtn').disabled = true;
+            document.getElementById('stopSimulationBtn').disabled = false;
+            document.getElementById('downloadButtons').style.display = 'none';
+            document.getElementById('resultContent').innerHTML = '<p class="result-item info">正在准备时序数据生成...</p>';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressText').textContent = '准备开始...';
+
+            try {
+                let frequency;
+                if (sectionId === "69G" || sectionId === "X1LQG" || sectionId === "IG1") {
+                    frequency = 1700;
+                } else if (sectionId === "57G" || sectionId === "3DG") {
+                    frequency = 2300;
+                } else {
+                    frequency = 1700;
+                }
+
+                for (let i = 0; i < voltageValues.length; i++) {
+                    if (!isSimulationRunning) break;
+                    const voltage = voltageValues[i];
+                    const params = {
+                        section_id: sectionId,
+                        frequency: frequency,
+                        error_type: errorType,
+                        error_value: errorValue,
+                        track_length: trackLength,
+                        resistance: resistance,
+                        inductance: inductance,
+                        capacitance: capacitance,
+                        leakage_resistance: leakageResistance,
+                        spt_cable_length: cableLength,
+                        r1: r1,
+                        r2: r2,
+                        voltage: voltage
+                    };
+                    try {
+                        const result = await simulateSingle(params);
+                        processSimulationResult({ params, result });
+                    } catch (error) {
+                        console.error('模拟失败:', error);
+                        processSimulationResult({ params, error: error });
+                    }
+                }
+            } catch (error) {
+                console.error('时序数据生成失败:', error);
+                addResultItem('error', `时序数据生成失败: ${error.message}`);
+            } finally {
+                finishTimeSeriesSimulation();
+            }
+        }
+
+        function downloadCSV() {
+            if (simulationResults.length === 0) {
+                showStatusMessage('没有数据可下载！', 'error');
+                return;
+            }
+            let csvContent = '电压 (V),送端轨面电压 (V),受端轨面电压 (V),主轨入电压 (V),轨出1电压 (V),输入阻抗 (Ω),输入电流 (A),时间戳\n';
+            simulationResults.forEach(item => {
+                csvContent += `${item.voltage.toFixed(1)},${item.send_end_track_voltage.toFixed(2)},${item.receive_end_track_voltage.toFixed(2)},${item.main_track_input_voltage.toFixed(2)},${item.main_track_output_voltage_1.toFixed(2)},${item.input_impedance.toFixed(2)},${item.input_current.toFixed(4)},${item.timestamp}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `time_series_data_${new Date().toISOString().slice(0, 19).replace(/[-:]/g, '')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showStatusMessage('CSV文件下载成功！', 'success');
+        }
+
+        function downloadJSON() {
+            if (simulationResults.length === 0) {
+                showStatusMessage('没有数据可下载！', 'error');
+                return;
+            }
+            const jsonContent = JSON.stringify(simulationResults, null, 2);
+            const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `time_series_data_${new Date().toISOString().slice(0, 19).replace(/[-:]/g, '')}.json`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showStatusMessage('JSON文件下载成功！', 'success');
+        }
+
+        document.getElementById('overlay').addEventListener('click', function() {
+            closeLeftMenu();
+            closeParameterWindow();
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+        });
+    </script>
+</body>
+</html>

@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>轨道参数设置 - 铁路轨道电路故障模拟系统</title>
-    <style>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>轨道参数设置 - 铁路轨道电路故障模拟系统</title>
+        <!-- 引入Chart.js库 -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
         * {
             margin: 0;
             padding: 0;
@@ -357,9 +359,169 @@
         .toggle-window-btn:hover {
             background: #2980b9;
         }
+        .simulation-result-item.full-width {
+            grid-column: 1 / -1;
+        }
+        .simulation-results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .simulation-results-table th,
+        .simulation-results-table td {
+            border: 1px solid #3498db;
+            padding: 8px;
+            text-align: center;
+        }
+        .simulation-results-table th {
+            background-color: #333;
+            color: #3498db;
+            font-weight: bold;
+        }
+        .simulation-results-table tr:hover {
+            background-color: #444;
+        }
+        
+        .simulation-result-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .simulation-chart-container {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+        }
+        
+        #simulationChart {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        /* 登录相关样式 */
+        .login-section {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        
+        .login-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .login-btn:hover {
+            background-color: #219653;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .login-modal-content {
+            background-color: #000;
+            margin: 15% auto;
+            padding: 30px;
+            border: 2px solid #3498db;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            color: #fff;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+            align-items: center;
+        }
+        
+        .login-form input[type="text"],
+        .login-form input[type="password"] {
+            padding: 10px;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #333;
+            color: #fff;
+            width: 300px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .login-form button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            width: 300px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .login-form button:hover {
+            background-color: #2980b9;
+        }
+        
+        .login-error {
+            color: #e74c3c;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .access-denied {
+            background-color: #000;
+            color: #e74c3c;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+            border: 2px solid #3498db;
+        }
+        
+        .access-denied h3 {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
+    <!-- 登录部分 -->
+    <div class="login-section" id="userInfoSection" style="display: none;">
+        <div class="user-info">
+            <span id="userName">用户</span>
+            <button class="logout-btn" onclick="logout()">登出</button>
+        </div>
+    </div>
+
     <!-- 左侧悬浮按钮 -->
     <button class="side-floating-btn side-floating-btn-left" onclick="openLeftMenu()">选择区段/故障类型</button>
 
@@ -374,12 +536,19 @@
         
         <div class="main-content">
             <div class="controls">
+                <button class="btn btn-primary" onclick="runFullSimulation()">运行完整仿真</button>
                 <button class="btn btn-secondary" onclick="applyParameters()">应用参数</button>
                 <button class="btn btn-secondary" onclick="buildCircuitModel()">构建电路模型</button>
                 <button class="btn btn-secondary" onclick="simulateModel()">仿真模型</button>
                 <button class="btn btn-secondary" onclick="clearModel()">清空模型</button>
                 <button class="btn btn-secondary" onclick="downloadCsv()">下载CSV</button>
                 <button class="btn btn-danger" onclick="resetParameters()">重置参数</button>
+            </div>
+            
+            <!-- 操作进度条 -->
+            <div class="progress-container" id="progressContainer" style="margin-top: 20px; display: none;">
+                <div class="progress-bar" id="progressBar" style="width: 0%; height: 10px; background-color: #3498db; border-radius: 5px;"></div>
+                <div class="progress-text" id="progressText" style="margin-top: 5px; text-align: center; color: #fff;">准备开始...</div>
             </div>
             
             <!-- 电路模型结果 -->
@@ -549,6 +718,18 @@
                 <input type="number" id="ballastResist" value="1.0" step="0.1" min="0.1">
             </div>
             
+            <div class="form-group">
+                <label for="voltageLevel">电平档位:</label>
+                <select id="voltageLevel" name="voltageLevel">
+                    <option value="1">1档 (161-170V)</option>
+                    <option value="2">2档 (146-154V)</option>
+                    <option value="3">3档 (128-135V)</option>
+                    <option value="4">4档 (104.5-110.5V)</option>
+                    <option value="5">5档 (75-79.5V)</option>
+                    <option value="6">6档 (75-170V)</option>
+                </select>
+            </div>
+            
             <div class="controls" style="margin-top: 30px;">
                 <button type="button" class="btn" onclick="saveParameters()">保存参数</button>
                 <button type="button" class="btn btn-secondary" onclick="closeParameterWindow()">取消</button>
@@ -562,8 +743,13 @@
             <h3>仿真结果详情</h3>
             <button class="close-bottom-btn" onclick="closeBottomWindow()">&times;</button>
         </div>
-        <div class="simulation-result-grid" id="simulationResultGrid">
-            <p style="color: #ccc;">暂无仿真结果，请先执行仿真操作</p>
+        <div class="simulation-result-content">
+            <div class="simulation-result-grid" id="simulationResultGrid">
+                <p style="color: #ccc;">暂无仿真结果，请先执行仿真操作</p>
+            </div>
+            <div class="simulation-chart-container" id="simulationChartContainer">
+                <canvas id="simulationChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -571,6 +757,10 @@
     <button class="toggle-window-btn" id="toggleWindowBtn" onclick="toggleBottomWindow()">查看仿真结果</button>
 
     <script>
+        // 登录相关变量
+        let isLoggedIn = false;
+        let currentUser = null;
+        
         // 故障类型映射
         const faultTypeNames = {
             '0': '无故障',
@@ -607,8 +797,119 @@
             inductance: 0.001,
             capacitance: 1e-9,
             cableLength: 10.0,
-            ballastResist: 1.0
+            ballastResist: 1.0,
+            voltageLevel: 3
         };
+        
+        // 检查登录状态
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                isLoggedIn = true;
+                updateLoginUI();
+                enableSimulationFeatures();
+            } else {
+                isLoggedIn = false;
+                currentUser = null;
+                updateLoginUI();
+                showLoginPrompt();
+            }
+        }
+        
+        // 更新登录UI
+        function updateLoginUI() {
+            const userInfoSection = document.getElementById('userInfoSection');
+            const userName = document.getElementById('userName');
+            
+            if (isLoggedIn && currentUser) {
+                userInfoSection.style.display = 'block';
+                userName.textContent = currentUser.username;
+            } else {
+                userInfoSection.style.display = 'none';
+            }
+        }
+        
+        // 显示登录提示
+        function showLoginPrompt() {
+            const container = document.querySelector('.container');
+            container.innerHTML = `
+                <div class="access-denied">
+                    <h3>访问被拒绝</h3>
+                    <p>请先登录以使用仿真系统功能</p>
+                    <form class="login-form" onsubmit="event.preventDefault(); login()">
+                        <div>
+                            <label for="loginUsername">用户名:</label>
+                            <input type="text" id="loginUsername" name="loginUsername" required>
+                        </div>
+                        <div>
+                            <label for="loginPassword">密码:</label>
+                            <input type="password" id="loginPassword" name="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn">登录</button>
+                        <div class="login-error" id="loginError" style="display: none;">用户名或密码错误</div>
+                    </form>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <p style="color: #ccc; margin-bottom: 10px;">还没有账号？</p>
+                        <a href="/register" class="btn" style="background-color: #27ae60; text-decoration: none;">立即注册</a>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 启用仿真功能
+        function enableSimulationFeatures() {
+            // 这里可以添加启用仿真功能的代码
+        }
+        
+        // 禁用仿真功能
+        function disableSimulationFeatures() {
+            showLoginPrompt();
+        }
+        
+        // 登录
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    isLoggedIn = true;
+                    currentUser = { username: username };
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    window.location.reload(); // 重新加载页面
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('loginError').textContent = '登录验证失败，请稍后重试';
+            }
+        }
+        
+        // 登出
+        function logout() {
+            isLoggedIn = false;
+            currentUser = null;
+            localStorage.removeItem('user');
+            window.location.reload(); // 重新加载页面
+        }
         
         // 打开左侧选择菜单（从左侧滑入）
         function openLeftMenu() {
@@ -667,6 +968,7 @@
             document.getElementById('capacitance').value = trackParameters.capacitance;
             document.getElementById('cableLength').value = trackParameters.cableLength;
             document.getElementById('ballastResist').value = trackParameters.ballastResist;
+            document.getElementById('voltageLevel').value = trackParameters.voltageLevel || 3;
             
             // 显示窗口和遮罩
             document.getElementById('parameterWindow').classList.add('active');
@@ -690,7 +992,8 @@
                 inductance: parseFloat(document.getElementById('inductance').value),
                 capacitance: parseFloat(document.getElementById('capacitance').value),
                 cableLength: parseFloat(document.getElementById('cableLength').value),
-                ballastResist: parseFloat(document.getElementById('ballastResist').value)
+                ballastResist: parseFloat(document.getElementById('ballastResist').value),
+                voltageLevel: parseInt(document.getElementById('voltageLevel').value)
             };
             
             // 更新显示
@@ -731,7 +1034,8 @@
                 inductance: 0.001,
                 capacitance: 1e-9,
                 cableLength: 10.0,
-                ballastResist: 1.0
+                ballastResist: 1.0,
+                voltageLevel: 3
             };
             
             // 重置选择
@@ -781,6 +1085,12 @@
         function openBottomWindow() {
             document.getElementById('bottomFloatingWindow').classList.add('active');
             document.getElementById('toggleWindowBtn').style.display = 'none';
+            // 打开后重新绘制图表（因为canvas可能在悬浮窗隐藏时无法正确计算尺寸）
+            if (circuitModelResult && circuitModelResult.data) {
+                setTimeout(() => {
+                    drawSineChart(circuitModelResult.data);
+                }, 100);
+            }
         }
 
         // 关闭底部悬浮窗
@@ -802,6 +1112,12 @@
                 // 显示悬浮窗
                 bottomWindow.classList.add('active');
                 toggleBtn.style.display = 'none';
+                // 打开后重新绘制图表（因为canvas可能在悬浮窗隐藏时无法正确计算尺寸）
+                if (circuitModelResult && circuitModelResult.data) {
+                    setTimeout(() => {
+                        drawSineChart(circuitModelResult.data);
+                    }, 100);
+                }
             }
         }
 
@@ -826,31 +1142,80 @@
                     <div class="simulation-result-label">故障类型</div>
                     <div class="simulation-result-value">${data.faultStatus || 'N/A'}</div>
                 </div>
+                <div class="simulation-result-item">
+                    <div class="simulation-result-label">频率</div>
+                    <div class="simulation-result-value">${data.frequency || 'N/A'} Hz</div>
+                </div>
+                <div class="simulation-result-item">
+                    <div class="simulation-result-label">道碴电阻</div>
+                    <div class="simulation-result-value">${data.ballastResist || 'N/A'} Ω·km</div>
+                </div>
             `;
 
-            // 电压信息
-            html += `
-                <div class="simulation-result-item">
-                    <div class="simulation-result-label">输入电压 (V)</div>
-                    <div class="simulation-result-value">${data.inputVoltage || 'N/A'}</div>
-                </div>
-                <div class="simulation-result-item">
-                    <div class="simulation-result-label">主轨入电压 (V)</div>
-                    <div class="simulation-result-value">${data.mainRailInputVoltage || 'N/A'}</div>
-                </div>
-                <div class="simulation-result-item">
-                    <div class="simulation-result-label">轨出1电压</div>
-                    <div class="simulation-result-value">${data.railOutput1Voltage || 'N/A'}</div>
-                </div>
-                <div class="simulation-result-item">
-                    <div class="simulation-result-label">轨出2电压</div>
-                    <div class="simulation-result-value">${data.railOutput2Voltage || 'N/A'}</div>
-                </div>
-                <div class="simulation-result-item">
-                    <div class="simulation-result-label">输出电压</div>
-                    <div class="simulation-result-value">${data.outputVoltage || 'N/A'}</div>
-                </div>
-            `;
+            // 检查是否有多组仿真结果
+            if (data.simulationResults && data.simulationResults.length > 0) {
+                // 多组仿真结果表格
+                html += `
+                    <div class="simulation-result-item full-width">
+                        <div class="simulation-result-label">多组仿真结果</div>
+                        <div class="simulation-result-value">
+                            <table class="simulation-results-table">
+                                <thead>
+                                    <tr>
+                                        <th>输入电压 (V)</th>
+                                        <th>主轨入电压</th>
+                                        <th>轨出1电压</th>
+                                        <th>轨出2电压</th>
+                                        <th>输出电压</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                // 遍历多组结果
+                data.simulationResults.forEach(item => {
+                    html += `
+                        <tr>
+                            <td>${item.inputVoltage}</td>
+                            <td>${item.mainRailInputVoltage || 'N/A'}</td>
+                            <td>${item.railOutput1Voltage || 'N/A'}</td>
+                            <td>${item.railOutput2Voltage || 'N/A'}</td>
+                            <td>${item.outputVoltage || 'N/A'}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // 单组仿真结果
+                html += `
+                    <div class="simulation-result-item">
+                        <div class="simulation-result-label">输入电压 (V)</div>
+                        <div class="simulation-result-value">${data.inputVoltage || 'N/A'}</div>
+                    </div>
+                    <div class="simulation-result-item">
+                        <div class="simulation-result-label">主轨入电压 (V)</div>
+                        <div class="simulation-result-value">${data.mainRailInputVoltage || 'N/A'}</div>
+                    </div>
+                    <div class="simulation-result-item">
+                        <div class="simulation-result-label">轨出1电压</div>
+                        <div class="simulation-result-value">${data.railOutput1Voltage || 'N/A'}</div>
+                    </div>
+                    <div class="simulation-result-item">
+                        <div class="simulation-result-label">轨出2电压</div>
+                        <div class="simulation-result-value">${data.railOutput2Voltage || 'N/A'}</div>
+                    </div>
+                    <div class="simulation-result-item">
+                        <div class="simulation-result-label">输出电压</div>
+                        <div class="simulation-result-value">${data.outputVoltage || 'N/A'}</div>
+                    </div>
+                `;
+            }
 
             // 电流和阻抗信息
             html += `
@@ -897,6 +1262,192 @@
             `;
 
             grid.innerHTML = html;
+
+            // 绘制正弦函数图表
+            drawSineChart(data);
+        }
+
+        // 绘制正弦函数图表
+        function drawSineChart(data) {
+            try {
+                const canvas = document.getElementById('simulationChart');
+                const ctx = canvas.getContext('2d');
+
+                // 清除之前的图表
+                if (window.simulationChart) {
+                    window.simulationChart.destroy();
+                }
+
+                // 生成时间数据（0到10毫秒）
+                const timeData = [];
+                for (let t = 0; t <= 10; t += 0.1) {
+                    timeData.push(t);
+                }
+
+                // 准备图表数据
+                const datasets = [];
+
+                // 如果有多组仿真结果，使用最后一组的电压值
+                let inputVoltage = 130.0;
+                let mainRailInputVoltage = 100.0;
+                let railOutput1Voltage = 90.0;
+                let outputVoltage = 80.0;
+
+                if (data.simulationResults && data.simulationResults.length > 0) {
+                    const lastResult = data.simulationResults[data.simulationResults.length - 1];
+                    inputVoltage = parseFloat(lastResult.inputVoltage) || 130.0;
+                    mainRailInputVoltage = parseFloat(lastResult.mainRailInputVoltage) || 100.0;
+                    railOutput1Voltage = parseFloat(lastResult.railOutput1Voltage) || 90.0;
+                    outputVoltage = parseFloat(lastResult.outputVoltage) || 80.0;
+                } else if (data.inputVoltage) {
+                    inputVoltage = parseFloat(data.inputVoltage) || 130.0;
+                    mainRailInputVoltage = parseFloat(data.mainRailInputVoltage) || 100.0;
+                    railOutput1Voltage = parseFloat(data.railOutput1Voltage) || 90.0;
+                    outputVoltage = parseFloat(data.outputVoltage) || 80.0;
+                }
+
+                // 计算频率（Hz）
+                const frequency = data.frequency || 1700;
+
+                // 生成正弦波数据
+                const inputVoltageData = timeData.map(t => inputVoltage * Math.sin(2 * Math.PI * frequency * t / 1000));
+                const mainRailInputVoltageData = timeData.map(t => mainRailInputVoltage * Math.sin(2 * Math.PI * frequency * t / 1000));
+                const railOutput1VoltageData = timeData.map(t => railOutput1Voltage * Math.sin(2 * Math.PI * frequency * t / 1000));
+                const outputVoltageData = timeData.map(t => outputVoltage * Math.sin(2 * Math.PI * frequency * t / 1000));
+
+                // 添加数据集
+                datasets.push({
+                    label: '输入电压',
+                    data: inputVoltageData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    tension: 0.1
+                });
+
+                datasets.push({
+                    label: '主轨入电压',
+                    data: mainRailInputVoltageData,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    tension: 0.1
+                });
+
+                datasets.push({
+                    label: '轨出1电压',
+                    data: railOutput1VoltageData,
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 2,
+                    tension: 0.1
+                });
+
+                datasets.push({
+                    label: '输出电压',
+                    data: outputVoltageData,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    tension: 0.1
+                });
+
+                // 创建图表
+                window.simulationChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: timeData,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '时间 (ms)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: '电压 (V)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '电压正弦波形图',
+                                font: {
+                                    size: 16
+                                }
+                            },
+                            legend: {
+                                position: 'top'
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('绘制图表失败:', error);
+            }
+        }
+
+        // 更新进度条
+        function updateProgress(percentage, message) {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            progressBar.style.width = percentage + '%';
+            progressText.textContent = message;
+        }
+
+        // 运行完整仿真
+        async function runFullSimulation() {
+            if (!currentSelection.trackSection) {
+                showStatusMessage('请先选择轨道区段和故障类型！', 'error');
+                return;
+            }
+
+            // 显示进度条
+            document.getElementById('progressContainer').style.display = 'block';
+            updateProgress(0, '准备开始...');
+
+            try {
+                // 步骤1：应用参数
+                updateProgress(10, '应用参数...');
+                applyParameters();
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // 步骤2：构建电路模型
+                updateProgress(30, '构建电路模型...');
+                await buildCircuitModel();
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // 步骤3：仿真模型
+                updateProgress(60, '仿真模型...');
+                await simulateModel();
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // 步骤4：完成
+                updateProgress(100, '仿真完成！');
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // 隐藏进度条
+                setTimeout(() => {
+                    document.getElementById('progressContainer').style.display = 'none';
+                }, 1000);
+
+                // 显示成功消息
+                showStatusMessage('完整仿真运行成功！', 'success');
+
+                // 自动打开底部悬浮窗
+                setTimeout(() => {
+                    openBottomWindow();
+                }, 1500);
+
+            } catch (error) {
+                console.error('完整仿真失败:', error);
+                showStatusMessage('完整仿真失败，请稍后重试', 'error');
+                document.getElementById('progressContainer').style.display = 'none';
+            }
         }
         
         // 点击遮罩关闭所有窗口
@@ -979,215 +1530,277 @@
         async function buildCircuitModel() {
             if (!currentSelection.trackSection) {
                 showStatusMessage('请先选择轨道区段和故障类型！', 'error');
-                return;
+                return Promise.reject(new Error('未选择轨道区段和故障类型'));
             }
             
             showStatusMessage('正在构建电路模型，请稍候...', 'success');
             
-            try {
-                // 准备表单数据
-                const formData = new FormData();
-                formData.append('trackSection', currentSelection.trackSection);
-                formData.append('faultType', currentSelection.faultType);
-                formData.append('trackLength', trackParameters.trackLength);
-                formData.append('cableLength', trackParameters.cableLength);
-                formData.append('frequency', trackParameters.frequency);
-                formData.append('inputVoltage', 10.0); // 默认输入电压
-                formData.append('ballastResist', trackParameters.ballastResist);
-                
-                // 发送请求
-                const response = await fetch('/api/build-circuit-model', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                // 保存模型结果
-                circuitModelResult = result;
-                
-                if (result.status === 'success') {
-                    showStatusMessage('电路模型构建成功！', 'success');
-
-                    // 更新底部悬浮窗的仿真结果
-                    updateSimulationResult(result);
-
-                    // 显示结果
-                    const resultContent = `
-                        <div class="parameter-item">
-                            <div class="parameter-label">轨道区段:</div>
-                            <div class="parameter-value">${result.data.trackSection}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">故障类型:</div>
-                            <div class="parameter-value">${result.data.faultStatus}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">输入电压:</div>
-                            <div class="parameter-value">${result.data.inputVoltage} V</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">主轨入电压:</div>
-                            <div class="parameter-value">${result.data.mainRailInputVoltage} V</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">轨出1电压:</div>
-                            <div class="parameter-value">${result.data.railOutput1Voltage}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">轨出2电压:</div>
-                            <div class="parameter-value">${result.data.railOutput2Voltage}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">输出电压:</div>
-                            <div class="parameter-value">${result.data.outputVoltage}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">轨道长度:</div>
-                            <div class="parameter-value">${result.data.trackLength} m</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">电缆长度:</div>
-                            <div class="parameter-value">${result.data.cableLength} m</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">频率:</div>
-                            <div class="parameter-value">${result.data.frequency} Hz</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">道碴电阻:</div>
-                            <div class="parameter-value">${result.data.ballastResist} Ω·km</div>
-                        </div>
-                    `;
+            return new Promise(async (resolve, reject) => {
+                try {
+                    // 准备表单数据
+                    const formData = new FormData();
+                    formData.append('trackSection', currentSelection.trackSection);
+                    formData.append('faultType', currentSelection.faultType);
+                    formData.append('trackLength', trackParameters.trackLength);
+                    formData.append('cableLength', trackParameters.cableLength);
+                    formData.append('frequency', trackParameters.frequency);
+                    formData.append('inputVoltage', 10.0); // 默认输入电压
+                    formData.append('ballastResist', trackParameters.ballastResist);
                     
-                    document.getElementById('modelResultContent').innerHTML = resultContent;
-                    document.getElementById('circuitModelResult').style.display = 'block';
-                } else {
-                    showStatusMessage(`构建失败: ${result.message}`, 'error');
+                    // 发送请求
+                    const response = await fetch('/api/build-circuit-model', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    // 保存模型结果
+                    circuitModelResult = result;
+                    
+                    if (result.status === 'success') {
+                        showStatusMessage('电路模型构建成功！', 'success');
+
+                        // 更新底部悬浮窗的仿真结果
+                        updateSimulationResult(result);
+
+                        // 显示结果
+                        const resultContent = `
+                            <div class="parameter-item">
+                                <div class="parameter-label">轨道区段:</div>
+                                <div class="parameter-value">${result.data.trackSection}</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">故障类型:</div>
+                                <div class="parameter-value">${result.data.faultStatus}</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">输入电压:</div>
+                                <div class="parameter-value">${result.data.inputVoltage} V</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">主轨入电压:</div>
+                                <div class="parameter-value">${result.data.mainRailInputVoltage} V</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">轨出1电压:</div>
+                                <div class="parameter-value">${result.data.railOutput1Voltage}</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">轨出2电压:</div>
+                                <div class="parameter-value">${result.data.railOutput2Voltage}</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">输出电压:</div>
+                                <div class="parameter-value">${result.data.outputVoltage}</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">轨道长度:</div>
+                                <div class="parameter-value">${result.data.trackLength} m</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">电缆长度:</div>
+                                <div class="parameter-value">${result.data.cableLength} m</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">频率:</div>
+                                <div class="parameter-value">${result.data.frequency} Hz</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">道碴电阻:</div>
+                                <div class="parameter-value">${result.data.ballastResist} Ω·km</div>
+                            </div>
+                        `;
+
+                        document.getElementById('modelResultContent').innerHTML = resultContent;
+                        document.getElementById('circuitModelResult').style.display = 'block';
+                        resolve(result);
+                    } else {
+                        const errorMessage = `构建失败: ${result.message}`;
+                        showStatusMessage(errorMessage, 'error');
+                        reject(new Error(errorMessage));
+                    }
+                } catch (error) {
+                    console.error('构建电路模型失败:', error);
+                    showStatusMessage('构建电路模型失败，请稍后重试', 'error');
+                    reject(error);
                 }
-            } catch (error) {
-                console.error('构建电路模型失败:', error);
-                showStatusMessage('构建电路模型失败，请稍后重试', 'error');
-            }
+            });
         }
         
         // 仿真模型
         async function simulateModel() {
             if (!currentSelection.trackSection) {
                 showStatusMessage('请先选择轨道区段和故障类型！', 'error');
-                return;
+                return Promise.reject(new Error('未选择轨道区段和故障类型'));
             }
             
             showStatusMessage('正在进行模型仿真，请稍候...', 'success');
             
-            try {
-                // 准备表单数据
-                const formData = new FormData();
-                formData.append('trackSection', currentSelection.trackSection);
-                formData.append('faultType', currentSelection.faultType);
-                formData.append('trackLength', trackParameters.trackLength);
-                formData.append('cableLength', trackParameters.cableLength);
-                formData.append('frequency', trackParameters.frequency);
-                formData.append('inputVoltage', 130.0); // 默认输入电压
-                formData.append('ballastResist', trackParameters.ballastResist);
-                
-                // 发送请求
-                const response = await fetch('/api/simulate-model', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
+            return new Promise(async (resolve, reject) => {
+                try {
+                    // 准备表单数据
+                    const formData = new FormData();
+                    formData.append('trackSection', currentSelection.trackSection);
+                    formData.append('faultType', currentSelection.faultType);
+                    formData.append('trackLength', trackParameters.trackLength);
+                    formData.append('cableLength', trackParameters.cableLength);
+                    formData.append('frequency', trackParameters.frequency);
+                    formData.append('inputVoltage', 130.0); // 默认输入电压
+                    formData.append('ballastResist', trackParameters.ballastResist);
+                    formData.append('voltageLevel', trackParameters.voltageLevel || 3);
+                    
+                    // 发送请求
+                    const response = await fetch('/api/simulate-model', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
 
-                // 保存模型结果
-                circuitModelResult = result;
+                    // 保存模型结果
+                    circuitModelResult = result;
 
-                if (result.status === 'success') {
-                    showStatusMessage('模型仿真成功！', 'success');
+                    if (result.status === 'success') {
+                        showStatusMessage('模型仿真成功！', 'success');
 
-                    // 更新底部悬浮窗的仿真结果
-                    updateSimulationResult(result);
+                        // 更新底部悬浮窗的仿真结果
+                        updateSimulationResult(result);
 
-                    // 显示查看仿真结果按钮
-                    document.getElementById('toggleWindowBtn').style.display = 'block';
+                        // 显示查看仿真结果按钮
+                        document.getElementById('toggleWindowBtn').style.display = 'block';
 
-                    // 显示仿真结果
-                    const resultContent = `
-                        <div class="parameter-item">
-                            <div class="parameter-label">轨道区段:</div>
-                            <div class="parameter-value">${result.data.trackSection}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">故障类型:</div>
-                            <div class="parameter-value">${result.data.faultStatus}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">输入电压:</div>
-                            <div class="parameter-value">${result.data.inputVoltage} V</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">主轨入电压:</div>
-                            <div class="parameter-value">${result.data.mainRailInputVoltage} V</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">轨出1电压:</div>
-                            <div class="parameter-value">${result.data.railOutput1Voltage}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">轨出2电压:</div>
-                            <div class="parameter-value">${result.data.railOutput2Voltage}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">输出电压:</div>
-                            <div class="parameter-value">${result.data.outputVoltage}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">输入电流:</div>
-                            <div class="parameter-value">${result.data.inputCurrent}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">输入阻抗:</div>
-                            <div class="parameter-value">${result.data.inputImpedance}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">钢轨阻抗:</div>
-                            <div class="parameter-value">${result.data.railImpedance}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">调谐区阻抗:</div>
-                            <div class="parameter-value">${result.data.tunerImpedance}</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">频率:</div>
-                            <div class="parameter-value">${result.data.frequency} Hz</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">轨道长度:</div>
-                            <div class="parameter-value">${result.data.trackLength} m</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">电缆长度:</div>
-                            <div class="parameter-value">${result.data.cableLength} m</div>
-                        </div>
-                        <div class="parameter-item">
-                            <div class="parameter-label">道碴电阻:</div>
-                            <div class="parameter-value">${result.data.ballastResist} Ω·km</div>
-                        </div>
-                    `;
+                        // 显示仿真结果
+                        let resultContent = `
+                            <div class="parameter-item">
+                                <div class="parameter-label">轨道区段:</div>
+                                <div class="parameter-value">${result.data.trackSection}</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">故障类型:</div>
+                                <div class="parameter-value">${result.data.faultStatus}</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">频率:</div>
+                                <div class="parameter-value">${result.data.frequency} Hz</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">道碴电阻:</div>
+                                <div class="parameter-value">${result.data.ballastResist} Ω·km</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">轨道长度:</div>
+                                <div class="parameter-value">${result.data.trackLength} m</div>
+                            </div>
+                            <div class="parameter-item">
+                                <div class="parameter-label">电缆长度:</div>
+                                <div class="parameter-value">${result.data.cableLength} m</div>
+                            </div>
+                        `;
 
-                    document.getElementById('modelResultContent').innerHTML = resultContent;
-                    document.getElementById('circuitModelResult').style.display = 'block';
-                } else {
-                    showStatusMessage(`仿真失败: ${result.message}`, 'error');
+                        // 检查是否有多组仿真结果
+                        if (result.data.simulationResults && result.data.simulationResults.length > 0) {
+                            resultContent += `
+                                <div class="parameter-item full-width">
+                                    <div class="parameter-label">多组仿真结果</div>
+                                    <div class="parameter-value">
+                                        <table class="simulation-results-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>输入电压 (V)</th>
+                                                    <th>主轨入电压</th>
+                                                    <th>轨出1电压</th>
+                                                    <th>轨出2电压</th>
+                                                    <th>输出电压</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                            `;
+
+                            // 遍历多组结果
+                            result.data.simulationResults.forEach(item => {
+                                resultContent += `
+                                    <tr>
+                                        <td>${item.inputVoltage}</td>
+                                        <td>${item.mainRailInputVoltage || 'N/A'}</td>
+                                        <td>${item.railOutput1Voltage || 'N/A'}</td>
+                                        <td>${item.railOutput2Voltage || 'N/A'}</td>
+                                        <td>${item.outputVoltage || 'N/A'}</td>
+                                    </tr>
+                                `;
+                            });
+
+                            resultContent += `
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            // 单组仿真结果
+                            resultContent += `
+                                <div class="parameter-item">
+                                    <div class="parameter-label">输入电压:</div>
+                                    <div class="parameter-value">${result.data.inputVoltage} V</div>
+                                </div>
+                                <div class="parameter-item">
+                                    <div class="parameter-label">主轨入电压:</div>
+                                    <div class="parameter-value">${result.data.mainRailInputVoltage} V</div>
+                                </div>
+                                <div class="parameter-item">
+                                    <div class="parameter-label">轨出1电压:</div>
+                                    <div class="parameter-value">${result.data.railOutput1Voltage}</div>
+                                </div>
+                                <div class="parameter-item">
+                                    <div class="parameter-label">轨出2电压:</div>
+                                    <div class="parameter-value">${result.data.railOutput2Voltage}</div>
+                                </div>
+                                <div class="parameter-item">
+                                    <div class="parameter-label">输出电压:</div>
+                                    <div class="parameter-value">${result.data.outputVoltage}</div>
+                                </div>
+                                <div class="parameter-item">
+                                    <div class="parameter-label">输入电流:</div>
+                                    <div class="parameter-value">${result.data.inputCurrent}</div>
+                                </div>
+                                <div class="parameter-item">
+                                    <div class="parameter-label">输入阻抗:</div>
+                                    <div class="parameter-value">${result.data.inputImpedance}</div>
+                                </div>
+                                <div class="parameter-item">
+                                    <div class="parameter-label">钢轨阻抗:</div>
+                                    <div class="parameter-value">${result.data.railImpedance}</div>
+                                </div>
+                                <div class="parameter-item">
+                                    <div class="parameter-label">调谐区阻抗:</div>
+                                    <div class="parameter-value">${result.data.tunerImpedance}</div>
+                                </div>
+                            `;
+                        }
+
+                        document.getElementById('modelResultContent').innerHTML = resultContent;
+                        document.getElementById('circuitModelResult').style.display = 'block';
+                        resolve(result);
+                    } else {
+                        const errorMessage = `仿真失败: ${result.message}`;
+                        showStatusMessage(errorMessage, 'error');
+                        reject(new Error(errorMessage));
+                    }
+                } catch (error) {
+                    console.error('模型仿真失败:', error);
+                    showStatusMessage('模型仿真失败，请稍后重试', 'error');
+                    reject(error);
                 }
-            } catch (error) {
-                console.error('模型仿真失败:', error);
-                showStatusMessage('模型仿真失败，请稍后重试', 'error');
-            }
+            });
         }
         
         // 初始化显示
         updateParameterDisplay();
+        
+        // 页面加载完成后检查登录状态
+        window.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+        });
     </script>
 </body>
 </html>

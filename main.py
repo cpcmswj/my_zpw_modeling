@@ -152,6 +152,11 @@ async def read_comparison_time_series(request: Request):
 async def read_track_parameters(request: Request):
     return templates.TemplateResponse("track_parameters.html", {"request": request})
 
+# 时序数据生成页面
+@app.get("/time-series-generator", response_class=HTMLResponse)
+async def read_time_series_generator(request: Request):
+    return templates.TemplateResponse("time_series_generator.html", {"request": request})
+
 # 构建电路模型API端点
 @app.post("/api/build-circuit-model")
 async def build_circuit_model(
@@ -210,8 +215,27 @@ async def build_circuit_model(
             
             # 获取主轨入电压
             if hasattr(fault, 'output_voltage_main'):
-                main_rail_input_voltage = fault.output_voltage_main[0] if isinstance(fault.output_voltage_main, (list, np.ndarray)) else fault.output_voltage_main
-                print(f"主轨入电压: {main_rail_input_voltage}")
+                try:
+                    # 尝试获取 voltage_main 作为主轨入电压
+                    if hasattr(fault, 'voltage_main'):
+                        main_rail_input_voltage = fault.voltage_main
+                        print(f"从 voltage_main 获取主轨入电压: {main_rail_input_voltage}")
+                    else:
+                        # 尝试从 output_voltage_main 获取主轨入电压
+                        main_rail_input_voltage = fault.output_voltage_main
+                        # 检查是否为数组或列表
+                        if isinstance(main_rail_input_voltage, (list, np.ndarray)):
+                            # 尝试获取第一个元素
+                            if len(main_rail_input_voltage) > 0:
+                                main_rail_input_voltage = main_rail_input_voltage[0]
+                        # 检查是否为复数
+                        if isinstance(main_rail_input_voltage, complex):
+                            # 计算复数的模
+                            main_rail_input_voltage = abs(main_rail_input_voltage)
+                        print(f"主轨入电压: {main_rail_input_voltage}")
+                except Exception as e:
+                    print(f"获取主轨入电压时出错: {e}")
+                    main_rail_input_voltage = None
             else:
                 main_rail_input_voltage = None
                 print("警告：未找到主轨入电压")
@@ -276,7 +300,8 @@ async def simulate_model(
     cableLength: float = Form(...),
     frequency: int = Form(...),
     inputVoltage: float = Form(...),
-    ballastResist: float = Form(...)
+    ballastResist: float = Form(...),
+    voltageLevel: int = Form(3)
 ):
     try:
         # 导入Error_Of_Trail_Amplitude_Phase类
@@ -290,6 +315,7 @@ async def simulate_model(
         print(f"频率: {frequency}")
         print(f"输入电压: {inputVoltage}")
         print(f"道碴电阻: {ballastResist}")
+        print(f"电压档位: {voltageLevel}")
         
         # 创建故障实例
         fault = Error_Of_Trail_Amplitude_Phase(
@@ -306,31 +332,123 @@ async def simulate_model(
         model_result = fault.build_circuit_model()
         print("电路模型构建完成")
         
-        # 计算输入电压对应的输出
-        print("计算输入电压对应的输出...")
-        fault.input_V = inputVoltage
+        # 根据电压档位确定电压范围
+        def get_voltage_range(level):
+            switcher = {
+                1: (161, 170),
+                2: (146, 154),
+                3: (128, 135),
+                4: (104.5, 110.5),
+                5: (75, 79.5),
+                6: (75, 170)
+            }
+            return switcher.get(level, (75, 170))
         
-        # 计算输入阻抗
-        try:
-            input_current, input_impedance, Z_rail, Z_tuner = fault.call_input(inputVoltage, ballastResist / 1000)
-            print(f"输入电流: {input_current}")
-            print(f"输入阻抗: {input_impedance}")
-            print(f"钢轨阻抗: {Z_rail}")
-            print(f"调谐区阻抗: {Z_tuner}")
-        except Exception as e:
-            print(f"计算输入阻抗时出错: {e}")
-            input_current = None
-            input_impedance = None
-            Z_rail = None
-            Z_tuner = None
+        # 获取电压范围
+        min_voltage, max_voltage = get_voltage_range(voltageLevel)
+        print(f"电压范围: {min_voltage}V - {max_voltage}V")
         
-        # 计算输出电压
-        try:
-            output_voltage = fault.count_output()
-            print(f"输出电压: {output_voltage}")
-        except Exception as e:
-            print(f"计算输出电压时出错: {e}")
-            output_voltage = None
+        # 生成多组输入电压
+        # 生成13个等间距的电压值
+        import numpy as np
+        input_voltages = np.linspace(min_voltage, max_voltage, 13).tolist()
+        # 保留1位小数
+        input_voltages = [round(v, 1) for v in input_voltages]
+        print(f"使用多组输入电压: {input_voltages}")
+        
+        # 存储多组仿真结果
+        simulation_results = []
+        
+        for voltage in input_voltages:
+            print(f"\n计算输入电压 {voltage}V 对应的输出...")
+            fault.input_V = voltage
+            
+            # 计算输入阻抗
+            try:
+                input_current, input_impedance, Z_rail, Z_tuner = fault.call_input(voltage, ballastResist / 1000)
+                print(f"输入电流: {input_current}")
+                print(f"输入阻抗: {input_impedance}")
+                print(f"钢轨阻抗: {Z_rail}")
+                print(f"调谐区阻抗: {Z_tuner}")
+            except Exception as e:
+                print(f"计算输入阻抗时出错: {e}")
+                input_current = None
+                input_impedance = None
+                Z_rail = None
+                Z_tuner = None
+            
+            # 计算输出电压
+            try:
+                output_voltage = fault.count_output()
+                print(f"输出电压: {output_voltage}")
+            except Exception as e:
+                print(f"计算输出电压时出错: {e}")
+                output_voltage = None
+            
+            # 计算主轨入电压和轨出1电压
+            try:
+                # 调用 call_matrix_main 方法计算主轨入电压
+                fault.call_matrix_main()
+                
+                # 获取主轨入电压
+                if hasattr(fault, 'output_voltage_main'):
+                    try:
+                        # 尝试获取 voltage_main 作为主轨入电压
+                        if hasattr(fault, 'voltage_main'):
+                            main_rail_input_voltage = fault.voltage_main
+                            print(f"从 voltage_main 获取主轨入电压: {main_rail_input_voltage}")
+                        else:
+                            # 尝试从 output_voltage_main 获取主轨入电压
+                            main_rail_input_voltage = fault.output_voltage_main
+                            # 检查是否为数组或列表
+                            if isinstance(main_rail_input_voltage, (list, np.ndarray)):
+                                # 尝试获取第一个元素
+                                if len(main_rail_input_voltage) > 0:
+                                    main_rail_input_voltage = main_rail_input_voltage[0]
+                            # 检查是否为复数
+                            if isinstance(main_rail_input_voltage, complex):
+                                # 计算复数的模
+                                main_rail_input_voltage = abs(main_rail_input_voltage)
+                            print(f"主轨入电压: {main_rail_input_voltage}")
+                    except Exception as e:
+                        print(f"获取主轨入电压时出错: {e}")
+                        main_rail_input_voltage = None
+                else:
+                    main_rail_input_voltage = None
+                    print("警告：未找到主轨入电压")
+                
+                # 获取轨出1电压（这里假设轨出1电压是主轨入电压的一部分）
+                if main_rail_input_voltage is not None:
+                    # 轨出1电压通常是主轨入电压经过衰耗盘后的电压
+                    # 这里使用一个简化的计算方式，实际项目中需要根据具体电路计算
+                    rail_output_1_voltage = main_rail_input_voltage * 0.9 if isinstance(main_rail_input_voltage, (int, float, complex)) else None
+                    rail_output_2_voltage = main_rail_input_voltage * 0.1 if isinstance(main_rail_input_voltage, (int, float, complex)) else None
+                    print(f"轨出1电压: {rail_output_1_voltage}")
+                    print(f"轨出2电压: {rail_output_2_voltage}")
+                else:
+                    rail_output_1_voltage = None
+                    rail_output_2_voltage = None
+                    print("警告：无法计算轨出1电压和轨出2电压")
+            except Exception as e:
+                print(f"计算主轨入电压和轨出1电压时出错: {e}")
+                import traceback
+                traceback.print_exc()
+                main_rail_input_voltage = voltage
+                rail_output_1_voltage = None
+                rail_output_2_voltage = None
+            
+            # 存储当前电压的仿真结果
+            simulation_results.append({
+                "inputVoltage": voltage,
+                "outputVoltage": str(output_voltage) if output_voltage is not None else "计算失败",
+                "inputCurrent": str(input_current) if input_current is not None else "计算失败",
+                "inputImpedance": str(input_impedance) if input_impedance is not None else "计算失败",
+                "railImpedance": str(Z_rail) if Z_rail is not None else "计算失败",
+                "tunerImpedance": str(Z_tuner) if Z_tuner is not None else "计算失败",
+                "mainRailInputVoltage": str(main_rail_input_voltage) if main_rail_input_voltage is not None else "计算失败",
+                "railOutput1Voltage": str(rail_output_1_voltage) if rail_output_1_voltage is not None else "计算失败",
+                "railOutput2Voltage": str(rail_output_2_voltage) if rail_output_2_voltage is not None else "计算失败"
+            })
         
         # 构建响应
         response_data = {
@@ -342,14 +460,14 @@ async def simulate_model(
                 "trackLength": trackLength,
                 "cableLength": cableLength,
                 "frequency": frequency,
-                "inputVoltage": inputVoltage,
                 "ballastResist": ballastResist,
-                "outputVoltage": str(output_voltage) if output_voltage is not None else "计算失败",
-                "inputCurrent": str(input_current) if input_current is not None else "计算失败",
-                "inputImpedance": str(input_impedance) if input_impedance is not None else "计算失败",
-                "railImpedance": str(Z_rail) if Z_rail is not None else "计算失败",
-                "tunerImpedance": str(Z_tuner) if Z_tuner is not None else "计算失败",
-                "faultStatus": fault.status()
+                "faultStatus": fault.status(),
+                "voltageLevel": voltageLevel,
+                "voltageRange": {
+                    "min": min_voltage,
+                    "max": max_voltage
+                },
+                "simulationResults": simulation_results
             }
         }
         
