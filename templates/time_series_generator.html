@@ -433,6 +433,56 @@
             font-size: 16px;
         }
 
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .login-form div {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .login-form label {
+            width: 80px;
+            text-align: right;
+            margin-right: 15px;
+            color: #bdc3c7;
+            font-size: 14px;
+        }
+
+        .login-form input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #3498db;
+            border-radius: 6px;
+            background-color: #2a2a2a;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .login-form input:focus {
+            border-color: #2980b9;
+        }
+
+        .login-form .btn {
+            margin-top: 10px;
+            padding: 10px 40px;
+            font-size: 16px;
+        }
+
+        .login-error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
         .bottom-floating-window {
             position: fixed;
             bottom: -500px;
@@ -1252,32 +1302,23 @@
             document.getElementById('progressText').textContent = '时序数据生成完成！';
 
             // 一次性将所有数据保存到CSV
+            // 将数据保存到CSV（用于下载功能）
             if (simulationResults.length > 0) {
                 try {
+                    // 先清空旧的CSV文件
+                    await fetch('/api/time-series/clear-csv', { method: 'POST' });
                     for (const result of simulationResults) {
                         await fetch('/api/time-series/save-to-csv', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(result)
                         });
-                        await delay(100); // 短暂延迟确保写入完成
+                        await delay(100);
                     }
                     console.log(`已保存 ${simulationResults.length} 条数据到CSV`);
                 } catch (error) {
                     console.error('保存到CSV失败:', error);
                 }
-            }
-
-            // 从CSV读取最终数据（验证保存是否成功）
-            try {
-                const response = await fetch('/api/time-series/read-from-csv');
-                const data = await response.json();
-                if (data.status === 'success' && data.results.length > 0) {
-                    simulationResults = data.results;
-                    console.log(`从CSV读取到 ${simulationResults.length} 条数据`);
-                }
-            } catch (error) {
-                console.error('从CSV读取数据失败:', error);
             }
 
             if (simulationResults.length > 0) {
@@ -1547,14 +1588,16 @@
             point: 'rgba(231, 76, 60, 1)'
         };
 
-        function switchChart(chartType) {
+        function switchChart(chartType, event) {
             currentChartType = chartType;
             
             // 更新按钮状态
             document.querySelectorAll('.chart-control-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
             
             updateChart();
         }
@@ -1754,13 +1797,13 @@
         </div>
         <div class="chart-window-content">
             <div class="chart-controls">
-                <button class="chart-control-btn active" onclick="switchChart('voltage')">输入电压</button>
-                <button class="chart-control-btn" onclick="switchChart('send_end_track_voltage')">送端轨面电压</button>
-                <button class="chart-control-btn" onclick="switchChart('receive_end_track_voltage')">受端轨面电压</button>
-                <button class="chart-control-btn" onclick="switchChart('main_track_input_voltage')">主轨入电压</button>
-                <button class="chart-control-btn" onclick="switchChart('main_track_output_voltage_1')">轨出1电压</button>
-                <button class="chart-control-btn" onclick="switchChart('input_impedance')">输入阻抗</button>
-                <button class="chart-control-btn" onclick="switchChart('input_current')">输入电流</button>
+                <button class="chart-control-btn active" onclick="switchChart('voltage', event)">输入电压</button>
+                <button class="chart-control-btn" onclick="switchChart('send_end_track_voltage', event)">送端轨面电压</button>
+                <button class="chart-control-btn" onclick="switchChart('receive_end_track_voltage', event)">受端轨面电压</button>
+                <button class="chart-control-btn" onclick="switchChart('main_track_input_voltage', event)">主轨入电压</button>
+                <button class="chart-control-btn" onclick="switchChart('main_track_output_voltage_1', event)">轨出1电压</button>
+                <button class="chart-control-btn" onclick="switchChart('input_impedance', event)">输入阻抗</button>
+                <button class="chart-control-btn" onclick="switchChart('input_current', event)">输入电流</button>
             </div>
             <div class="chart-container">
                 <canvas id="dataChart"></canvas>
