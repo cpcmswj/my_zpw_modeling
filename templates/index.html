@@ -79,6 +79,14 @@
             gap: 10px;
         }
         
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #3498db;
+        }
+        
         .logout-btn {
             background-color: #e74c3c;
             color: white;
@@ -821,6 +829,7 @@
             <!-- 用户信息部分 -->
             <div class="login-section" id="userInfoSection" style="display: none;">
                 <div class="user-info">
+                    <img id="userAvatar" class="user-avatar" src="" alt="头像" style="display: none;">
                     <span id="userName">用户</span>
                     <button class="logout-btn" onclick="logout()">登出</button>
                 </div>
@@ -1660,6 +1669,14 @@
             if (isLoggedIn) {
                 document.getElementById('userInfoSection').style.display = 'block';
                 document.getElementById('userName').textContent = currentUser.username;
+                
+                const avatarImg = document.getElementById('userAvatar');
+                if (currentUser.avatar_path) {
+                    avatarImg.src = `/${currentUser.avatar_path}`;
+                    avatarImg.style.display = 'block';
+                } else {
+                    avatarImg.style.display = 'none';
+                }
             } else {
                 document.getElementById('userInfoSection').style.display = 'none';
             }
@@ -1736,7 +1753,10 @@
                 if (result.status === 'success') {
                     console.log('登录成功');
                     isLoggedIn = true;
-                    currentUser = { username: username };
+                    currentUser = { 
+                        username: result.user.username,
+                        avatar_path: result.user.avatar_path 
+                    };
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     updateLoginUI();
                     enableSimulationFeatures();

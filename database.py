@@ -94,13 +94,14 @@ class SimpleUserStore:
         with self._lock:
             return self._users.get(username)
 
-    def add_user(self, username, hashed_password):
+    def add_user(self, username, hashed_password, avatar_path=None):
         with self._lock:
             if username in self._users:
                 return False
             self._users[username] = {
                 "username": username,
-                "hashed_password": hashed_password
+                "hashed_password": hashed_password,
+                "avatar_path": avatar_path
             }
             self._save_to_edge_config()
             return True

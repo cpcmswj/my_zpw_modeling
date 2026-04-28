@@ -394,6 +394,14 @@
             align-items: center;
             gap: 10px;
         }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #3498db;
+        }
 
         .logout-btn {
             background-color: #e74c3c;
@@ -508,6 +516,12 @@
             padding: 15px 20px;
             background-color: #2a2a2a;
             border-bottom: 1px solid #3498db;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .bottom-window-header h3 {
@@ -714,6 +728,7 @@
 <body>
     <div class="login-section" id="userInfoSection" style="display: none;">
         <div class="user-info">
+            <img id="userAvatar" class="user-avatar" src="" alt="头像" style="display: none;">
             <span id="userName">用户</span>
             <button class="logout-btn" onclick="logout()">登出</button>
         </div>
@@ -794,12 +809,26 @@
             <input type="number" id="errorValue" name="errorValue" value="1.0" step="0.1">
         </div>
         <div class="form-group">
-            <label for="r1">R1:</label>
-            <input type="number" id="r1" name="r1" value="1" step="1">
+            <label for="r1">衰耗盘端子1:</label>
+            <select id="r1" name="r1">
+                <option value="1">1</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+            </select>
         </div>
         <div class="form-group">
-            <label for="r2">R2:</label>
-            <input type="number" id="r2" name="r2" value="1" step="1">
+            <label for="r2">衰耗盘端子2:</label>
+            <select id="r2" name="r2">
+                <option value="2">2</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="7">7</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="voltageLevel">发送端电平档位:</label>
@@ -965,6 +994,14 @@
                 userInfoSection.style.display = 'block';
                 userName.textContent = currentUser.username;
                 document.body.classList.add('logged-in');
+                
+                const avatarImg = document.getElementById('userAvatar');
+                if (currentUser.avatar_path) {
+                    avatarImg.src = `/${currentUser.avatar_path}`;
+                    avatarImg.style.display = 'block';
+                } else {
+                    avatarImg.style.display = 'none';
+                }
             } else {
                 userInfoSection.style.display = 'none';
                 document.body.classList.remove('logged-in');
@@ -1013,7 +1050,10 @@
                 const result = await response.json();
                 if (result.status === 'success') {
                     isLoggedIn = true;
-                    currentUser = { username: username };
+                    currentUser = { 
+                        username: result.user.username,
+                        avatar_path: result.user.avatar_path 
+                    };
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     window.location.reload();
                 } else {
@@ -1198,6 +1238,25 @@
             isSimulationRunning = false;
             abortControllers.forEach(controller => { controller.abort(); });
             abortControllers = [];
+
+            // 重置按钮状态
+            document.getElementById('startSimulationBtn').disabled = false;
+            document.getElementById('stopSimulationBtn').disabled = true;
+
+            // 更新进度显示
+            const progress = totalSimulationCount > 0 ? (currentSimulationIndex / totalSimulationCount) * 100 : 0;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `已停止生成！已生成 ${currentSimulationIndex} / ${totalSimulationCount} 条数据`;
+
+            // 显示已生成的数据
+            if (simulationResults.length > 0) {
+                const noFaultCount = simulationResults.filter(result => result.error_type === 0).length;
+                const faultCount = simulationResults.filter(result => result.error_type !== 0).length;
+                addResultItem('info', `已停止生成！当前共 ${simulationResults.length} 条数据（无故障: ${noFaultCount}，故障: ${faultCount}）`);
+                showToggleButton();
+                showChartToggleButton();
+                updateSimulationResult();
+            }
         }
 
         async function simulateSingle(params) {
@@ -1289,6 +1348,12 @@
                 showToggleButton();
                 showChartToggleButton();
                 updateSimulationResult();
+
+                // 如果图表窗口已经打开，实时刷新图表
+                const chartWindow = document.getElementById('chartFloatingWindow');
+                if (chartWindow && chartWindow.classList.contains('active')) {
+                    updateChart();
+                }
             }
             const progress = (currentSimulationIndex / totalSimulationCount) * 100;
             document.getElementById('progressFill').style.width = `${progress}%`;
@@ -1340,6 +1405,12 @@
         }
 
         async function startTimeSeriesSimulation() {
+            // 检查是否已经在运行
+            if (isSimulationRunning) {
+                showStatusMessage('模拟正在进行中，请先停止后再试！', 'error');
+                return;
+            }
+
             if (!currentSelection.trackSection) {
                 showStatusMessage('请先选择轨道区段和故障类型！', 'error');
                 return;
@@ -1797,15 +1868,17 @@
 
     <div class="bottom-floating-window" id="bottomFloatingWindow">
         <div class="bottom-window-header">
-            <h3>生成结果</h3>
-            <button class="close-bottom-btn" onclick="closeBottomWindow()">&times;</button>
+            <h3>仿真结果</h3>
+            <div class="header-actions">
+                <div class="download-buttons" id="downloadButtons" style="display: none;">
+                    <button class="btn" onclick="downloadCSV()">下载 CSV 文件</button>
+                    <button class="btn" onclick="downloadJSON()">下载 JSON 文件</button>
+                </div>
+                <button class="close-bottom-btn" onclick="closeBottomWindow()">&times;</button>
+            </div>
         </div>
         <div class="bottom-window-content">
             <div class="simulation-result-grid" id="simulationResultGrid"></div>
-            <div class="download-buttons" id="downloadButtons" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #3498db;">
-                <button class="btn" onclick="downloadCSV()">下载 CSV 文件</button>
-                <button class="btn" onclick="downloadJSON()">下载 JSON 文件</button>
-            </div>
         </div>
     </div>
 
