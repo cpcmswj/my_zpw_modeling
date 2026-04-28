@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request, Form, Body
+from fastapi import FastAPI, Request, Form, Body, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from typing import Optional
 import numpy as np
 import os
 
@@ -73,6 +74,7 @@ app = FastAPI()
 
 # 配置模板和静态文件
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 templates = Jinja2Templates(directory="templates")
 
 # 获取端口配置
@@ -1335,11 +1337,13 @@ async def login_api(
 
         if password_match:
             print("登录成功！")
+            avatar_path = user_data.get("avatar_path")
             return JSONResponse({
                 "status": "success",
                 "message": "登录成功",
                 "user": {
-                    "username": username
+                    "username": username,
+                    "avatar_path": avatar_path
                 }
             })
         else:
@@ -1359,7 +1363,8 @@ async def login_api(
 @app.post("/api/register")
 async def register_api(
     username: str = Form(...),
-    password: str = Form(...)
+    password: str = Form(...),
+    avatar: Optional[UploadFile] = File(None)
 ):
     try:
         print(f"接收到注册请求: username={username}")
@@ -1375,8 +1380,22 @@ async def register_api(
         hashed_password = pwd_context.hash(password)
         print(f"哈希后的密码: {hashed_password}")
 
+        avatar_path = None
+        if avatar:
+            print(f"接收到头像文件: {avatar.filename}")
+            # 确保uploads目录存在
+            os.makedirs("uploads", exist_ok=True)
+            # 生成唯一文件名
+            avatar_filename = f"{username}_{uuid.uuid4().hex[:8]}{os.path.splitext(avatar.filename)[1]}"
+            avatar_path = f"uploads/{avatar_filename}"
+            
+            # 保存头像文件
+            with open(avatar_path, "wb") as f:
+                f.write(await avatar.read())
+            print(f"头像已保存: {avatar_path}")
+
         print("添加新用户到存储")
-        user_store.add_user(username, hashed_password)
+        user_store.add_user(username, hashed_password, avatar_path)
 
         print(f"用户注册成功: {username}")
         return JSONResponse({

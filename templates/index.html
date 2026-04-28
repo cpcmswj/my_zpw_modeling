@@ -79,6 +79,14 @@
             gap: 10px;
         }
         
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #3498db;
+        }
+        
         .logout-btn {
             background-color: #e74c3c;
             color: white;
@@ -821,6 +829,7 @@
             <!-- 用户信息部分 -->
             <div class="login-section" id="userInfoSection" style="display: none;">
                 <div class="user-info">
+                    <img id="userAvatar" class="user-avatar" src="" alt="头像" style="display: none;">
                     <span id="userName">用户</span>
                     <button class="logout-btn" onclick="logout()">登出</button>
                 </div>
@@ -1660,6 +1669,14 @@
             if (isLoggedIn) {
                 document.getElementById('userInfoSection').style.display = 'block';
                 document.getElementById('userName').textContent = currentUser.username;
+                
+                const avatarImg = document.getElementById('userAvatar');
+                if (currentUser.avatar_path) {
+                    avatarImg.src = `/${currentUser.avatar_path}`;
+                    avatarImg.style.display = 'block';
+                } else {
+                    avatarImg.style.display = 'none';
+                }
             } else {
                 document.getElementById('userInfoSection').style.display = 'none';
             }
@@ -1736,7 +1753,10 @@
                 if (result.status === 'success') {
                     console.log('登录成功');
                     isLoggedIn = true;
-                    currentUser = { username: username };
+                    currentUser = { 
+                        username: result.user.username,
+                        avatar_path: result.user.avatar_path 
+                    };
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     updateLoginUI();
                     enableSimulationFeatures();
@@ -1824,6 +1844,27 @@
                         floatingTabs[i].classList.add('active');
                         break;
                     }
+                }
+            }
+
+            // 切换到时间序列模拟时，确保不会误读取CSV数据
+            if (tabName === 'time_series') {
+                // 如果已经有生成的数据，重新绘制图表确保使用正确的数据
+                if (typeof simulationResults !== 'undefined' && simulationResults.length > 0) {
+                    // 延迟执行以确保DOM已更新
+                    setTimeout(function() {
+                        drawAllVoltageCharts(simulationResults);
+                    }, 100);
+                } else {
+                    // 如果没有数据，清空图表
+                    const canvasIds = ['inputVoltageChart', 'sendEndVoltageChart', 'receiveEndVoltageChart', 'mainTrackInputVoltageChart', 'mainTrackOutputVoltageChart'];
+                    canvasIds.forEach(function(id) {
+                        const canvas = document.getElementById(id);
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        }
+                    });
                 }
             }
         }
@@ -4316,8 +4357,12 @@
         
         // 窗口大小改变事件监听器
         window.addEventListener('resize', function() {
-            if (simulationResults.length > 0) {
-                drawAllVoltageCharts(simulationResults);
+            // 只有在时间序列模拟选项卡处于活动状态时才重新绘制图表
+            const timeSeriesTab = document.getElementById('time_series');
+            if (timeSeriesTab && timeSeriesTab.classList.contains('active')) {
+                if (typeof simulationResults !== 'undefined' && simulationResults.length > 0) {
+                    drawAllVoltageCharts(simulationResults);
+                }
             }
         });
         
