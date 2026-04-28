@@ -1550,6 +1550,12 @@
             const chartWindow = document.getElementById('chartFloatingWindow');
             chartWindow.classList.toggle('active');
             if (chartWindow.classList.contains('active')) {
+                // 确保只使用内存中的 simulationResults，不读取CSV文件
+                if (simulationResults.length === 0) {
+                    showStatusMessage('没有可用的模拟数据，请先生成数据！', 'error');
+                    chartWindow.classList.remove('active');
+                    return;
+                }
                 updateChart();
             }
         }
@@ -1597,6 +1603,12 @@
             });
             if (event && event.target) {
                 event.target.classList.add('active');
+            }
+            
+            // 确保只使用内存中的 simulationResults，不读取CSV文件
+            if (simulationResults.length === 0) {
+                showStatusMessage('没有可用的模拟数据，请先生成数据！', 'error');
+                return;
             }
             
             updateChart();

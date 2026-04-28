@@ -1826,6 +1826,27 @@
                     }
                 }
             }
+
+            // 切换到时间序列模拟时，确保不会误读取CSV数据
+            if (tabName === 'time_series') {
+                // 如果已经有生成的数据，重新绘制图表确保使用正确的数据
+                if (typeof simulationResults !== 'undefined' && simulationResults.length > 0) {
+                    // 延迟执行以确保DOM已更新
+                    setTimeout(function() {
+                        drawAllVoltageCharts(simulationResults);
+                    }, 100);
+                } else {
+                    // 如果没有数据，清空图表
+                    const canvasIds = ['inputVoltageChart', 'sendEndVoltageChart', 'receiveEndVoltageChart', 'mainTrackInputVoltageChart', 'mainTrackOutputVoltageChart'];
+                    canvasIds.forEach(function(id) {
+                        const canvas = document.getElementById(id);
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        }
+                    });
+                }
+            }
         }
         
         // 集成系统相关代码
@@ -4316,8 +4337,12 @@
         
         // 窗口大小改变事件监听器
         window.addEventListener('resize', function() {
-            if (simulationResults.length > 0) {
-                drawAllVoltageCharts(simulationResults);
+            // 只有在时间序列模拟选项卡处于活动状态时才重新绘制图表
+            const timeSeriesTab = document.getElementById('time_series');
+            if (timeSeriesTab && timeSeriesTab.classList.contains('active')) {
+                if (typeof simulationResults !== 'undefined' && simulationResults.length > 0) {
+                    drawAllVoltageCharts(simulationResults);
+                }
             }
         });
         
