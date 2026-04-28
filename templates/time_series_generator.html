@@ -1613,9 +1613,9 @@
             const noFaultResults = simulationResults.filter(result => result.error_type === 0);
             const faultResults = simulationResults.filter(result => result.error_type !== 0);
 
-            // 生成序号标签
-            const maxLength = Math.max(noFaultResults.length, faultResults.length);
-            const labels = Array.from({ length: maxLength }, (_, i) => i + 1);
+            // 生成连续的序号标签（1到总数据数）
+            const totalLength = noFaultResults.length + faultResults.length;
+            const labels = Array.from({ length: totalLength }, (_, i) => i + 1);
 
             // 销毁旧图表
             if (dataChart) {
@@ -1626,12 +1626,21 @@
 
             if (currentChartType === 'voltage') {
                 // 输入电压图表 - 显示无故障和故障的输入电压
+                // 无故障数据显示在前面的序号位置
+                const noFaultData = Array(totalLength).fill(null);
+                noFaultResults.forEach((result, index) => {
+                    noFaultData[index] = result.voltage;
+                });
+                
+                // 故障数据显示在无故障数据之后的序号位置
+                const faultData = Array(totalLength).fill(null);
+                faultResults.forEach((result, index) => {
+                    faultData[noFaultResults.length + index] = result.voltage;
+                });
+
                 datasets.push({
                     label: '无故障 - 输入电压 (V)',
-                    data: labels.map(index => {
-                        const result = noFaultResults[index - 1];
-                        return result ? result.voltage : null;
-                    }),
+                    data: noFaultData,
                     borderColor: noFaultColor.border,
                     backgroundColor: noFaultColor.background,
                     borderWidth: 2,
@@ -1647,10 +1656,7 @@
                 
                 datasets.push({
                     label: '故障 - 输入电压 (V)',
-                    data: labels.map(index => {
-                        const result = faultResults[index - 1];
-                        return result ? result.voltage : null;
-                    }),
+                    data: faultData,
                     borderColor: faultColor.border,
                     backgroundColor: faultColor.background,
                     borderWidth: 2,
@@ -1665,12 +1671,19 @@
                 });
             } else {
                 // 其他数据类型图表
+                const noFaultData = Array(totalLength).fill(null);
+                noFaultResults.forEach((result, index) => {
+                    noFaultData[index] = result[currentChartType] || 0;
+                });
+                
+                const faultData = Array(totalLength).fill(null);
+                faultResults.forEach((result, index) => {
+                    faultData[noFaultResults.length + index] = result[currentChartType] || 0;
+                });
+
                 datasets.push({
                     label: '无故障 - ' + chartLabels[currentChartType],
-                    data: labels.map(index => {
-                        const result = noFaultResults[index - 1];
-                        return result ? (result[currentChartType] || 0) : null;
-                    }),
+                    data: noFaultData,
                     borderColor: noFaultColor.border,
                     backgroundColor: noFaultColor.background,
                     borderWidth: 2,
@@ -1686,10 +1699,7 @@
                 
                 datasets.push({
                     label: '故障 - ' + chartLabels[currentChartType],
-                    data: labels.map(index => {
-                        const result = faultResults[index - 1];
-                        return result ? (result[currentChartType] || 0) : null;
-                    }),
+                    data: faultData,
                     borderColor: faultColor.border,
                     backgroundColor: faultColor.background,
                     borderWidth: 2,
