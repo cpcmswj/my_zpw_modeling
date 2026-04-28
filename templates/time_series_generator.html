@@ -1217,13 +1217,6 @@
                 };
                 simulationResults.push(resultData);
 
-                // 保存到CSV文件
-                fetch('/api/time-series/save-to-csv', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(resultData)
-                }).catch(error => console.error('保存到CSV失败:', error));
-
                 const faultType = params.error_type || 0;
                 const faultTypeName = faultTypeNames[faultType] || '无故障';
                 addResultItem('success', `模拟成功 (电压: ${(params.voltage || 0).toFixed(1)}V, 故障类型: ${faultTypeName}) - 送端轨面电压: ${(voltageResults.send_end_track_voltage || 0).toFixed(2)}V, 受端轨面电压: ${(voltageResults.receive_end_track_voltage || 0).toFixed(2)}V, 主轨入电压: ${(voltageResults.main_track_input_voltage || 0).toFixed(2)}V, 轨出1电压: ${(voltageResults.main_track_output_voltage_1 || 0).toFixed(2)}V`);
@@ -1242,12 +1235,30 @@
             document.getElementById('stopSimulationBtn').disabled = true;
             document.getElementById('progressText').textContent = '时序数据生成完成！';
 
-            // 从CSV读取最终数据
+            // 一次性将所有数据保存到CSV
+            if (simulationResults.length > 0) {
+                try {
+                    for (const result of simulationResults) {
+                        await fetch('/api/time-series/save-to-csv', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(result)
+                        });
+                        await delay(100); // 短暂延迟确保写入完成
+                    }
+                    console.log(`已保存 ${simulationResults.length} 条数据到CSV`);
+                } catch (error) {
+                    console.error('保存到CSV失败:', error);
+                }
+            }
+
+            // 从CSV读取最终数据（验证保存是否成功）
             try {
                 const response = await fetch('/api/time-series/read-from-csv');
                 const data = await response.json();
                 if (data.status === 'success' && data.results.length > 0) {
                     simulationResults = data.results;
+                    console.log(`从CSV读取到 ${simulationResults.length} 条数据`);
                 }
             } catch (error) {
                 console.error('从CSV读取数据失败:', error);
