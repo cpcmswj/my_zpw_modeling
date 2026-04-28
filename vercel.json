@@ -1,5 +1,4 @@
 {
-  "version": 2,
   "builds": [
     {
       "src": "main.py",
@@ -13,13 +12,7 @@
     }
   ],
   "env": {
-    "PYTHONUNBUFFERED": "1",
-    "PORT": "3000",
-    "PYTHONPATH": "."
-  },
-  "build": {
-    "env": {
-      "PYTHONPATH": "."
-    }
+    "EDGE_CONFIG_ID": "@edge-config-id",
+    "EDGE_CONFIG_TOKEN": "@edge-config-token"
   }
 }
