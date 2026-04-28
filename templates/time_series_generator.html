@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>时序数据生成</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -417,6 +418,233 @@
         .access-denied h3 {
             margin-bottom: 10px;
         }
+
+        .bottom-floating-window {
+            position: fixed;
+            bottom: -500px;
+            left: 0;
+            width: 100%;
+            height: 400px;
+            background-color: #1e1e1e;
+            border-top: 3px solid #3498db;
+            transition: bottom 0.3s ease;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bottom-floating-window.active {
+            bottom: 0;
+        }
+
+        .bottom-window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #2a2a2a;
+            border-bottom: 1px solid #3498db;
+        }
+
+        .bottom-window-header h3 {
+            margin: 0;
+            color: #3498db;
+            font-size: 18px;
+        }
+
+        .close-bottom-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .close-bottom-btn:hover {
+            color: #e74c3c;
+        }
+
+        .bottom-window-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 20px;
+        }
+
+        .toggle-bottom-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 2500;
+            display: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .toggle-bottom-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .simulation-result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-card {
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .result-card.error {
+            border-left-color: #e74c3c;
+        }
+
+        .result-card h4 {
+            margin: 0 0 10px 0;
+            color: #3498db;
+            font-size: 14px;
+        }
+
+        .result-card .result-detail {
+            font-size: 12px;
+            color: #ccc;
+            margin: 5px 0;
+        }
+
+        .result-card .result-voltage {
+            font-size: 16px;
+            font-weight: bold;
+            color: #27ae60;
+            margin-top: 8px;
+        }
+
+        .result-card.error .result-voltage {
+            color: #e74c3c;
+        }
+
+        .chart-floating-window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 90%;
+            max-width: 1000px;
+            height: 80%;
+            max-height: 600px;
+            background-color: #1e1e1e;
+            border: 3px solid #3498db;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+            z-index: 4000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-floating-window.active {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .chart-window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #2a2a2a;
+            border-bottom: 1px solid #3498db;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .chart-window-header h3 {
+            margin: 0;
+            color: #3498db;
+            font-size: 18px;
+        }
+
+        .close-chart-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .close-chart-btn:hover {
+            color: #e74c3c;
+        }
+
+        .chart-window-content {
+            flex: 1;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .chart-control-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .chart-control-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .chart-control-btn.active {
+            background-color: #27ae60;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: calc(100% - 50px);
+            position: relative;
+        }
+
+        .chart-toggle-btn {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 2500;
+            display: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-toggle-btn:hover {
+            background-color: #219653;
+        }
     </style>
 </head>
 <body>
@@ -510,7 +738,7 @@
             <input type="number" id="r2" name="r2" value="1" step="1">
         </div>
         <div class="form-group">
-            <label for="voltageLevel">发送端电压档位:</label>
+            <label for="voltageLevel">发送端电平档位:</label>
             <select id="voltageLevel" name="voltageLevel">
                 <option value="1">1档 (161-170V)</option>
                 <option value="2">2档 (146-154V)</option>
@@ -566,15 +794,30 @@
                 </div>
             </div>
 
+            <!-- 轨道区段示意图和故障类型展示 -->
+            <div class="railway-zone-container" style="margin: 30px 0; display: flex; gap: 20px; flex-wrap: wrap;">
+                <!-- 轨道区段示意图 -->
+                <div class="railway-zone" style="flex: 1; min-width: 300px; background-color: #2a2a2a; padding: 20px; border-radius: 8px; border: 1px solid #3498db;">
+                    <h3 style="color: #3498db; margin-bottom: 15px;">轨道区段示意图</h3>
+                    <div style="text-align: center; padding: 20px;">
+                        <img id="railwayZoneImage" src="/static/images/railway_zone.png" alt="轨道区段示意图" style="max-width: 100%; height: auto; border-radius: 4px;">
+                    </div>
+                </div>
+                
+                <!-- 故障类型图片展示 -->
+                <div class="fault-type-display" style="flex: 1; min-width: 300px; background-color: #2a2a2a; padding: 20px; border-radius: 8px; border: 1px solid #3498db;">
+                    <h3 style="color: #3498db; margin-bottom: 15px;">故障类型展示</h3>
+                    <div style="text-align: center; padding: 20px;">
+                        <img id="faultTypeImage" src="/static/images/错误展示0.png" alt="故障类型展示" style="max-width: 100%; height: auto; border-radius: 4px;">
+                        <p id="faultTypeDescription" style="margin-top: 15px; color: #ccc;">无故障</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="result-section">
                 <h2>生成结果</h2>
                 <div class="result-content" id="resultContent">
                     <p>请设置参数并点击"开始时序数据生成"按钮</p>
-                </div>
-
-                <div class="download-buttons" id="downloadButtons" style="display: none;">
-                    <button class="btn" onclick="downloadCSV()">下载 CSV 文件</button>
-                    <button class="btn" onclick="downloadJSON()">下载 JSON 文件</button>
                 </div>
             </div>
         </div>
@@ -593,6 +836,18 @@
             '5': '接收端调谐单元2断路',
             '6': '补偿电容3断路',
             '7': '补偿电容3短路'
+        };
+        
+        // 故障类型图片映射
+        const faultTypeImages = {
+            '0': '/static/images/错误展示0.png',
+            '1': '/static/images/错误展示1.png',
+            '2': '/static/images/错误展示2.png',
+            '3': '/static/images/错误展示3.png',
+            '4': '/static/images/错误展示4.png',
+            '5': '/static/images/错误展示5.png',
+            '6': '/static/images/错误展示6.png',
+            '7': '/static/images/错误展示7.png'
         };
 
         const trackSectionParams = {
@@ -623,6 +878,7 @@
         let currentSimulationIndex = 0;
         let totalSimulationCount = 0;
         let abortControllers = [];
+        let currentSessionId = null;
 
         function checkLoginStatus() {
             const savedUser = localStorage.getItem('user');
@@ -729,6 +985,17 @@
             }
         }
 
+        function updateFaultTypeImage(faultType) {
+            const faultTypeImage = document.getElementById('faultTypeImage');
+            const faultTypeDescription = document.getElementById('faultTypeDescription');
+            if (faultTypeImages[faultType]) {
+                faultTypeImage.src = faultTypeImages[faultType];
+            }
+            if (faultTypeNames[faultType]) {
+                faultTypeDescription.textContent = faultTypeNames[faultType];
+            }
+        }
+
         function saveSelection() {
             const section = document.getElementById('trackSection').value;
             const faultType = document.getElementById('faultType').value;
@@ -740,6 +1007,8 @@
             currentSelection.faultType = faultType;
             document.getElementById('trackSectionValue').textContent = section;
             document.getElementById('faultTypeValue').textContent = faultTypeNames[faultType];
+            // 更新故障类型图片
+            updateFaultTypeImage(faultType);
             showStatusMessage('选择已保存！', 'success');
             closeLeftMenu();
         }
@@ -844,6 +1113,10 @@
             document.getElementById('downloadButtons').style.display = 'none';
             simulationResults = [];
             document.getElementById('resultStats').textContent = '0 / 0';
+            closeBottomWindow();
+            closeChartWindow();
+            document.getElementById('toggleBottomBtn').style.display = 'none';
+            document.getElementById('toggleChartBtn').style.display = 'none';
         }
 
         function addResultItem(type, message) {
@@ -880,27 +1153,25 @@
 
             try {
                 if (!isSimulationRunning) throw new Error('模拟已停止');
+
                 const controller = new AbortController();
-                abortControllers.push(controller);
-                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+
                 try {
-                    const response = await fetch('/api/calculate/track-circuit', {
+                    const response = await fetch(`/api/calculate/track-circuit?_=${Date.now()}`, {
                         method: 'POST',
                         body: formData,
                         signal: controller.signal,
                         headers: { 'Accept': 'application/json' }
                     });
                     clearTimeout(timeoutId);
-                    const index = abortControllers.indexOf(controller);
-                    if (index > -1) abortControllers.splice(index, 1);
+
                     if (!response.ok) throw new Error(`API调用失败: ${response.status}`);
                     const result = await response.json();
                     if (result.status !== 'success') throw new Error(result.message || '模拟失败');
                     return result;
                 } catch (error) {
                     clearTimeout(timeoutId);
-                    const index = abortControllers.indexOf(controller);
-                    if (index > -1) abortControllers.splice(index, 1);
                     throw error;
                 }
             } catch (error) {
@@ -913,12 +1184,16 @@
             currentSimulationIndex++;
             if (simulation.error) {
                 const errorMessage = simulation.error.message || simulation.error || '未知错误';
-                addResultItem('error', `模拟失败 (电压: ${(simulation.params.voltage || 0).toFixed(1)}V): ${errorMessage}`);
+                const faultType = simulation.params.error_type || 0;
+                const faultTypeName = faultTypeNames[faultType] || '无故障';
+                addResultItem('error', `模拟失败 (电压: ${(simulation.params.voltage || 0).toFixed(1)}V, 故障类型: ${faultTypeName}): ${errorMessage}`);
             } else {
                 const result = simulation.result;
                 const params = simulation.params;
                 if (!result) {
-                    addResultItem('error', `模拟失败 (电压: ${(params.voltage || 0).toFixed(1)}V): 无效的模拟结果`);
+                    const faultType = params.error_type || 0;
+                    const faultTypeName = faultTypeNames[faultType] || '无故障';
+                    addResultItem('error', `模拟失败 (电压: ${(params.voltage || 0).toFixed(1)}V, 故障类型: ${faultTypeName}): 无效的模拟结果`);
                     return;
                 }
                 const voltageResults = result.voltage_results || {
@@ -941,24 +1216,59 @@
                     timestamp: new Date().toISOString()
                 };
                 simulationResults.push(resultData);
-                addResultItem('success', `模拟成功 (电压: ${(params.voltage || 0).toFixed(1)}V) - 送端轨面电压: ${(voltageResults.send_end_track_voltage || 0).toFixed(2)}V, 受端轨面电压: ${(voltageResults.receive_end_track_voltage || 0).toFixed(2)}V, 主轨入电压: ${(voltageResults.main_track_input_voltage || 0).toFixed(2)}V, 轨出1电压: ${(voltageResults.main_track_output_voltage_1 || 0).toFixed(2)}V`);
+
+                // 保存到CSV文件
+                fetch('/api/time-series/save-to-csv', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(resultData)
+                }).catch(error => console.error('保存到CSV失败:', error));
+
+                const faultType = params.error_type || 0;
+                const faultTypeName = faultTypeNames[faultType] || '无故障';
+                addResultItem('success', `模拟成功 (电压: ${(params.voltage || 0).toFixed(1)}V, 故障类型: ${faultTypeName}) - 送端轨面电压: ${(voltageResults.send_end_track_voltage || 0).toFixed(2)}V, 受端轨面电压: ${(voltageResults.receive_end_track_voltage || 0).toFixed(2)}V, 主轨入电压: ${(voltageResults.main_track_input_voltage || 0).toFixed(2)}V, 轨出1电压: ${(voltageResults.main_track_output_voltage_1 || 0).toFixed(2)}V`);
+                showToggleButton();
+                showChartToggleButton();
+                updateSimulationResult();
             }
             const progress = (currentSimulationIndex / totalSimulationCount) * 100;
             document.getElementById('progressFill').style.width = `${progress}%`;
             document.getElementById('resultStats').textContent = `${currentSimulationIndex} / ${totalSimulationCount}`;
         }
 
-        function finishTimeSeriesSimulation() {
+        async function finishTimeSeriesSimulation() {
             isSimulationRunning = false;
             document.getElementById('startSimulationBtn').disabled = false;
             document.getElementById('stopSimulationBtn').disabled = true;
             document.getElementById('progressText').textContent = '时序数据生成完成！';
+
+            // 从CSV读取最终数据
+            try {
+                const response = await fetch('/api/time-series/read-from-csv');
+                const data = await response.json();
+                if (data.status === 'success' && data.results.length > 0) {
+                    simulationResults = data.results;
+                }
+            } catch (error) {
+                console.error('从CSV读取数据失败:', error);
+            }
+
             if (simulationResults.length > 0) {
                 document.getElementById('downloadButtons').style.display = 'flex';
-                addResultItem('success', `时序数据生成完成！共生成 ${simulationResults.length} 条有效数据。`);
+                const noFaultCount = simulationResults.filter(result => result.error_type === 0).length;
+                const faultCount = simulationResults.filter(result => result.error_type !== 0).length;
+                addResultItem('success', `时序数据生成完成！共生成 ${simulationResults.length} 条有效数据，其中无故障数据 ${noFaultCount} 条，故障数据 ${faultCount} 条。`);
+                showToggleButton();
+                showChartToggleButton();
+                updateSimulationResult();
             } else {
                 addResultItem('error', '时序数据生成完成，但未生成任何有效数据。');
             }
+        }
+
+        // 延迟函数
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
         }
 
         async function startTimeSeriesSimulation() {
@@ -967,10 +1277,13 @@
                 return;
             }
             const sectionId = currentSelection.trackSection;
-            const errorType = parseInt(currentSelection.faultType);
+            const selectedErrorType = parseInt(currentSelection.faultType);
             const { trackLength, resistance, inductance, capacitance, leakageResistance, cableLength, errorValue, r1, r2 } = trackParameters;
 
             const voltageValues = generateVoltageValues();
+            const halfLength = Math.ceil(voltageValues.length / 2);
+            const noFaultVoltages = voltageValues.slice(0, halfLength);
+            const faultVoltages = voltageValues.slice(halfLength);
             totalSimulationCount = voltageValues.length;
             if (totalSimulationCount <= 0) {
                 alert('无效的电压设置');
@@ -980,6 +1293,13 @@
             simulationResults = [];
             isSimulationRunning = true;
             currentSimulationIndex = 0;
+
+            // 清除旧的CSV文件
+            try {
+                await fetch('/api/time-series/clear-csv', { method: 'POST' });
+            } catch (error) {
+                console.error('清除CSV文件失败:', error);
+            }
 
             document.getElementById('startSimulationBtn').disabled = true;
             document.getElementById('stopSimulationBtn').disabled = false;
@@ -998,13 +1318,15 @@
                     frequency = 1700;
                 }
 
-                for (let i = 0; i < voltageValues.length; i++) {
+                // 先生成无故障数据
+                document.getElementById('progressText').textContent = '正在生成无故障数据...';
+                for (let i = 0; i < noFaultVoltages.length; i++) {
                     if (!isSimulationRunning) break;
-                    const voltage = voltageValues[i];
+                    const voltage = noFaultVoltages[i];
                     const params = {
                         section_id: sectionId,
                         frequency: frequency,
-                        error_type: errorType,
+                        error_type: 0, // 无故障
                         error_value: errorValue,
                         track_length: trackLength,
                         resistance: resistance,
@@ -1023,6 +1345,39 @@
                         console.error('模拟失败:', error);
                         processSimulationResult({ params, error: error });
                     }
+                    // 在请求之间添加较长延迟，让连接有机会关闭
+                    await delay(2000);
+                }
+
+                // 再生成选定故障类型的数据
+                document.getElementById('progressText').textContent = '正在生成故障数据...';
+                for (let i = 0; i < faultVoltages.length; i++) {
+                    if (!isSimulationRunning) break;
+                    const voltage = faultVoltages[i];
+                    const params = {
+                        section_id: sectionId,
+                        frequency: frequency,
+                        error_type: selectedErrorType,
+                        error_value: errorValue,
+                        track_length: trackLength,
+                        resistance: resistance,
+                        inductance: inductance,
+                        capacitance: capacitance,
+                        leakage_resistance: leakageResistance,
+                        spt_cable_length: cableLength,
+                        r1: r1,
+                        r2: r2,
+                        voltage: voltage
+                    };
+                    try {
+                        const result = await simulateSingle(params);
+                        processSimulationResult({ params, result });
+                    } catch (error) {
+                        console.error('模拟失败:', error);
+                        processSimulationResult({ params, error: error });
+                    }
+                    // 在请求之间添加较长延迟，让连接有机会关闭
+                    await delay(2000);
                 }
             } catch (error) {
                 console.error('时序数据生成失败:', error);
@@ -1071,6 +1426,273 @@
             showStatusMessage('JSON文件下载成功！', 'success');
         }
 
+        function closeBottomWindow() {
+            document.getElementById('bottomFloatingWindow').classList.remove('active');
+        }
+
+        function toggleBottomWindow() {
+            const bottomWindow = document.getElementById('bottomFloatingWindow');
+            bottomWindow.classList.toggle('active');
+            updateSimulationResult();
+        }
+
+        function updateSimulationResult() {
+            const grid = document.getElementById('simulationResultGrid');
+            grid.innerHTML = '';
+            if (simulationResults.length === 0) {
+                grid.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">暂无生成结果</p>';
+                document.getElementById('downloadButtons').style.display = 'none';
+                return;
+            }
+            document.getElementById('downloadButtons').style.display = 'flex';
+            simulationResults.forEach((result, index) => {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                const faultType = result.error_type || 0;
+                const faultTypeName = faultTypeNames[faultType] || '无故障';
+                card.innerHTML = `
+                    <h4>电压: ${result.voltage.toFixed(1)}V (${index + 1}/${simulationResults.length})</h4>
+                    <div class="result-detail">故障类型: ${faultTypeName}</div>
+                    <div class="result-detail">送端轨面电压: ${(result.send_end_track_voltage || 0).toFixed(2)}V</div>
+                    <div class="result-detail">受端轨面电压: ${(result.receive_end_track_voltage || 0).toFixed(2)}V</div>
+                    <div class="result-detail">主轨入电压: ${(result.main_track_input_voltage || 0).toFixed(2)}V</div>
+                    <div class="result-detail">轨出1电压: ${(result.main_track_output_voltage_1 || 0).toFixed(2)}V</div>
+                    <div class="result-detail">输入阻抗: ${(result.input_impedance || 0).toFixed(2)}Ω</div>
+                    <div class="result-detail">输入电流: ${(result.input_current || 0).toFixed(4)}A</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function showToggleButton() {
+            const btn = document.getElementById('toggleBottomBtn');
+            btn.style.display = 'block';
+        }
+
+        function showChartToggleButton() {
+            const btn = document.getElementById('toggleChartBtn');
+            btn.style.display = 'block';
+        }
+
+        function closeChartWindow() {
+            document.getElementById('chartFloatingWindow').classList.remove('active');
+        }
+
+        function toggleChartWindow() {
+            const chartWindow = document.getElementById('chartFloatingWindow');
+            chartWindow.classList.toggle('active');
+            if (chartWindow.classList.contains('active')) {
+                updateChart();
+            }
+        }
+
+        let dataChart = null;
+        let currentChartType = 'voltage';
+
+        const chartLabels = {
+            'voltage': '输入电压 (V)',
+            'send_end_track_voltage': '送端轨面电压 (V)',
+            'receive_end_track_voltage': '受端轨面电压 (V)',
+            'main_track_input_voltage': '主轨入电压 (V)',
+            'main_track_output_voltage_1': '轨出1电压 (V)',
+            'input_impedance': '输入阻抗 (Ω)',
+            'input_current': '输入电流 (A)'
+        };
+
+        const chartColors = {
+            'send_end_track_voltage': 'rgba(52, 152, 219, 1)',
+            'receive_end_track_voltage': 'rgba(46, 204, 113, 1)',
+            'main_track_input_voltage': 'rgba(241, 196, 15, 1)',
+            'main_track_output_voltage_1': 'rgba(155, 89, 182, 1)',
+            'input_impedance': 'rgba(230, 126, 34, 1)',
+            'input_current': 'rgba(231, 76, 60, 1)'
+        };
+
+        const noFaultColor = {
+            border: 'rgba(39, 174, 96, 1)',
+            background: 'rgba(39, 174, 96, 0.2)',
+            point: 'rgba(39, 174, 96, 1)'
+        };
+
+        const faultColor = {
+            border: 'rgba(231, 76, 60, 1)',
+            background: 'rgba(231, 76, 60, 0.2)',
+            point: 'rgba(231, 76, 60, 1)'
+        };
+
+        function switchChart(chartType) {
+            currentChartType = chartType;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.chart-control-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            updateChart();
+        }
+
+        function updateChart() {
+            if (simulationResults.length === 0) {
+                return;
+            }
+
+            const ctx = document.getElementById('dataChart').getContext('2d');
+
+            // 将数据分为无故障和故障两组
+            const noFaultResults = simulationResults.filter(result => result.error_type === 0);
+            const faultResults = simulationResults.filter(result => result.error_type !== 0);
+
+            // 生成序号标签
+            const maxLength = Math.max(noFaultResults.length, faultResults.length);
+            const labels = Array.from({ length: maxLength }, (_, i) => i + 1);
+
+            // 销毁旧图表
+            if (dataChart) {
+                dataChart.destroy();
+            }
+
+            let datasets = [];
+
+            if (currentChartType === 'voltage') {
+                // 输入电压图表 - 显示无故障和故障的输入电压
+                datasets.push({
+                    label: '无故障 - 输入电压 (V)',
+                    data: labels.map(index => {
+                        const result = noFaultResults[index - 1];
+                        return result ? result.voltage : null;
+                    }),
+                    borderColor: noFaultColor.border,
+                    backgroundColor: noFaultColor.background,
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: noFaultColor.point,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    spanGaps: true
+                });
+                
+                datasets.push({
+                    label: '故障 - 输入电压 (V)',
+                    data: labels.map(index => {
+                        const result = faultResults[index - 1];
+                        return result ? result.voltage : null;
+                    }),
+                    borderColor: faultColor.border,
+                    backgroundColor: faultColor.background,
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: faultColor.point,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    spanGaps: true
+                });
+            } else {
+                // 其他数据类型图表
+                datasets.push({
+                    label: '无故障 - ' + chartLabels[currentChartType],
+                    data: labels.map(index => {
+                        const result = noFaultResults[index - 1];
+                        return result ? (result[currentChartType] || 0) : null;
+                    }),
+                    borderColor: noFaultColor.border,
+                    backgroundColor: noFaultColor.background,
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: noFaultColor.point,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    spanGaps: true
+                });
+                
+                datasets.push({
+                    label: '故障 - ' + chartLabels[currentChartType],
+                    data: labels.map(index => {
+                        const result = faultResults[index - 1];
+                        return result ? (result[currentChartType] || 0) : null;
+                    }),
+                    borderColor: faultColor.border,
+                    backgroundColor: faultColor.background,
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: faultColor.point,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    spanGaps: true
+                });
+            }
+
+            // 创建新图表
+            dataChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: chartLabels[currentChartType],
+                            color: '#3498db',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '序号',
+                                color: '#999'
+                            },
+                            ticks: {
+                                color: '#ccc'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: chartLabels[currentChartType],
+                                color: '#999'
+                            },
+                            ticks: {
+                                color: '#ccc'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         document.getElementById('overlay').addEventListener('click', function() {
             closeLeftMenu();
             closeParameterWindow();
@@ -1080,5 +1702,43 @@
             checkLoginStatus();
         });
     </script>
+
+    <div class="bottom-floating-window" id="bottomFloatingWindow">
+        <div class="bottom-window-header">
+            <h3>生成结果</h3>
+            <button class="close-bottom-btn" onclick="closeBottomWindow()">&times;</button>
+        </div>
+        <div class="bottom-window-content">
+            <div class="simulation-result-grid" id="simulationResultGrid"></div>
+            <div class="download-buttons" id="downloadButtons" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #3498db;">
+                <button class="btn" onclick="downloadCSV()">下载 CSV 文件</button>
+                <button class="btn" onclick="downloadJSON()">下载 JSON 文件</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="toggle-bottom-btn" id="toggleBottomBtn" onclick="toggleBottomWindow()">查看生成结果</button>
+    <button class="chart-toggle-btn" id="toggleChartBtn" onclick="toggleChartWindow()">查看数据图表</button>
+
+    <div class="chart-floating-window" id="chartFloatingWindow">
+        <div class="chart-window-header">
+            <h3>数据图表</h3>
+            <button class="close-chart-btn" onclick="closeChartWindow()">&times;</button>
+        </div>
+        <div class="chart-window-content">
+            <div class="chart-controls">
+                <button class="chart-control-btn active" onclick="switchChart('voltage')">输入电压</button>
+                <button class="chart-control-btn" onclick="switchChart('send_end_track_voltage')">送端轨面电压</button>
+                <button class="chart-control-btn" onclick="switchChart('receive_end_track_voltage')">受端轨面电压</button>
+                <button class="chart-control-btn" onclick="switchChart('main_track_input_voltage')">主轨入电压</button>
+                <button class="chart-control-btn" onclick="switchChart('main_track_output_voltage_1')">轨出1电压</button>
+                <button class="chart-control-btn" onclick="switchChart('input_impedance')">输入阻抗</button>
+                <button class="chart-control-btn" onclick="switchChart('input_current')">输入电流</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="dataChart"></canvas>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

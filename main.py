@@ -75,7 +75,7 @@ PORT = int(os.environ.get("PORT", 8000))
 # 根路径，返回新的首页
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("time_series_generator.html", {"request": request})
 
 # 图片查看器页面 - 使用模板引擎
 @app.get("/image-viewer", response_class=HTMLResponse)
@@ -1693,3 +1693,225 @@ if __name__ == "__main__":
         workers=1
     )
 # 运行：uvicorn main:app --reload
+
+# 时序数据存储系统（基于内存）
+import uuid
+from datetime import datetime
+import threading
+
+class TimeSeriesStorage:
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._sessions = {}
+
+    def create_session(self):
+        session_id = str(uuid.uuid4())
+        with self._lock:
+            self._sessions[session_id] = {
+                'created_at': datetime.now().isoformat(),
+                'results': []
+            }
+        return session_id
+
+    def add_result(self, session_id, result_data):
+        with self._lock:
+            if session_id in self._sessions:
+                self._sessions[session_id]['results'].append(result_data)
+                return True
+            return False
+
+    def get_results(self, session_id):
+        with self._lock:
+            if session_id in self._sessions:
+                return self._sessions[session_id]['results']
+            return []
+
+    def get_session_info(self, session_id):
+        with self._lock:
+            if session_id in self._sessions:
+                return {
+                    'session_id': session_id,
+                    'created_at': self._sessions[session_id]['created_at'],
+                    'result_count': len(self._sessions[session_id]['results'])
+                }
+            return None
+
+    def clear_session(self, session_id):
+        with self._lock:
+            if session_id in self._sessions:
+                del self._sessions[session_id]
+                return True
+            return False
+
+# 全局存储实例
+time_series_storage = TimeSeriesStorage()
+
+# 创建时序数据存储会话
+@app.post("/api/time-series/create-session")
+async def create_time_series_session():
+    session_id = time_series_storage.create_session()
+    return JSONResponse({
+        "status": "success",
+        "session_id": session_id
+    })
+
+# 添加时序数据到会话
+@app.post("/api/time-series/add-result/{session_id}")
+async def add_time_series_result(session_id: str, data: dict = Body(...)):
+    result = time_series_storage.add_result(session_id, data)
+    if result:
+        return JSONResponse({"status": "success"})
+    return JSONResponse(
+        {"status": "error", "message": "会话不存在"},
+        status_code=404
+    )
+
+# 获取会话中的所有数据
+@app.get("/api/time-series/get-results/{session_id}")
+async def get_time_series_results(session_id: str):
+    results = time_series_storage.get_results(session_id)
+    return JSONResponse({
+        "status": "success",
+        "results": results,
+        "count": len(results)
+    })
+
+# 获取会话信息
+@app.get("/api/time-series/session-info/{session_id}")
+async def get_session_info(session_id: str):
+    info = time_series_storage.get_session_info(session_id)
+    if info:
+        return JSONResponse({
+            "status": "success",
+            "info": info
+        })
+    return JSONResponse(
+        {"status": "error", "message": "会话不存在"},
+        status_code=404
+    )
+
+# 清除会话
+@app.delete("/api/time-series/clear-session/{session_id}")
+async def clear_session(session_id: str):
+    if time_series_storage.clear_session(session_id):
+        return JSONResponse({"status": "success"})
+    return JSONResponse(
+        {"status": "error", "message": "会话不存在"},
+        status_code=404
+    )
+
+# CSV文件存储系统
+import csv
+import os
+from datetime import datetime
+
+CSV_FILE_PATH = os.path.join("static", "time_series_data.csv")
+
+# 清除CSV文件（初始化）
+@app.post("/api/time-series/clear-csv")
+async def clear_csv_file():
+    try:
+        # 如果文件存在则删除
+        if os.path.exists(CSV_FILE_PATH):
+            os.remove(CSV_FILE_PATH)
+        return JSONResponse({"status": "success", "message": "CSV文件已清除"})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+# 保存单条数据到CSV
+@app.post("/api/time-series/save-to-csv")
+async def save_to_csv(data: dict = Body(...)):
+    try:
+        file_exists = os.path.exists(CSV_FILE_PATH)
+        file_empty = not file_exists or os.path.getsize(CSV_FILE_PATH) == 0
+
+        with open(CSV_FILE_PATH, 'a', newline='', encoding='utf-8-sig') as csvfile:
+            fieldnames = ['voltage', 'section_id', 'error_type', 'track_length',
+                          'send_end_track_voltage', 'receive_end_track_voltage',
+                          'main_track_input_voltage', 'main_track_output_voltage_1',
+                          'input_impedance', 'input_current', 'timestamp']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            # 如果文件不存在或为空，写入表头
+            if file_empty:
+                writer.writeheader()
+
+            # 写入数据行
+            writer.writerow({
+                'voltage': data.get('voltage', 0),
+                'section_id': data.get('section_id', ''),
+                'error_type': data.get('error_type', 0),
+                'track_length': data.get('track_length', 0),
+                'send_end_track_voltage': data.get('send_end_track_voltage', 0),
+                'receive_end_track_voltage': data.get('receive_end_track_voltage', 0),
+                'main_track_input_voltage': data.get('main_track_input_voltage', 0),
+                'main_track_output_voltage_1': data.get('main_track_output_voltage_1', 0),
+                'input_impedance': data.get('input_impedance', 0),
+                'input_current': data.get('input_current', 0),
+                'timestamp': data.get('timestamp', datetime.now().isoformat())
+            })
+
+        return JSONResponse({"status": "success"})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+# 从CSV读取所有数据
+@app.get("/api/time-series/read-from-csv")
+async def read_from_csv():
+    try:
+        if not os.path.exists(CSV_FILE_PATH):
+            return JSONResponse({"status": "success", "results": [], "count": 0})
+
+        results = []
+        with open(CSV_FILE_PATH, 'r', encoding='utf-8-sig') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                # 转换数值类型
+                try:
+                    results.append({
+                        'voltage': float(row['voltage']),
+                        'section_id': row['section_id'],
+                        'error_type': int(row['error_type']),
+                        'track_length': float(row['track_length']),
+                        'send_end_track_voltage': float(row['send_end_track_voltage']),
+                        'receive_end_track_voltage': float(row['receive_end_track_voltage']),
+                        'main_track_input_voltage': float(row['main_track_input_voltage']),
+                        'main_track_output_voltage_1': float(row['main_track_output_voltage_1']),
+                        'input_impedance': float(row['input_impedance']),
+                        'input_current': float(row['input_current']),
+                        'timestamp': row['timestamp']
+                    })
+                except (ValueError, KeyError) as e:
+                    # 跳过无效行
+                    continue
+
+        return JSONResponse({"status": "success", "results": results, "count": len(results)})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+# 获取CSV文件状态
+@app.get("/api/time-series/csv-status")
+async def get_csv_status():
+    try:
+        if not os.path.exists(CSV_FILE_PATH):
+            return JSONResponse({
+                "status": "success",
+                "exists": False,
+                "row_count": 0
+            })
+
+        with open(CSV_FILE_PATH, 'r', encoding='utf-8-sig') as csvfile:
+            reader = csv.reader(csvfile)
+            row_count = sum(1 for row in reader) - 1  # 减去表头
+
+        return JSONResponse({
+            "status": "success",
+            "exists": True,
+            "row_count": max(0, row_count)
+        })
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
