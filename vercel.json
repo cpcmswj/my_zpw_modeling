@@ -14,6 +14,12 @@
   ],
   "env": {
     "PYTHONUNBUFFERED": "1",
-    "PORT": "3000"
+    "PORT": "3000",
+    "PYTHONPATH": "."
+  },
+  "build": {
+    "env": {
+      "PYTHONPATH": "."
+    }
   }
 }

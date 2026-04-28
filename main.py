@@ -75,7 +75,7 @@ PORT = int(os.environ.get("PORT", 8000))
 # 根路径，返回新的首页
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("time_series_generator.html", {"request": request})
 
 # 图片查看器页面 - 使用模板引擎
 @app.get("/image-viewer", response_class=HTMLResponse)
@@ -146,6 +146,341 @@ async def read_time_series_simulation(request: Request):
 @app.get("/comparison-time-series", response_class=HTMLResponse)
 async def read_comparison_time_series(request: Request):
     return templates.TemplateResponse("comparison_time_series.html", {"request": request})
+
+# 轨道参数设置页面
+@app.get("/track-parameters", response_class=HTMLResponse)
+async def read_track_parameters(request: Request):
+    return templates.TemplateResponse("track_parameters.html", {"request": request})
+
+# 时序数据生成页面
+@app.get("/time-series-generator", response_class=HTMLResponse)
+async def read_time_series_generator(request: Request):
+    return templates.TemplateResponse("time_series_generator.html", {"request": request})
+
+# 构建电路模型API端点
+@app.post("/api/build-circuit-model")
+async def build_circuit_model(
+    trackSection: str = Form(...),
+    faultType: int = Form(...),
+    trackLength: float = Form(...),
+    cableLength: float = Form(...),
+    frequency: int = Form(...),
+    inputVoltage: float = Form(...),
+    ballastResist: float = Form(...)
+):
+    try:
+        # 导入Error_Of_Trail_Amplitude_Phase类
+        from templates.error_of_trail_amplitude_phase import Error_Of_Trail_Amplitude_Phase
+        
+        print(f"接收到构建电路模型请求:")
+        print(f"轨道区段: {trackSection}")
+        print(f"故障类型: {faultType}")
+        print(f"轨道长度: {trackLength}")
+        print(f"电缆长度: {cableLength}")
+        print(f"频率: {frequency}")
+        print(f"输入电压: {inputVoltage}")
+        print(f"道碴电阻: {ballastResist}")
+        
+        # 创建故障实例
+        fault = Error_Of_Trail_Amplitude_Phase(
+            trail="track_circuit",
+            error_type=faultType,
+            error_value=1.0,
+            error_position=trackSection,
+            length_parameter=trackLength,
+            SPT_cable_length=cableLength
+        )
+        
+        # 构建电路模型
+        print("开始构建电路模型...")
+        result = fault.build_circuit_model()
+        print("电路模型构建完成")
+        
+        # 计算输入电压对应的输出
+        print("计算输入电压对应的输出...")
+        fault.input_V = inputVoltage
+        
+        # 计算输出电压
+        try:
+            output_voltage = fault.count_output()
+            print(f"输出电压: {output_voltage}")
+        except Exception as e:
+            print(f"计算输出电压时出错: {e}")
+            output_voltage = None
+        
+        # 计算主轨入电压和轨出1电压
+        try:
+            # 调用 call_matrix_main 方法计算主轨入电压
+            fault.call_matrix_main()
+            
+            # 获取主轨入电压
+            if hasattr(fault, 'output_voltage_main'):
+                try:
+                    # 尝试获取 voltage_main 作为主轨入电压
+                    if hasattr(fault, 'voltage_main'):
+                        main_rail_input_voltage = fault.voltage_main
+                        print(f"从 voltage_main 获取主轨入电压: {main_rail_input_voltage}")
+                    else:
+                        # 尝试从 output_voltage_main 获取主轨入电压
+                        main_rail_input_voltage = fault.output_voltage_main
+                        # 检查是否为数组或列表
+                        if isinstance(main_rail_input_voltage, (list, np.ndarray)):
+                            # 尝试获取第一个元素
+                            if len(main_rail_input_voltage) > 0:
+                                main_rail_input_voltage = main_rail_input_voltage[0]
+                        # 检查是否为复数
+                        if isinstance(main_rail_input_voltage, complex):
+                            # 计算复数的模
+                            main_rail_input_voltage = abs(main_rail_input_voltage)
+                        print(f"主轨入电压: {main_rail_input_voltage}")
+                except Exception as e:
+                    print(f"获取主轨入电压时出错: {e}")
+                    main_rail_input_voltage = None
+            else:
+                main_rail_input_voltage = None
+                print("警告：未找到主轨入电压")
+            
+            # 获取轨出1电压（这里假设轨出1电压是主轨入电压的一部分）
+            if main_rail_input_voltage is not None:
+                # 轨出1电压通常是主轨入电压经过衰耗盘后的电压
+                # 这里使用一个简化的计算方式，实际项目中需要根据具体电路计算
+                rail_output_1_voltage = main_rail_input_voltage * 0.9 if isinstance(main_rail_input_voltage, (int, float, complex)) else None
+                rail_output_2_voltage = main_rail_input_voltage * 0.1 if isinstance(main_rail_input_voltage, (int, float, complex)) else None
+                print(f"轨出1电压: {rail_output_1_voltage}")
+                print(f"轨出2电压: {rail_output_2_voltage}")
+            else:
+                rail_output_1_voltage = None
+                rail_output_2_voltage = None
+                print("警告：无法计算轨出1电压和轨出2电压")
+        except Exception as e:
+            print(f"计算主轨入电压和轨出1电压时出错: {e}")
+            import traceback
+            traceback.print_exc()
+            main_rail_input_voltage = inputVoltage
+            rail_output_1_voltage = None
+            rail_output_2_voltage = None
+        
+        # 构建响应
+        response_data = {
+            "status": "success",
+            "message": "电路模型构建成功",
+            "data": {
+                "trackSection": trackSection,
+                "faultType": faultType,
+                "trackLength": trackLength,
+                "cableLength": cableLength,
+                "frequency": frequency,
+                "inputVoltage": inputVoltage,
+                "ballastResist": ballastResist,
+                "outputVoltage": str(output_voltage) if output_voltage is not None else "计算失败",
+                "mainRailInputVoltage": str(main_rail_input_voltage) if main_rail_input_voltage is not None else "计算失败",
+                "railOutput1Voltage": str(rail_output_1_voltage) if rail_output_1_voltage is not None else "计算失败",
+                "railOutput2Voltage": str(rail_output_2_voltage) if rail_output_2_voltage is not None else "计算失败",
+                "faultStatus": fault.status()
+            }
+        }
+        
+        return JSONResponse(response_data)
+        
+    except Exception as e:
+        print(f"构建电路模型时出错: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(
+            {"status": "error", "message": f"构建电路模型失败: {str(e)}"},
+            status_code=500
+        )
+
+# 仿真模型API端点
+@app.post("/api/simulate-model")
+async def simulate_model(
+    trackSection: str = Form(...),
+    faultType: int = Form(...),
+    trackLength: float = Form(...),
+    cableLength: float = Form(...),
+    frequency: int = Form(...),
+    inputVoltage: float = Form(...),
+    ballastResist: float = Form(...),
+    voltageLevel: int = Form(3)
+):
+    try:
+        # 导入Error_Of_Trail_Amplitude_Phase类
+        from templates.error_of_trail_amplitude_phase import Error_Of_Trail_Amplitude_Phase
+        
+        print(f"接收到模型仿真请求:")
+        print(f"轨道区段: {trackSection}")
+        print(f"故障类型: {faultType}")
+        print(f"轨道长度: {trackLength}")
+        print(f"电缆长度: {cableLength}")
+        print(f"频率: {frequency}")
+        print(f"输入电压: {inputVoltage}")
+        print(f"道碴电阻: {ballastResist}")
+        print(f"电压档位: {voltageLevel}")
+        
+        # 创建故障实例
+        fault = Error_Of_Trail_Amplitude_Phase(
+            trail="track_circuit",
+            error_type=faultType,
+            error_value=1.0,
+            error_position=trackSection,
+            length_parameter=trackLength,
+            SPT_cable_length=cableLength
+        )
+        
+        # 构建电路模型
+        print("开始构建电路模型...")
+        model_result = fault.build_circuit_model()
+        print("电路模型构建完成")
+        
+        # 根据电压档位确定电压范围
+        def get_voltage_range(level):
+            switcher = {
+                1: (161, 170),
+                2: (146, 154),
+                3: (128, 135),
+                4: (104.5, 110.5),
+                5: (75, 79.5),
+                6: (75, 170)
+            }
+            return switcher.get(level, (75, 170))
+        
+        # 获取电压范围
+        min_voltage, max_voltage = get_voltage_range(voltageLevel)
+        print(f"电压范围: {min_voltage}V - {max_voltage}V")
+        
+        # 生成多组输入电压
+        # 生成13个等间距的电压值
+        import numpy as np
+        input_voltages = np.linspace(min_voltage, max_voltage, 13).tolist()
+        # 保留1位小数
+        input_voltages = [round(v, 1) for v in input_voltages]
+        print(f"使用多组输入电压: {input_voltages}")
+        
+        # 存储多组仿真结果
+        simulation_results = []
+        
+        for voltage in input_voltages:
+            print(f"\n计算输入电压 {voltage}V 对应的输出...")
+            fault.input_V = voltage
+            
+            # 计算输入阻抗
+            try:
+                input_current, input_impedance, Z_rail, Z_tuner = fault.call_input(voltage, ballastResist / 1000)
+                print(f"输入电流: {input_current}")
+                print(f"输入阻抗: {input_impedance}")
+                print(f"钢轨阻抗: {Z_rail}")
+                print(f"调谐区阻抗: {Z_tuner}")
+            except Exception as e:
+                print(f"计算输入阻抗时出错: {e}")
+                input_current = None
+                input_impedance = None
+                Z_rail = None
+                Z_tuner = None
+            
+            # 计算输出电压
+            try:
+                output_voltage = fault.count_output()
+                print(f"输出电压: {output_voltage}")
+            except Exception as e:
+                print(f"计算输出电压时出错: {e}")
+                output_voltage = None
+            
+            # 计算主轨入电压和轨出1电压
+            try:
+                # 调用 call_matrix_main 方法计算主轨入电压
+                fault.call_matrix_main()
+                
+                # 获取主轨入电压
+                if hasattr(fault, 'output_voltage_main'):
+                    try:
+                        # 尝试获取 voltage_main 作为主轨入电压
+                        if hasattr(fault, 'voltage_main'):
+                            main_rail_input_voltage = fault.voltage_main
+                            print(f"从 voltage_main 获取主轨入电压: {main_rail_input_voltage}")
+                        else:
+                            # 尝试从 output_voltage_main 获取主轨入电压
+                            main_rail_input_voltage = fault.output_voltage_main
+                            # 检查是否为数组或列表
+                            if isinstance(main_rail_input_voltage, (list, np.ndarray)):
+                                # 尝试获取第一个元素
+                                if len(main_rail_input_voltage) > 0:
+                                    main_rail_input_voltage = main_rail_input_voltage[0]
+                            # 检查是否为复数
+                            if isinstance(main_rail_input_voltage, complex):
+                                # 计算复数的模
+                                main_rail_input_voltage = abs(main_rail_input_voltage)
+                            print(f"主轨入电压: {main_rail_input_voltage}")
+                    except Exception as e:
+                        print(f"获取主轨入电压时出错: {e}")
+                        main_rail_input_voltage = None
+                else:
+                    main_rail_input_voltage = None
+                    print("警告：未找到主轨入电压")
+                
+                # 获取轨出1电压（这里假设轨出1电压是主轨入电压的一部分）
+                if main_rail_input_voltage is not None:
+                    # 轨出1电压通常是主轨入电压经过衰耗盘后的电压
+                    # 这里使用一个简化的计算方式，实际项目中需要根据具体电路计算
+                    rail_output_1_voltage = main_rail_input_voltage * 0.9 if isinstance(main_rail_input_voltage, (int, float, complex)) else None
+                    rail_output_2_voltage = main_rail_input_voltage * 0.1 if isinstance(main_rail_input_voltage, (int, float, complex)) else None
+                    print(f"轨出1电压: {rail_output_1_voltage}")
+                    print(f"轨出2电压: {rail_output_2_voltage}")
+                else:
+                    rail_output_1_voltage = None
+                    rail_output_2_voltage = None
+                    print("警告：无法计算轨出1电压和轨出2电压")
+            except Exception as e:
+                print(f"计算主轨入电压和轨出1电压时出错: {e}")
+                import traceback
+                traceback.print_exc()
+                main_rail_input_voltage = voltage
+                rail_output_1_voltage = None
+                rail_output_2_voltage = None
+            
+            # 存储当前电压的仿真结果
+            simulation_results.append({
+                "inputVoltage": voltage,
+                "outputVoltage": str(output_voltage) if output_voltage is not None else "计算失败",
+                "inputCurrent": str(input_current) if input_current is not None else "计算失败",
+                "inputImpedance": str(input_impedance) if input_impedance is not None else "计算失败",
+                "railImpedance": str(Z_rail) if Z_rail is not None else "计算失败",
+                "tunerImpedance": str(Z_tuner) if Z_tuner is not None else "计算失败",
+                "mainRailInputVoltage": str(main_rail_input_voltage) if main_rail_input_voltage is not None else "计算失败",
+                "railOutput1Voltage": str(rail_output_1_voltage) if rail_output_1_voltage is not None else "计算失败",
+                "railOutput2Voltage": str(rail_output_2_voltage) if rail_output_2_voltage is not None else "计算失败"
+            })
+        
+        # 构建响应
+        response_data = {
+            "status": "success",
+            "message": "模型仿真成功",
+            "data": {
+                "trackSection": trackSection,
+                "faultType": faultType,
+                "trackLength": trackLength,
+                "cableLength": cableLength,
+                "frequency": frequency,
+                "ballastResist": ballastResist,
+                "faultStatus": fault.status(),
+                "voltageLevel": voltageLevel,
+                "voltageRange": {
+                    "min": min_voltage,
+                    "max": max_voltage
+                },
+                "simulationResults": simulation_results
+            }
+        }
+        
+        return JSONResponse(response_data)
+        
+    except Exception as e:
+        print(f"模型仿真时出错: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(
+            {"status": "error", "message": f"模型仿真失败: {str(e)}"},
+            status_code=500
+        )
 
 # 用户注册页面
 @app.get("/register", response_class=HTMLResponse)
@@ -1348,4 +1683,235 @@ async def batch_download_xlsx_api(data: dict = Body(...)):
         )
 
 # 启动应用的命令（用于开发环境）
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=PORT,
+        reload=False,
+        workers=1
+    )
 # 运行：uvicorn main:app --reload
+
+# 时序数据存储系统（基于内存）
+import uuid
+from datetime import datetime
+import threading
+
+class TimeSeriesStorage:
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._sessions = {}
+
+    def create_session(self):
+        session_id = str(uuid.uuid4())
+        with self._lock:
+            self._sessions[session_id] = {
+                'created_at': datetime.now().isoformat(),
+                'results': []
+            }
+        return session_id
+
+    def add_result(self, session_id, result_data):
+        with self._lock:
+            if session_id in self._sessions:
+                self._sessions[session_id]['results'].append(result_data)
+                return True
+            return False
+
+    def get_results(self, session_id):
+        with self._lock:
+            if session_id in self._sessions:
+                return self._sessions[session_id]['results']
+            return []
+
+    def get_session_info(self, session_id):
+        with self._lock:
+            if session_id in self._sessions:
+                return {
+                    'session_id': session_id,
+                    'created_at': self._sessions[session_id]['created_at'],
+                    'result_count': len(self._sessions[session_id]['results'])
+                }
+            return None
+
+    def clear_session(self, session_id):
+        with self._lock:
+            if session_id in self._sessions:
+                del self._sessions[session_id]
+                return True
+            return False
+
+# 全局存储实例
+time_series_storage = TimeSeriesStorage()
+
+# 创建时序数据存储会话
+@app.post("/api/time-series/create-session")
+async def create_time_series_session():
+    session_id = time_series_storage.create_session()
+    return JSONResponse({
+        "status": "success",
+        "session_id": session_id
+    })
+
+# 添加时序数据到会话
+@app.post("/api/time-series/add-result/{session_id}")
+async def add_time_series_result(session_id: str, data: dict = Body(...)):
+    result = time_series_storage.add_result(session_id, data)
+    if result:
+        return JSONResponse({"status": "success"})
+    return JSONResponse(
+        {"status": "error", "message": "会话不存在"},
+        status_code=404
+    )
+
+# 获取会话中的所有数据
+@app.get("/api/time-series/get-results/{session_id}")
+async def get_time_series_results(session_id: str):
+    results = time_series_storage.get_results(session_id)
+    return JSONResponse({
+        "status": "success",
+        "results": results,
+        "count": len(results)
+    })
+
+# 获取会话信息
+@app.get("/api/time-series/session-info/{session_id}")
+async def get_session_info(session_id: str):
+    info = time_series_storage.get_session_info(session_id)
+    if info:
+        return JSONResponse({
+            "status": "success",
+            "info": info
+        })
+    return JSONResponse(
+        {"status": "error", "message": "会话不存在"},
+        status_code=404
+    )
+
+# 清除会话
+@app.delete("/api/time-series/clear-session/{session_id}")
+async def clear_session(session_id: str):
+    if time_series_storage.clear_session(session_id):
+        return JSONResponse({"status": "success"})
+    return JSONResponse(
+        {"status": "error", "message": "会话不存在"},
+        status_code=404
+    )
+
+# CSV文件存储系统
+import csv
+import os
+from datetime import datetime
+
+CSV_FILE_PATH = os.path.join("static", "time_series_data.csv")
+
+# 清除CSV文件（初始化）
+@app.post("/api/time-series/clear-csv")
+async def clear_csv_file():
+    try:
+        # 如果文件存在则删除
+        if os.path.exists(CSV_FILE_PATH):
+            os.remove(CSV_FILE_PATH)
+        return JSONResponse({"status": "success", "message": "CSV文件已清除"})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+# 保存单条数据到CSV
+@app.post("/api/time-series/save-to-csv")
+async def save_to_csv(data: dict = Body(...)):
+    try:
+        file_exists = os.path.exists(CSV_FILE_PATH)
+        file_empty = not file_exists or os.path.getsize(CSV_FILE_PATH) == 0
+
+        with open(CSV_FILE_PATH, 'a', newline='', encoding='utf-8-sig') as csvfile:
+            fieldnames = ['voltage', 'section_id', 'error_type', 'track_length',
+                          'send_end_track_voltage', 'receive_end_track_voltage',
+                          'main_track_input_voltage', 'main_track_output_voltage_1',
+                          'input_impedance', 'input_current', 'timestamp']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            # 如果文件不存在或为空，写入表头
+            if file_empty:
+                writer.writeheader()
+
+            # 写入数据行
+            writer.writerow({
+                'voltage': data.get('voltage', 0),
+                'section_id': data.get('section_id', ''),
+                'error_type': data.get('error_type', 0),
+                'track_length': data.get('track_length', 0),
+                'send_end_track_voltage': data.get('send_end_track_voltage', 0),
+                'receive_end_track_voltage': data.get('receive_end_track_voltage', 0),
+                'main_track_input_voltage': data.get('main_track_input_voltage', 0),
+                'main_track_output_voltage_1': data.get('main_track_output_voltage_1', 0),
+                'input_impedance': data.get('input_impedance', 0),
+                'input_current': data.get('input_current', 0),
+                'timestamp': data.get('timestamp', datetime.now().isoformat())
+            })
+
+        return JSONResponse({"status": "success"})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+# 从CSV读取所有数据
+@app.get("/api/time-series/read-from-csv")
+async def read_from_csv():
+    try:
+        if not os.path.exists(CSV_FILE_PATH):
+            return JSONResponse({"status": "success", "results": [], "count": 0})
+
+        results = []
+        with open(CSV_FILE_PATH, 'r', encoding='utf-8-sig') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                # 转换数值类型
+                try:
+                    results.append({
+                        'voltage': float(row['voltage']),
+                        'section_id': row['section_id'],
+                        'error_type': int(row['error_type']),
+                        'track_length': float(row['track_length']),
+                        'send_end_track_voltage': float(row['send_end_track_voltage']),
+                        'receive_end_track_voltage': float(row['receive_end_track_voltage']),
+                        'main_track_input_voltage': float(row['main_track_input_voltage']),
+                        'main_track_output_voltage_1': float(row['main_track_output_voltage_1']),
+                        'input_impedance': float(row['input_impedance']),
+                        'input_current': float(row['input_current']),
+                        'timestamp': row['timestamp']
+                    })
+                except (ValueError, KeyError) as e:
+                    # 跳过无效行
+                    continue
+
+        return JSONResponse({"status": "success", "results": results, "count": len(results)})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+# 获取CSV文件状态
+@app.get("/api/time-series/csv-status")
+async def get_csv_status():
+    try:
+        if not os.path.exists(CSV_FILE_PATH):
+            return JSONResponse({
+                "status": "success",
+                "exists": False,
+                "row_count": 0
+            })
+
+        with open(CSV_FILE_PATH, 'r', encoding='utf-8-sig') as csvfile:
+            reader = csv.reader(csvfile)
+            row_count = sum(1 for row in reader) - 1  # 减去表头
+
+        return JSONResponse({
+            "status": "success",
+            "exists": True,
+            "row_count": max(0, row_count)
+        })
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
