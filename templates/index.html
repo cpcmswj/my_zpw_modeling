@@ -1172,6 +1172,18 @@
                             <input type="number" id="error7Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
                             <span style="width: 30px; text-align: right;">%</span>
                         </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="error8" name="errorTypes" value="8" checked style="width: auto;">
+                            <label for="error8" style="flex: 1;">8 - 发送端SPT电缆断路</label>
+                            <input type="number" id="error8Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                            <span style="width: 30px; text-align: right;">%</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="error9" name="errorTypes" value="9" checked style="width: auto;">
+                            <label for="error9" style="flex: 1;">9 - 接收端SPT电缆断路</label>
+                            <input type="number" id="error9Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                            <span style="width: 30px; text-align: right;">%</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -1411,6 +1423,8 @@
                                 <option value="5">5 - 接收端调谐单元2断路</option>
                                 <option value="6">6 - 补偿电容3断路</option>
                                 <option value="7">7 - 补偿电容3短路</option>
+                                <option value="8">8 - 发送端SPT电缆断路</option>
+                                <option value="9">9 - 接收端SPT电缆断路</option>
                             </select>
                         </div>
                     </div>
@@ -1933,7 +1947,9 @@
             { value: 4, name: "4 - 接收端空芯线圈短路", description: "接收端空芯线圈发生短路故障" },
             { value: 5, name: "5 - 接收端调谐单元2断路", description: "接收端调谐单元2发生断路故障" },
             { value: 6, name: "6 - 补偿电容3断路", description: "补偿电容3发生断路故障" },
-            { value: 7, name: "7 - 补偿电容3短路", description: "补偿电容3发生短路故障" }
+            { value: 7, name: "7 - 补偿电容3短路", description: "补偿电容3发生短路故障" },
+            { value: 8, name: "8 - 发送端SPT电缆断路", description: "发送端SPT电缆发生断路故障" },
+            { value: 9, name: "9 - 接收端SPT电缆断路", description: "接收端SPT电缆发生断路故障" }
         ];
         
         // 初始化集成系统

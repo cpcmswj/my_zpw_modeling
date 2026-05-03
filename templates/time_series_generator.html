@@ -1,4 +1,40 @@
-<!DOCTYPE html>
+<!--
+    时序数据生成页面 - 调用流程说明
+    
+    1. 页面访问: 用户访问 /time-series-generator 路由
+       -> FastAPI 渲染此模板
+    
+    2. 页面初始化 (DOMContentLoaded):
+       -> checkLoginStatus() - 检查登录状态
+       -> 若未登录，显示登录弹窗
+    
+    3. 用户操作流程:
+       a. 选择轨道区段 (trackSection)
+       b. 选择故障类型 (errorType)
+       c. 设置数据数量 (dataCount)、故障数据比例 (faultRatio)
+       d. 设置衰耗盘端子 (r1, r2) 和电压参数
+       e. 点击"开始时序数据生成"按钮
+    
+    4. 数据生成流程:
+       -> startTimeSeriesSimulation() 被调用
+       -> 循环调用 simulateSingle() 生成每组数据
+       -> simulateSingle() 通过 POST /api/time_series_simulation 发送请求
+       -> 服务器返回仿真结果，存入 simulationResults 数组
+    
+    5. 结果展示:
+       -> 每组数据生成后调用 updateSimulationResult() 更新列表
+       -> 若图表窗口已打开，调用 updateChart() 实时刷新图表
+       -> 显示下载按钮，支持 CSV/JSON 格式导出
+    
+    6. 图表功能:
+       -> 点击"查看数据图表"打开悬浮窗口
+       -> 支持切换不同数据类型 (输入电压、轨面电压等)
+       -> 图表使用 Chart.js 绘制
+    
+    7. 停止功能:
+       -> 点击"停止生成"按钮调用 stopTimeSeriesSimulation()
+       -> 取消所有待处理请求，保留已生成数据
+--><!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -766,6 +802,8 @@
                 <option value="5">接收端调谐单元2断路</option>
                 <option value="6">补偿电容3断路</option>
                 <option value="7">补偿电容3短路</option>
+                <option value="8">发送端SPT电缆断路</option>
+                <option value="9">接收端SPT电缆断路</option>
             </select>
         </div>
         <button class="save-btn" onclick="saveSelection()">保存选择</button>
@@ -928,7 +966,9 @@
             '4': '接收端空芯线圈短路',
             '5': '接收端调谐单元2断路',
             '6': '补偿电容3断路',
-            '7': '补偿电容3短路'
+            '7': '补偿电容3短路',
+            '8': '发送端SPT电缆断路',
+            '9': '接收端SPT电缆断路'
         };
         
         // 故障类型图片映射
@@ -1107,6 +1147,7 @@
             const faultType = document.getElementById('faultType').value;
             if (!section) {
                 showStatusMessage('请选择轨道区段！', 'error');
+                alert('请选择轨道区段！');
                 return;
             }
             currentSelection.trackSection = section;
@@ -1156,17 +1197,53 @@
             closeParameterWindow();
         }
 
+        /**
+         * 显示状态消息提示
+         * 
+         * 功能说明：
+         * 在页面顶部创建一个悬浮的消息提示框，显示成功或错误信息，
+         * 3秒后自动消失，提供用户操作反馈
+         * 
+         * 参数说明：
+         * @param {string} message - 要显示的消息内容
+         * @param {string} type - 消息类型，可选值：
+         *   - 'success': 成功消息（绿色样式）
+         *   - 'error': 错误消息（红色样式）
+         *   - 'info': 信息消息（蓝色样式）
+         * 
+         * 实现原理：
+         * 1. 动态创建一个div元素
+         * 2. 设置CSS类名（用于样式控制）
+         * 3. 添加到页面主容器中
+         * 4. 3秒后开始淡出动画
+         * 5. 动画结束后从DOM中移除元素
+         * 
+         * 使用场景：
+         * - 保存选择成功/失败提示
+         * - 数据生成进度提示
+         * - 下载文件成功提示
+         * - API请求结果反馈
+         */
         function showStatusMessage(message, type) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `status-message ${type}`;
-            messageDiv.textContent = message;
-            const container = document.querySelector('.main-content');
-            container.appendChild(messageDiv);
-            messageDiv.style.display = 'block';
+            const messageDiv = document.createElement('div');  // 创建消息容器div
+            messageDiv.className = `status-message ${type}`;    // 设置CSS类名：status-message + 类型
+            messageDiv.textContent = message;                  // 设置消息文本内容
+            
+            const container = document.querySelector('.main-content');  // 获取页面主容器
+            container.appendChild(messageDiv);                    // 将消息div添加到主容器
+            
+            messageDiv.style.display = 'block';                 // 确保消息可见
+            
+            // 设置3秒后自动隐藏
             setTimeout(() => {
-                messageDiv.style.display = 'none';
-                setTimeout(() => { container.removeChild(messageDiv); }, 300);
-            }, 3000);
+                messageDiv.style.display = 'none';              // 隐藏消息（开始淡出）
+                // 再等300ms动画完成后从DOM中移除
+                setTimeout(() => { 
+                    if (messageDiv.parentNode) {               // 确保元素仍在DOM中
+                        container.removeChild(messageDiv);       // 移除消息元素
+                    }
+                }, 300);
+            }, 3000);  // 3秒后开始淡出
         }
 
         function getVoltageRange(level) {
@@ -1547,21 +1624,64 @@
             showStatusMessage('CSV文件下载成功！', 'success');
         }
 
+        /**
+         * 下载JSON文件功能
+         * 
+         * 实现原理：
+         * 1. 将JavaScript数组对象转换为JSON字符串
+         * 2. 创建Blob对象（Binary Large Object）存储二进制数据
+         * 3. 通过URL.createObjectURL()生成临时下载链接
+         * 4. 创建隐藏的<a>元素模拟点击下载
+         * 5. 下载完成后清理临时资源
+         * 
+         * 数据来源：
+         * - simulationResults: 全局数组，存储所有生成的时序仿真数据
+         * - 每个元素包含：error_type, voltage, 各种电压参数, timestamp等
+         */
         function downloadJSON() {
+            // 步骤1: 检查是否有可下载的数据
             if (simulationResults.length === 0) {
                 showStatusMessage('没有数据可下载！', 'error');
                 return;
             }
+            
+            // 步骤2: 将JavaScript对象转换为格式化的JSON字符串
+            // JSON.stringify(array, null, 2) 第三个参数2表示缩进空格数，使输出更易读
             const jsonContent = JSON.stringify(simulationResults, null, 2);
+            
+            // 步骤3: 创建Blob对象
+            // Blob是浏览器支持的二进制大对象，用于存储原始数据
+            // type: 'application/json' 告诉浏览器这是JSON格式文件
+            // charset=utf-8 确保中文字符正确编码
             const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+            
+            // 步骤4: 生成临时下载URL
+            // URL.createObjectURL(blob) 为Blob对象创建一个唯一的临时URL
+            // 格式类似: blob:http://127.0.0.1:8000/xxxxxxx-xxxx-xxxx
+            // 此URL仅在当前文档生命周期内有效
             const url = URL.createObjectURL(blob);
+            
+            // 步骤5: 创建隐藏的下载链接元素
             const link = document.createElement('a');
-            link.setAttribute('href', url);
+            link.setAttribute('href', url);                                    // 设置下载资源的URL
             link.setAttribute('download', `time_series_data_${new Date().toISOString().slice(0, 19).replace(/[-:]/g, '')}.json`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // download属性指定下载文件名
+            // 文件名格式: time_series_data_20260429Txxxxxx.json
+            // new Date().toISOString() -> "2026-04-29T15:30:45.123Z"
+            // .slice(0, 19) -> "2026-04-29T15:30:45"
+            // .replace(/[-:]/g, '') -> "20260429T153045"
+            
+            link.style.visibility = 'hidden';  // 隐藏链接元素，不影响页面布局
+            
+            // 步骤6: 模拟点击触发下载
+            document.body.appendChild(link);  // 将链接添加到DOM
+            link.click();                     // 触发点击事件，浏览器开始下载
+            
+            // 步骤7: 清理临时资源
+            document.body.removeChild(link);   // 从DOM中移除链接元素
+            // URL.revokeObjectURL(url);        // 释放URL对象（可选，浏览器会自动清理）
+            
+            // 步骤8: 显示下载成功提示
             showStatusMessage('JSON文件下载成功！', 'success');
         }
 

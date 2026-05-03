@@ -161,6 +161,10 @@ class Error_Of_Trail_Amplitude_Phase:
             return "补偿电容3断路"
         elif self.error_type==7:
             return "补偿电容3短路"
+        elif self.error_type==8:
+            return "发送端SPT电缆断路"
+        elif self.error_type==9:
+            return "接收端SPT电缆断路"
         else:
             return "未知故障类型"
     def find_neibour_zone(self):
@@ -1167,6 +1171,78 @@ class Error_Of_Trail_Amplitude_Phase:
                     print("警告：主轨入电压计算结果包含无效值")
             except Exception as e:
                 print(f"计算主轨入电压时出错: {e}")
+        elif self.error_type==8:
+            # 发送端SPT电缆断路 - 将发送端SPT电缆矩阵置为零矩阵
+            # SPT电缆矩阵（全零矩阵表示断路）
+            self.matrix = np.zeros((2, 2))
+            # 由于发送端电缆断路，后续计算结果应为0
+            self.output_voltage_surface1 = np.array([[0.0], [0.0]])
+            self.output_voltage_surface2 = np.array([[0.0], [0.0]])
+            self.output_voltage_main = np.array([[0.0], [0.0]])
+            self.output_voltage_main_1 = np.array([[0.0], [0.0]])
+        elif self.error_type==9:
+            # 接收端SPT电缆断路 - 只将接收端（后一个）SPT电缆矩阵置为零矩阵
+            # 发送端（前一个）SPT电缆矩阵正常
+            # 这与error_type==0类似，但接收端电缆矩阵被置零
+            frequency = self.frequency_table(self.error_position)
+            
+            # 发送端SPT电缆矩阵（正常）
+            try:
+                spt_cable_matrix_send = jg.SPTcable_matrix(frequency, self.SPT_cable_length)
+                if not np.all(np.isfinite(spt_cable_matrix_send)):
+                    print("警告：发送端SPT电缆矩阵包含无效值，使用单位矩阵替代")
+                    spt_cable_matrix_send = np.eye(2)
+                self.matrix = np.dot(spt_cable_matrix_send, self.matrix)
+            except Exception as e:
+                print(f"计算发送端SPT电缆矩阵时出错: {e}")
+                self.matrix = np.eye(2)
+            
+            # 匹配变压器矩阵
+            try:
+                transformer_matrix = self.parameter.transformer_matrix_input()
+                if not np.all(np.isfinite(transformer_matrix)):
+                    print("警告：变压器矩阵包含无效值，使用单位矩阵替代")
+                    transformer_matrix = np.eye(2)
+                self.matrix = np.dot(transformer_matrix, self.matrix)
+            except Exception as e:
+                print(f"计算变压器矩阵时出错: {e}")
+                self.matrix = np.eye(2)
+            
+            # 送端轨面电压
+            self.output_voltage_surface1 = self.count_output()
+            
+            # 钢轨等效
+            try:
+                iron_rail_matrix = self.parameter.whole_iron_rail_with_capacitance(
+                    self.length_parameter/jg.find_capacitance_step(frequency),
+                    jg.find_capacitance_step(frequency),
+                    0, 0, jg.find_capacitance(frequency)
+                )
+                if not np.all(np.isfinite(iron_rail_matrix)):
+                    print("警告：钢轨传输矩阵包含无效值，使用单位矩阵替代")
+                    iron_rail_matrix = np.eye(2)
+                self.matrix = np.dot(iron_rail_matrix, self.matrix)
+            except Exception as e:
+                print(f"计算钢轨等效传输矩阵时出错: {e}")
+                self.matrix = np.eye(2)
+            
+            # 受端轨面电压
+            self.output_voltage_surface2 = self.count_output()
+            
+            # 匹配变压器矩阵
+            try:
+                transformer_matrix = self.parameter.transformer_matrix_input()
+                if not np.all(np.isfinite(transformer_matrix)):
+                    transformer_matrix = np.eye(2)
+                self.matrix = np.dot(transformer_matrix, self.matrix)
+            except Exception as e:
+                print(f"计算变压器矩阵时出错: {e}")
+                self.matrix = np.eye(2)
+            
+            # 接收端SPT电缆矩阵（全零矩阵表示断路）
+            self.matrix = np.zeros((2, 2))
+            # 接收端电缆断路，输出为0
+            self.output_voltage_main = np.array([[0.0], [0.0]])
         
         # 轨出1电压，经过衰耗盘
         try:
@@ -1471,11 +1547,37 @@ class Error_Of_Trail_Amplitude_Phase:
             #计算电流
             I=self.input_V/Z_input
             return I,Z_input,Z_rail,Z_tuner
+        elif self.error_type==8:
+            # 发送端SPT电缆断路 - 输入阻抗无限大，电流为0
+            Z_input = 1e10  # 极大的阻抗表示断路
+            Z_rail = 0
+            Z_tuner = 0
+            I = 0  # 电流为0因为电缆断路
+            return I, Z_input, Z_rail, Z_tuner
+        elif self.error_type==9:
+            # 接收端SPT电缆断路 - 接收端阻抗无限大，信号无法传输
+            # 使用与无故障类似的计算，但最终结果会因接收端电缆断路而不同
+            frequency = self.frequency_table(self.error_position)
+            Z_tuner = self.tuning_parameters.Z_g + self.tuning_parameters.Z_ca + jg.find_resist_V1V2(frequency)
+            Z_tuner = jg.calculate_parallel_impedance(Z_tuner, self.tuning_parameters.Z_ca + 1j * self.tuning_parameters.L_SVA * self.tuning_parameters.angular_frequency)
+            Z_tuner = jg.calculate_parallel_impedance(Z_tuner, self.tuning_parameters.Z_BA1)
+            # 主轨道阻抗
+            Z_rail = self.parameter.impedance_complex + jg.calculate_parallel_impedance(self.parameter.Y_complex, self.tuning_parameters.Z_ca + jg.SPTcable_impedance(frequency, jg.find_tuning_unit_impedance(self.tuning_parameters.angular_frequency, self.find_BA_type(frequency)), self.SPT_cable_length))
+            # 发送端匹配变压器后的总阻抗
+            Z_send = jg.calculate_parallel_impedance(Z_tuner, Z_rail)
+            Z_input = self.parameter.transformer_impedance_output(Z_send)
+            Z_input = jg.SPTcable_impedance(frequency, Z_input, self.SPT_cable_length)
+            # 检查Z_input是否为异常值
+            if np.isinf(Z_input) or np.isnan(Z_input) or abs(Z_input) > 1e6 or abs(Z_input) < 1e-6:
+                Z_input = 400
+            # 计算电流
+            I = self.input_V / Z_input
+            return I, Z_input, Z_rail, Z_tuner
         else:
             return 0, 0, 0, 0
     def call_matrix(self):
         """根据故障类型选择合适的传输矩阵"""
-        if self.error_type in [0, 1, 2, 3, 4, 5, 6, 7]:
+        if self.error_type in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
             result = self.call_matrix_main()
             # 如果返回的是字典，保存电压结果并返回矩阵
             if isinstance(result, dict):
