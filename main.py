@@ -165,6 +165,11 @@ async def read_track_parameters(request: Request):
 async def read_time_series_generator(request: Request):
     return templates.TemplateResponse("time_series_generator.html", {"request": request})
 
+# 电压数据评估系统页面
+@app.get("/voltage-evaluation", response_class=HTMLResponse)
+async def read_voltage_evaluation(request: Request):
+    return templates.TemplateResponse("voltage_evaluation.html", {"request": request})
+
 # 构建电路模型API端点
 @app.post("/api/build-circuit-model")
 async def build_circuit_model(

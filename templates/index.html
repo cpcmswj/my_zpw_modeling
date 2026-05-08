@@ -3541,7 +3541,65 @@
             }
         });
 
+        // ================================================================================
+        //                           文件读取与图表绘制流程说明
+        // ================================================================================
+        //
+        // 【整体流程】
+        //  用户上传文件 → FileReader读取文件 → XLSX库解析数据 → 选择数据列 →
+        //  绘制Canvas图表 → 显示在wave-display区域
+        //
+        // 【支持的格式】
+        //  - CSV文件：使用FileReader.readAsText()读取为文本
+        //  - Excel文件(.xlsx/.xls)：使用FileReader.readAsArrayBuffer()读取为二进制
+        //
+        // 【数据处理流程】
+        //  1. 文件读取 (handleFileUpload函数)
+        //     - 使用FileReader API读取文件内容
+        //     - CSV: readAsText() → XLSX.read(text, {type: 'string'})
+        //     - Excel: readAsArrayBuffer() → XLSX.read(data, {type: 'array'})
+        //     - XLSX库自动识别编码（BOM处理）
+        //
+        //  2. 工作表选择 (handleSheetChange函数)
+        //     - workbook.SheetNames: 获取所有工作表名称
+        //     - workbook.Sheets[sheetName]: 获取指定工作表数据
+        //     - XLSX.utils.sheet_to_json(): 将工作表转换为JSON数组
+        //
+        //  3. 数据提取 (plotXY函数)
+        //     - 根据用户选择的列索引提取X轴和Y轴数据
+        //     - 支持多Y轴数据列（多条曲线）
+        //     - 支持数据类型列（用于区分不同类型的数据点）
+        //
+        //  4. 图表绘制
+        //     - 使用HTML5 Canvas 2D API绑制坐标轴和曲线
+        //     - 自动计算坐标范围和缩放比例
+        //     - 不同数据列使用不同颜色区分
+        //
+        // 【关键API】
+        //  - FileReader: 读取本地文件的Web API
+        //  - XLSX.read(): 解析Excel/CSV文件
+        //  - XLSX.utils.sheet_to_json(): 将工作表转换为JSON
+        //  - Canvas.getContext('2d'): 获取Canvas绑制上下文
+        //
+        // ================================================================================
+
         // 处理文件上传
+        /**
+         * 处理用户上传的CSV或Excel文件
+         * 
+         * 触发时机：用户通过<input type="file">选择文件后触发change事件
+         * 
+         * 处理流程：
+         * 1. 获取用户选择的文件对象 (event.target.files[0])
+         * 2. 验证文件格式（仅支持.csv/.xlsx/.xls）
+         * 3. 创建FileReader读取文件内容
+         * 4. 根据文件类型选择读取方式
+         *    - CSV: readAsText() → XLSX.read(text, {type: 'string'})
+         *    - Excel: readAsArrayBuffer() → XLSX.read(data, {type: 'array'})
+         * 5. 解析成功后填充工作表选择器
+         * 
+         * @param {Event} event - 文件选择事件，包含target.files[0]文件信息
+         */
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -3617,7 +3675,30 @@
             }
         }
 
-        // 处理工作表选择
+        /**
+         * 处理用户选择工作表的事件
+         * 
+         * 触发时机：用户从工作表下拉菜单中选择不同工作表时触发
+         * 
+         * 处理流程：
+         * 1. 获取用户选择的工作表名称
+         * 2. 从workbook中获取对应工作表的完整数据 (workbook.Sheets[sheetName])
+         * 3. 使用XLSX.utils.sheet_to_json()将工作表转换为二维JSON数组
+         *    - 每行是一个数组，数组元素是该行的各个列值
+         *    - 第一行通常是表头
+         * 4. 解析列信息，填充到X轴、Y轴、数据类型下拉选择框
+         *    - 提取第一行作为列名显示给用户
+         *    - 记录每个列的索引（0, 1, 2...）
+         * 
+         * 数据格式转换示例：
+         *  Excel表格:        转换后JSON:
+         *  | A    | B    |     [['电压1', '电压2'],
+         *  | 1.5  | 2.3  | →   [1.5, 2.3],
+         *  | 1.6  | 2.4  |     [1.6, 2.4],
+         *  | 1.7  | 2.5  |     [1.7, 2.5]]
+         * 
+         * @param {Event} event - 工作表选择事件，target.value是工作表名称
+         */
         function handleSheetChange(event) {
             let sheetName = event.target.value;
             // 如果value为空，使用第一个工作表名称
@@ -3686,7 +3767,47 @@
             }
         }
 
-        // 绘制XY图
+        /**
+         * 绘制XY散点图/折线图
+         * 
+         * 核心功能：
+         * 根据用户选择的数据列，从已解析的工作表中提取数据并绑制到Canvas上
+         * 
+         * 触发时机：用户点击"绑制图表"按钮时调用
+         * 
+         * 处理流程：
+         * 1. 获取用户选择的参数：
+         *    - xColumn: X轴数据列索引
+         *    - yColumns: Y轴数据列索引数组（支持多Y列）
+         *    - typeColumn: 数据类型列索引（用于区分不同类型数据点）
+         *    - startRow: 数据起始行（跳过表头）
+         *    - samples: 显示的数据点数量
+         *    - displayMode: 'single'或'multi'显示模式
+         * 
+         * 2. 数据提取：
+         *    - 遍历JSON数组，按列索引提取X和Y数据
+         *    - 转换为数值数组
+         *    - 支持数据类型过滤（排除特定类型）
+         * 
+         * 3. 图表绑制（单图表模式）：
+         *    - 创建Canvas元素
+         *    - 获取Canvas 2D绑制上下文 (canvas.getContext('2d'))
+         *    - 绑制坐标轴（使用moveTo/lineTo/stroke）
+         *    - 为每个Y轴数据列绑制一条曲线
+         *    - 使用不同颜色区分不同数据列
+         *    - 添加图例说明
+         * 
+         * Canvas绑制关键API：
+         * - ctx.moveTo(x, y): 移动到指定点
+         * - ctx.lineTo(x, y): 从当前位置到目标点画线
+         * - ctx.stroke(): 描边（显示线条）
+         * - ctx.fillText(text, x, y): 绘制文字
+         * - ctx.beginPath(): 开始新路径
+         * 
+         * 坐标转换公式：
+         * screenX = padding + (dataX - xMin) / (xMax - xMin) * (canvasWidth - 2*padding)
+         * screenY = padding + (yMax - dataY) / (yMax - yMin) * (canvasHeight - 2*padding)
+         */
         function plotXY() {
             const xyInfo = document.getElementById('xyInfo');
             const waveDisplay = document.querySelector('.wave-display');

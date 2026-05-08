@@ -42,6 +42,28 @@
     <title>时序数据生成</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* 
+           数字雨背景效果样式
+           ====================
+           实现原理：
+           1. 使用canvas元素作为全屏背景容器
+           2. position: fixed 使其固定在视口，不随滚动移动
+           3. z-index: -1 确保它在所有其他内容之后，不会遮挡界面元素
+           4. opacity: 0.2 半透明效果，不影响阅读其他内容
+           5. pointer-events: none 禁止接收鼠标事件，不影响界面交互
+           6. 宽高设为100%覆盖整个视口
+        */
+        #matrixCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;           /* 置于底层，不遮挡其他模块 */
+            opacity: 0.2;          /* 半透明效果，不影响阅读 */
+            pointer-events: none;   /* 不接收鼠标事件，不影响交互 */
+        }
+
         body {
             font-family: Arial, sans-serif;
             background-color: #121212;
@@ -762,6 +784,15 @@
     </style>
 </head>
 <body>
+    <!-- 
+        数字雨背景Canvas元素
+        ======================
+        这是数字雨效果的载体，JavaScript会在此canvas上绘制下落的数字字符。
+        位置：放在body最开头，确保是第一个子元素
+        样式：通过CSS设置为全屏背景，z-index:-1置于底层
+    -->
+    <canvas id="matrixCanvas"></canvas>
+    
     <div class="login-section" id="userInfoSection" style="display: none;">
         <div class="user-info">
             <img id="userAvatar" class="user-avatar" src="" alt="头像" style="display: none;">
@@ -2025,5 +2056,113 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // ========================================================================
+        //                        数字雨效果实现
+        // ========================================================================
+        // 
+        // 数字雨(Matrix Rain)效果原理说明：
+        // ================================
+        // 1. 灵感来源：电影《黑客帝国》中的经典数字雨场景
+        // 2. 实现方式：使用HTML5 Canvas 2D绑制API
+        // 3. 核心原理：
+        //    a. 将屏幕按字体大小分割成列
+        //    b. 每列有一个"雨滴"从顶部下落
+        //    c. 雨滴由随机数字字符组成
+        //    d. 使用半透明背景制造拖尾效果
+        //    e. 雨滴到达底部后随机重新从顶部开始
+        //
+        // 实现步骤：
+        // =========
+        // 1. 获取canvas元素和2D绑制上下文
+        // 2. 设置canvas尺寸为窗口大小
+        // 3. 定义数字字符集（0和1的交替字符串）
+        // 4. 创建数组存储每列雨滴的当前y坐标
+        // 5. 绑制函数：
+        //    a. 填充半透明黑色背景（制造拖尾）
+        //    b. 遍历每列，绑制当前位置的字符
+        //    c. 移动雨滴位置
+        //    d. 检测是否到达底部，随机重置
+        // 6. 使用setInterval循环绑制动画
+        //
+        // 关键技术点：
+        // ==========
+        // - 使用半透明背景(alpha=0.05)实现拖尾效果
+        // - Math.random() > 0.975 控制雨滴重置概率
+        // - 字符集使用"01"重复，产生二进制数字雨效果
+        // - 绿色(#0F0)字体颜色，模拟黑客帝国风格
+        // ========================================================================
+
+        function initMatrix() {
+            // 获取canvas元素
+            const canvas = document.getElementById('matrixCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置canvas尺寸为窗口大小
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // 数字字符集 - 使用0和1的交替字符串，产生二进制数字雨效果
+            const chars = "01010101010101010101010101010101";
+            const charArray = chars.split("");
+            
+            // 字体大小和列数计算
+            const fontSize = 14;
+            const columns = canvas.width / fontSize;
+            
+            // drops数组存储每列雨滴的当前y坐标，初始值为1（顶部）
+            const drops = [];
+            for (let i = 0; i < columns; i++) {
+                drops[i] = 1;
+            }
+            
+            // 核心绑制函数
+            function draw() {
+                // 关键技术：使用半透明黑色背景制造拖尾效果
+                // rgba(0, 0, 0, 0.05) 表示5%不透明度的黑色
+                // 每次绑制都覆盖一层半透明背景，使之前的字符逐渐淡出
+                ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 设置字符颜色为绿色，模拟黑客帝国风格
+                ctx.fillStyle = "#0F0";
+                ctx.font = fontSize + "px arial";
+                
+                // 遍历每一列
+                for (let i = 0; i < drops.length; i++) {
+                    // 从字符集中随机选择一个字符
+                    const text = charArray[Math.floor(Math.random() * charArray.length)];
+                    
+                    // 在当前位置绑制字符
+                    // x坐标: i * fontSize（每列间隔一个字体宽度）
+                    // y坐标: drops[i] * fontSize（雨滴当前位置）
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    
+                    // 检测雨滴是否到达底部且满足随机条件
+                    // Math.random() > 0.975 表示约2.5%的概率重置
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;  // 重置到顶部
+                    }
+                    
+                    // 移动雨滴位置（向下移动一个字符高度）
+                    drops[i]++;
+                }
+            }
+            
+            // 设置动画循环，每33毫秒绑制一次（约30fps）
+            setInterval(draw, 33);
+        }
+
+        // 页面加载完成后初始化数字雨
+        window.addEventListener('load', initMatrix);
+        
+        // 窗口大小改变时重新设置canvas尺寸
+        window.addEventListener('resize', function() {
+            const canvas = document.getElementById('matrixCanvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
 </body>
 </html>

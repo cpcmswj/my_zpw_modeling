@@ -38,7 +38,8 @@ define_pages = {
     'comparison_time_series': 'http://127.0.0.1:8000/comparison-time-series',
     'track_parameters': 'http://127.0.0.1:8000/track-parameters',
     'time_series_generator': 'http://127.0.0.1:8000/time-series-generator',
-    'register': 'http://127.0.0.1:8000/register'
+    'register': 'http://127.0.0.1:8000/register',
+    'voltage_evaluation': 'http://127.0.0.1:8000/voltage-evaluation'
 }
 
 def is_port_in_use(port):
