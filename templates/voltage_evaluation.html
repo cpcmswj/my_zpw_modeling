@@ -302,7 +302,21 @@
         <div id="params" class="tab-content">
             <div class="card">
                 <h2>⚙️ 仿真参数设置</h2>
+                
                 <div class="form-row">
+                    <div class="form-col">
+                        <label for="dataType">评估数据类型</label>
+                        <select id="dataType" onchange="updateDataTypeDisplay()">
+                            <option value="rail_output_1_voltage">接收端轨面电压 (V)</option>
+                            <option value="rail_output_2_voltage">发送端轨面电压 (V)</option>
+                            <option value="main_track_output_voltage_1">主轨道输出电压1 (V)</option>
+                            <option value="main_track_output_voltage_2">主轨道输出电压2 (V)</option>
+                            <option value="send_end_current">发送端电流 (A)</option>
+                            <option value="receive_end_current">接收端电流 (A)</option>
+                            <option value="track_current">轨道电流 (A)</option>
+                            <option value="spt_cable_voltage">SPT电缆电压 (V)</option>
+                        </select>
+                    </div>
                     <div class="form-col">
                         <label for="trackSection">轨道区段</label>
                         <select id="trackSection">
@@ -439,6 +453,10 @@
 
             <div class="card" id="tableCard" style="display: none;">
                 <h2>📋 详细数据对比</h2>
+                <div style="background-color: #2a2a2a; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong style="color: #3498db;">📊 当前评估的数据类型：</strong>
+                    <span id="dataTypeDisplay" style="color: #27ae60;">接收端轨面电压 (V)</span>
+                </div>
                 <div style="overflow-x: auto;">
                     <table class="data-table" id="resultsTable">
                         <thead>
@@ -448,6 +466,7 @@
                                 <th>仿真电压 (V)</th>
                                 <th>绝对差值 (V)</th>
                                 <th>相对误差 (%)</th>
+                                <th>数据类型</th>
                             </tr>
                         </thead>
                         <tbody id="resultsBody"></tbody>
@@ -477,6 +496,15 @@
             
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
+        }
+
+        // 更新数据类型显示
+        function updateDataTypeDisplay() {
+            const select = document.getElementById('dataType');
+            const display = document.getElementById('dataTypeDisplay');
+            if (display) {
+                display.textContent = select.options[select.selectedIndex].text;
+            }
         }
 
         function addVoltage() {
@@ -779,15 +807,19 @@
             document.getElementById('chartCard').style.display = 'block';
             document.getElementById('tableCard').style.display = 'block';
 
+            updateDataTypeDisplay();
+
             const totalPoints = evaluationResults.length;
             const avgAbsDiff = evaluationResults.reduce((sum, r) => sum + r.absoluteDiff, 0) / totalPoints;
             const avgRelDiff = evaluationResults.reduce((sum, r) => sum + r.relativeDiff, 0) / totalPoints;
             const maxAbsDiff = Math.max(...evaluationResults.map(r => r.absoluteDiff));
+            const dataType = document.getElementById('dataType').options[document.getElementById('dataType').selectedIndex].text;
+            const unit = dataType.includes('(A)') ? ' A' : ' V';
 
             document.getElementById('totalPoints').textContent = totalPoints;
-            document.getElementById('avgAbsDiff').textContent = avgAbsDiff.toFixed(3) + ' V';
+            document.getElementById('avgAbsDiff').textContent = avgAbsDiff.toFixed(3) + unit;
             document.getElementById('avgRelDiff').textContent = avgRelDiff.toFixed(2) + '%';
-            document.getElementById('maxAbsDiff').textContent = maxAbsDiff.toFixed(3) + ' V';
+            document.getElementById('maxAbsDiff').textContent = maxAbsDiff.toFixed(3) + unit;
 
             updateChart();
             updateTable();
@@ -877,6 +909,8 @@
 
         function updateTable() {
             const tbody = document.getElementById('resultsBody');
+            const dataType = document.getElementById('dataType').options[document.getElementById('dataType').selectedIndex].text;
+            
             tbody.innerHTML = evaluationResults.map(r => `
                 <tr>
                     <td>${r.index}</td>
@@ -888,6 +922,7 @@
                     <td class="${r.relativeDiff > 5 ? 'negative-diff' : 'positive-diff'}">
                         ${r.relativeDiff.toFixed(2)}%
                     </td>
+                    <td>${dataType}</td>
                 </tr>
             `).join('');
         }

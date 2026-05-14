@@ -187,7 +187,7 @@
             </div>
             <div class="form-group">
                 <label for="password">密码:</label>
-                <input type="password" id="password" name="password" required placeholder="请输入密码（至少4位）">
+                <input type="password" id="password" name="password" required placeholder="请输入密码（至少6位）">
             </div>
             <div class="form-group">
                 <label for="confirmPassword">确认密码:</label>
@@ -233,9 +233,9 @@
             }
             
             // 验证密码
-            if (password.length < 4) {
+            if (password.length < 6) {
                 messageDiv.className = 'message error';
-                messageDiv.textContent = '密码长度至少为4位';
+                messageDiv.textContent = '密码长度不足，请设置至少6位的密码';
                 return;
             }
             

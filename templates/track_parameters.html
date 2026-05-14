@@ -868,7 +868,7 @@
                             <input type="password" id="loginPassword" name="loginPassword" required>
                         </div>
                         <button type="submit" class="btn">登录</button>
-                        <div class="login-error" id="loginError" style="display: none;">用户名或密码错误</div>
+                        <div class="login-error" id="loginError" style="display: none;"></div>
                     </form>
                     <div style="margin-top: 20px; text-align: center;">
                         <p style="color: #ccc; margin-bottom: 10px;">还没有账号？</p>
@@ -918,12 +918,15 @@
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     window.location.reload(); // 重新加载页面
                 } else {
-                    document.getElementById('loginError').style.display = 'block';
+                    const loginError = document.getElementById('loginError');
+                    loginError.textContent = result.message || '登录失败';
+                    loginError.style.display = 'block';
                 }
             } catch (error) {
                 console.error('登录失败:', error);
-                document.getElementById('loginError').style.display = 'block';
-                document.getElementById('loginError').textContent = '登录验证失败，请稍后重试';
+                const loginError = document.getElementById('loginError');
+                loginError.textContent = '登录验证失败，请稍后重试';
+                loginError.style.display = 'block';
             }
         }
         

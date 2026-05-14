@@ -1333,7 +1333,7 @@ async def login_api(
         if not user_data:
             print(f"用户不存在: {username}")
             return JSONResponse(
-                {"status": "error", "message": "用户名或密码错误"},
+                {"status": "error", "message": "用户名不存在", "error_code": "username_not_found"},
                 status_code=401
             )
 
@@ -1354,7 +1354,7 @@ async def login_api(
         else:
             print("登录失败：密码错误")
             return JSONResponse(
-                {"status": "error", "message": "用户名或密码错误"},
+                {"status": "error", "message": "密码错误", "error_code": "password_wrong"},
                 status_code=401
             )
     except Exception as e:
@@ -1377,7 +1377,14 @@ async def register_api(
         if user_store.user_exists(username):
             print(f"用户名已存在: {username}")
             return JSONResponse(
-                {"status": "error", "message": "用户名已存在"},
+                {"status": "error", "message": "该用户名已被占用，请更换用户名", "error_code": "username_taken"},
+                status_code=400
+            )
+
+        if len(password) < 6:
+            print(f"密码过短: {len(password)}位")
+            return JSONResponse(
+                {"status": "error", "message": "密码长度不足，请设置至少6位的密码", "error_code": "password_too_short"},
                 status_code=400
             )
 
