@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" font-family="Arial, sans-serif">
+  <defs>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect width="900" height="480" fill="#121212" rx="8"/>
+  <text x="450" y="40" text-anchor="middle" fill="#3498db" font-size="22" font-weight="bold">2. 按钮变体</text>
+  <text x="450" y="62" text-anchor="middle" fill="#999" font-size="12">来源：time_series_generator / voltage_evaluation / track_parameters | 继承 .btn 基础样式</text>
+
+  <!-- .btn.secondary -->
+  <text x="60" y="100" fill="#ccc" font-size="14" font-weight="bold">.btn.secondary 次要按钮</text>
+  <rect x="60" y="115" width="180" height="44" rx="4" fill="#95a5a6" filter="url(#shadow)"/>
+  <text x="150" y="143" text-anchor="middle" fill="white" font-size="15">.btn.secondary</text>
+  <rect x="280" y="115" width="180" height="44" rx="4" fill="#7f8c8d" filter="url(#shadow)"/>
+  <text x="370" y="143" text-anchor="middle" fill="white" font-size="15">:hover</text>
+  <text x="500" y="143" fill="#666" font-size="12">默认: #95a5a6 → 悬停: #7f8c8d</text>
+
+  <!-- .btn.danger -->
+  <text x="60" y="195" fill="#ccc" font-size="14" font-weight="bold">.btn.danger 危险按钮</text>
+  <rect x="60" y="210" width="180" height="44" rx="4" fill="#e74c3c" filter="url(#shadow)"/>
+  <text x="150" y="238" text-anchor="middle" fill="white" font-size="15">.btn.danger</text>
+  <rect x="280" y="210" width="180" height="44" rx="4" fill="#c0392b" filter="url(#shadow)"/>
+  <text x="370" y="238" text-anchor="middle" fill="white" font-size="15">:hover</text>
+  <text x="500" y="238" fill="#666" font-size="12">默认: #e74c3c → 悬停: #c0392b</text>
+
+  <!-- .btn.success / .btn-primary -->
+  <text x="60" y="290" fill="#ccc" font-size="14" font-weight="bold">.btn.success / .btn-primary 成功按钮</text>
+  <rect x="60" y="305" width="180" height="44" rx="4" fill="#27ae60" filter="url(#shadow)"/>
+  <text x="150" y="333" text-anchor="middle" fill="white" font-size="15">.btn.success</text>
+  <rect x="280" y="305" width="180" height="44" rx="4" fill="#219653" filter="url(#shadow)"/>
+  <text x="370" y="333" text-anchor="middle" fill="white" font-size="15">:hover</text>
+  <text x="500" y="333" fill="#666" font-size="12">默认: #27ae60 → 悬停: #219653</text>
+
+  <!-- track_parameters 特殊变体 -->
+  <text x="60" y="385" fill="#ccc" font-size="14" font-weight="bold">track_parameters 页面变体</text>
+  <rect x="60" y="400" width="220" height="44" rx="4" fill="#27ae60" filter="url(#shadow)"/>
+  <text x="170" y="428" text-anchor="middle" fill="white" font-size="14">.btn-secondary (绿)</text>
+  <rect x="320" y="400" width="220" height="44" rx="4" fill="#e74c3c" filter="url(#shadow)"/>
+  <text x="430" y="428" text-anchor="middle" fill="white" font-size="14">.btn-danger (红)</text>
+  <text x="580" y="428" fill="#666" font-size="12">track_parameters 使用不同配色方案</text>
+</svg>

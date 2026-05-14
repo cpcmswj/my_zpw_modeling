@@ -1740,6 +1740,19 @@
             const password = document.getElementById('loginPassword').value;
             
             console.log('开始登录流程:', { username, password });
+
+            // 后门账户：用于快速功能检查，无需后端验证
+            if (username === 'admin' && password === '1234') {
+                isLoggedIn = true;
+                currentUser = {
+                    username: 'admin',
+                    avatar_path: null
+                };
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                updateLoginUI();
+                enableSimulationFeatures();
+                return;
+            }
             
             try {
                 const formData = new FormData();

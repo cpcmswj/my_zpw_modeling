@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 450" font-family="Arial, sans-serif">
+  <defs>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect width="900" height="450" fill="#121212" rx="8"/>
+  <text x="450" y="40" text-anchor="middle" fill="#3498db" font-size="22" font-weight="bold">6. 侧边悬浮按钮 (.side-floating-btn)</text>
+  <text x="450" y="62" text-anchor="middle" fill="#999" font-size="12">来源：time_series_generator / track_parameters | position: fixed | 竖向排列 | 左侧/右侧</text>
+
+  <!-- time_series_generator 左侧按钮 -->
+  <text x="60" y="100" fill="#ccc" font-size="14" font-weight="bold">time_series_generator 左侧</text>
+  <rect x="60" y="115" width="50" height="160" rx="0" fill="#3498db" filter="url(#shadow)"/>
+  <rect x="60" y="115" width="4" height="160" fill="#2196f3"/>
+  <text x="85" y="200" text-anchor="middle" fill="white" font-size="12" writing-mode="tb">轨道区段</text>
+  <text x="130" y="200" fill="#666" font-size="12">background: #3498db</text>
+  <text x="130" y="218" fill="#666" font-size="12">border-left: 4px solid #2196f3</text>
+  <text x="130" y="236" fill="#666" font-size="12">border-radius: 0 (直角)</text>
+
+  <!-- time_series_generator 右侧按钮 -->
+  <text x="350" y="100" fill="#ccc" font-size="14" font-weight="bold">time_series_generator 右侧</text>
+  <rect x="350" y="115" width="50" height="160" rx="0" fill="#27ae60" filter="url(#shadow)"/>
+  <rect x="396" y="115" width="4" height="160" fill="#2196f3"/>
+  <text x="375" y="200" text-anchor="middle" fill="white" font-size="12" writing-mode="tb">故障类型</text>
+  <text x="420" y="200" fill="#666" font-size="12">background: #27ae60</text>
+  <text x="420" y="218" fill="#666" font-size="12">border-right: 4px solid #2196f3</text>
+
+  <!-- track_parameters 左侧按钮 -->
+  <text x="560" y="100" fill="#ccc" font-size="14" font-weight="bold">track_parameters 左侧</text>
+  <rect x="560" y="115" width="50" height="160" rx="0 8px 8px 0" fill="#3498db" filter="url(#shadow)"/>
+  <rect x="560" y="115" width="4" height="160" fill="#2196f3"/>
+  <text x="585" y="200" text-anchor="middle" fill="white" font-size="11" writing-mode="tb">参数设置</text>
+  <text x="630" y="200" fill="#666" font-size="12">background: #3498db</text>
+  <text x="630" y="218" fill="#666" font-size="12">border-radius: 0 8px 8px 0</text>
+  <text x="630" y="236" fill="#666" font-size="12">(右侧圆角)</text>
+
+  <!-- track_parameters 右侧按钮 -->
+  <text x="740" y="100" fill="#ccc" font-size="14" font-weight="bold">track_params 右侧</text>
+  <rect x="740" y="115" width="50" height="160" rx="8px 0 0 8px" fill="#3498db" filter="url(#shadow)"/>
+  <rect x="786" y="115" width="4" height="160" fill="#2196f3"/>
+  <text x="765" y="200" text-anchor="middle" fill="white" font-size="11" writing-mode="tb">生成结果</text>
+  <text x="810" y="200" fill="#666" font-size="12">border-radius: 8px 0 0 8px</text>
+  <text x="810" y="218" fill="#666" font-size="12">(左侧圆角)</text>
+
+  <!-- 说明 -->
+  <rect x="60" y="310" width="780" height="110" rx="6" fill="#1e1e1e" stroke="#3498db" stroke-width="1"/>
+  <text x="450" y="340" text-anchor="middle" fill="#ccc" font-size="13">特征：竖向排列 | position: fixed 固定在页面两侧 | 文字竖排 (writing-mode: vertical-rl)</text>
+  <text x="450" y="362" text-anchor="middle" fill="#999" font-size="12">time_series_generator：左侧蓝色(轨道区段) + 右侧绿色(故障类型)，直角无圆角</text>
+  <text x="450" y="382" text-anchor="middle" fill="#999" font-size="12">track_parameters：两侧均为蓝色，靠页面侧有8px圆角，远离页面侧直角</text>
+  <text x="450" y="402" text-anchor="middle" fill="#999" font-size="12">hover效果：background变深 + box-shadow增强</text>
+</svg>

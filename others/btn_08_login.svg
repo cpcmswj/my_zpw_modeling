@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300" font-family="Arial, sans-serif">
+  <defs>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect width="800" height="300" fill="#121212" rx="8"/>
+  <text x="400" y="40" text-anchor="middle" fill="#3498db" font-size="22" font-weight="bold">8. 登录按钮 (.login-form button)</text>
+  <text x="400" y="62" text-anchor="middle" fill="#999" font-size="12">来源：index / time_series_generator / track_parameters | width: 100%/300px | padding: 10px</text>
+
+  <!-- 默认状态 -->
+  <text x="60" y="100" fill="#ccc" font-size="14" font-weight="bold">默认状态</text>
+  <rect x="60" y="115" width="300" height="44" rx="4" fill="#3498db" filter="url(#shadow)"/>
+  <text x="210" y="143" text-anchor="middle" fill="white" font-size="16">登录</text>
+  <text x="400" y="143" fill="#666" font-size="12">background: #3498db, width: 100%, padding: 10px</text>
+
+  <!-- hover状态 -->
+  <text x="60" y="190" fill="#ccc" font-size="14" font-weight="bold">悬停状态</text>
+  <rect x="60" y="205" width="300" height="44" rx="4" fill="#2980b9" filter="url(#shadow)"/>
+  <text x="210" y="233" text-anchor="middle" fill="white" font-size="16">登录 :hover</text>
+  <text x="400" y="233" fill="#666" font-size="12">background: #2980b9</text>
+
+  <!-- 说明 -->
+  <rect x="60" y="265" width="680" height="25" rx="4" fill="#1e1e1e" stroke="#3498db" stroke-width="1"/>
+  <text x="400" y="283" text-anchor="middle" fill="#999" font-size="12">三个页面(index / time_series_generator / track_parameters)登录按钮样式相同</text>
+</svg>

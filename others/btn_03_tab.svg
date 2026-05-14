@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" font-family="Arial, sans-serif">
+  <defs>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect width="800" height="350" fill="#121212" rx="8"/>
+  <text x="400" y="40" text-anchor="middle" fill="#3498db" font-size="22" font-weight="bold">3. 标签页按钮 (.tab-button)</text>
+  <text x="400" y="62" text-anchor="middle" fill="#999" font-size="12">来源：index / voltage_evaluation | padding: 12-15px 24-30px | border-bottom 切换效果</text>
+
+  <!-- index.html 样式 -->
+  <text x="60" y="100" fill="#ccc" font-size="14" font-weight="bold">index.html 标签页样式</text>
+
+  <!-- 默认 -->
+  <rect x="60" y="115" width="150" height="44" fill="#333" stroke="none"/>
+  <text x="135" y="143" text-anchor="middle" fill="white" font-size="14">默认状态</text>
+  <text x="240" y="143" fill="#666" font-size="12">background: #333, color: #fff</text>
+
+  <!-- hover -->
+  <rect x="60" y="175" width="150" height="44" fill="#3498db" stroke="none"/>
+  <text x="135" y="203" text-anchor="middle" fill="white" font-size="14">:hover</text>
+  <text x="240" y="203" fill="#666" font-size="12">background: #3498db</text>
+
+  <!-- active -->
+  <rect x="60" y="235" width="150" height="44" fill="#000" stroke="none"/>
+  <rect x="60" y="275" width="150" height="4" fill="#3498db"/>
+  <text x="135" y="263" text-anchor="middle" fill="#3498db" font-size="14" font-weight="bold">.active</text>
+  <text x="240" y="263" fill="#666" font-size="12">background: #000, color: #3498db, border-bottom: 2px solid #3498db</text>
+
+  <!-- voltage_evaluation 样式 -->
+  <text x="500" y="100" fill="#ccc" font-size="14" font-weight="bold">voltage_evaluation 标签页样式</text>
+
+  <!-- 默认 -->
+  <rect x="500" y="115" width="150" height="44" fill="#2a2a2a" stroke="none"/>
+  <text x="575" y="143" text-anchor="middle" fill="white" font-size="14">默认状态</text>
+
+  <!-- hover -->
+  <rect x="500" y="175" width="150" height="44" fill="#3498db" stroke="none"/>
+  <text x="575" y="203" text-anchor="middle" fill="white" font-size="14">:hover</text>
+
+  <!-- active -->
+  <rect x="500" y="235" width="150" height="44" fill="#3498db" stroke="none"/>
+  <text x="575" y="263" text-anchor="middle" fill="white" font-size="14" font-weight="bold">.active</text>
+  <text x="500" y="300" fill="#666" font-size="12">active直接使用主色填充</text>
+</svg>
