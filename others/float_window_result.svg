@@ -1,96 +1,102 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
-  <defs>
-    <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#3498db"/>
-      <stop offset="100%" style="stop-color:#2980b9"/>
-    </linearGradient>
-    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#2a2a2a"/>
-      <stop offset="100%" style="stop-color:#1e1e1e"/>
-    </linearGradient>
-  </defs>
-  
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 550">
   <!-- 背景 -->
-  <rect width="800" height="500" fill="#121212" rx="8"/>
+  <rect width="900" height="550" fill="#121212" rx="8"/>
   
   <!-- 标题 -->
-  <text x="400" y="45" text-anchor="middle" fill="#3498db" font-size="24" font-weight="bold">悬浮窗界面展示 - 结果观察</text>
-  <text x="400" y="70" text-anchor="middle" fill="#999" font-size="14">用于展示仿真结果的数据表格和图表窗口</text>
+  <text x="450" y="40" text-anchor="middle" fill="#3498db" font-size="26" font-weight="bold">结果观察窗口 - 底部悬浮窗</text>
+  <text x="450" y="65" text-anchor="middle" fill="#999" font-size="14">bottom-floating-window</text>
   
-  <!-- 悬浮窗主体 -->
-  <rect x="50" y="100" width="700" height="380" rx="10" fill="#1e1e1e" stroke="#3498db" stroke-width="3"/>
+  <!-- 主容器 -->
+  <rect x="30" y="90" width="840" height="430" rx="10" fill="#1e1e1e" stroke="#3498db" stroke-width="3"/>
   
   <!-- 标题栏 -->
-  <rect x="50" y="100" width="700" height="50" rx="10 10 0 0" fill="url(#headerGradient)"/>
-  <text x="100" y="135" fill="white" font-size="16" font-weight="bold">📊 仿真结果观察窗口</text>
+  <rect x="30" y="90" width="840" height="45" rx="10 10 0 0" fill="#2a2a2a"/>
+  <rect x="30" y="132" width="840" height="3" fill="#3498db"/>
   
-  <!-- 关闭按钮 -->
-  <rect x="670" y="110" width="30" height="30" rx="4" fill="#e74c3c"/>
-  <text x="685" y="132" text-anchor="middle" fill="white" font-size="22" font-weight="bold">×</text>
-  
-  <!-- 标签页切换 -->
-  <rect x="60" y="165" width="120" height="35" rx="4" fill="#3498db"/>
-  <text x="120" y="188" text-anchor="middle" fill="white" font-size="13">数据表格</text>
-  
-  <rect x="185" y="165" width="120" height="35" rx="4" fill="#2a2a2a" stroke="#3498db" stroke-width="1"/>
-  <text x="245" y="188" text-anchor="middle" fill="#999" font-size="13">图表展示</text>
-  
-  <rect x="310" y="165" width="120" height="35" rx="4" fill="#2a2a2a" stroke="#3498db" stroke-width="1"/>
-  <text x="370" y="188" text-anchor="middle" fill="#999" font-size="13">统计分析</text>
-  
-  <!-- 数据表格区域 -->
-  <rect x="60" y="210" width="680" height="220" rx="6" fill="#2a2a2a"/>
-  
-  <!-- 表格标题行 -->
-  <rect x="65" y="220" width="670" height="28" fill="#3498db"/>
-  <text x="100" y="240" fill="white" font-size="11" font-weight="bold">序号</text>
-  <text x="180" y="240" fill="white" font-size="11" font-weight="bold">电压(V)</text>
-  <text x="280" y="240" fill="white" font-size="11" font-weight="bold">送端轨面(V)</text>
-  <text x="390" y="240" fill="white" font-size="11" font-weight="bold">受端轨面(V)</text>
-  <text x="500" y="240" fill="white" font-size="11" font-weight="bold">主轨入(V)</text>
-  <text x="610" y="240" fill="white" font-size="11" font-weight="bold">轨出1(V)</text>
-  
-  <!-- 表格数据行 -->
-  <line x1="65" y1="255" x2="735" y2="255" stroke="#333"/>
-  <text x="100" y="270" fill="#ccc" font-size="11">1</text>
-  <text x="180" y="270" fill="#ccc" font-size="11">128.5</text>
-  <text x="280" y="270" fill="#27ae60" font-size="11">105.2</text>
-  <text x="390" y="270" fill="#27ae60" font-size="11">98.3</text>
-  <text x="500" y="270" fill="#27ae60" font-size="11">15.6</text>
-  <text x="610" y="270" fill="#27ae60" font-size="11">12.4</text>
-  
-  <line x1="65" y1="285" x2="735" y2="285" stroke="#333"/>
-  <text x="100" y="300" fill="#ccc" font-size="11">2</text>
-  <text x="180" y="300" fill="#ccc" font-size="11">130.2</text>
-  <text x="280" y="300" fill="#27ae60" font-size="11">106.8</text>
-  <text x="390" y="300" fill="#e74c3c" font-size="11">45.2</text>
-  <text x="500" y="300" fill="#e74c3c" font-size="11">8.2</text>
-  <text x="610" y="300" fill="#e74c3c" font-size="11">6.5</text>
-  
-  <line x1="65" y1="315" x2="735" y2="315" stroke="#333"/>
-  <text x="100" y="330" fill="#ccc" font-size="11">3</text>
-  <text x="180" y="330" fill="#ccc" font-size="11">132.8</text>
-  <text x="280" y="330" fill="#27ae60" font-size="11">108.5</text>
-  <text x="390" y="330" fill="#27ae60" font-size="11">102.1</text>
-  <text x="500" y="330" fill="#27ae60" font-size="11">16.2</text>
-  <text x="610" y="330" fill="#27ae60" font-size="11">12.9</text>
-  
-  <line x1="65" y1="345" x2="735" y2="345" stroke="#333"/>
-  <text x="100" y="360" fill="#ccc" font-size="11">4</text>
-  <text x="180" y="360" fill="#ccc" font-size="11">135.1</text>
-  <text x="280" y="360" fill="#27ae60" font-size="11">110.3</text>
-  <text x="390" y="360" fill="#e74c3c" font-size="11">52.6</text>
-  <text x="500" y="360" fill="#e74c3c" font-size="11">9.8</text>
-  <text x="610" y="360" fill="#e74c3c" font-size="11">7.7</text>
-  
-  <!-- 底部状态栏 -->
-  <rect x="60" y="385" width="680" height="35" rx="4" fill="#1e1e1e" stroke="#3498db" stroke-width="1"/>
-  <text x="100" y="408" fill="#999" font-size="11">共 15 条数据 | 正常: 10条 | 故障: 5条</text>
+  <!-- 标题文字 -->
+  <text x="55" y="118" fill="#3498db" font-size="18" font-weight="bold">仿真结果</text>
   
   <!-- 下载按钮 -->
-  <rect x="580" y="388" width="80" height="28" rx="4" fill="#27ae60"/>
-  <text x="620" y="588" text-anchor="middle" fill="white" font-size="11">下载CSV</text>
+  <rect x="550" y="100" width="130" height="28" rx="4" fill="#27ae60"/>
+  <text x="615" y="118" text-anchor="middle" fill="white" font-size="12">下载 CSV 文件</text>
   
-  <rect x="670" y="388" width="70" height="28" rx="4" fill="#3498db"/>
-  <text x="705" y="406" text-anchor="middle" fill="white" font-size="11">下载JSON</text>
+  <rect x="690" y="100" width="130" height="28" rx="4" fill="#3498db"/>
+  <text x="755" y="118" text-anchor="middle" fill="white" font-size="12">下载 JSON 文件</text>
+  
+  <!-- 关闭按钮 -->
+  <rect x="835" y="100" width="25" height="25" rx="4" fill="#1e1e1e" stroke="#e74c3c" stroke-width="1"/>
+  <text x="847" y="118" text-anchor="middle" fill="#e74c3c" font-size="18" font-weight="bold">×</text>
+  
+  <!-- 结果卡片网格 -->
+  <!-- 第1行 -->
+  <rect x="50" y="150" width="250" height="110" rx="8" fill="#2a2a2a"/>
+  <rect x="50" y="150" width="4" height="110" rx="2" fill="#27ae60"/>
+  <text x="65" y="175" fill="#3498db" font-size="12" font-weight="bold">#001 69G 无故障</text>
+  <text x="65" y="198" fill="#ccc" font-size="11">电压: 128.5V</text>
+  <text x="65" y="218" fill="#ccc" font-size="11">送端轨面: 105.2V</text>
+  <text x="65" y="238" fill="#ccc" font-size="11">受端轨面: 98.3V</text>
+  
+  <rect x="310" y="150" width="250" height="110" rx="8" fill="#2a2a2a"/>
+  <rect x="310" y="150" width="4" height="110" rx="2" fill="#27ae60"/>
+  <text x="325" y="175" fill="#3498db" font-size="12" font-weight="bold">#002 69G 无故障</text>
+  <text x="325" y="198" fill="#ccc" font-size="11">电压: 130.2V</text>
+  <text x="325" y="218" fill="#ccc" font-size="11">送端轨面: 106.8V</text>
+  <text x="325" y="238" fill="#ccc" font-size="11">受端轨面: 102.1V</text>
+  
+  <rect x="570" y="150" width="280" height="110" rx="8" fill="#2a2a2a"/>
+  <rect x="570" y="150" width="4" height="110" rx="2" fill="#27ae60"/>
+  <text x="585" y="175" fill="#3498db" font-size="12" font-weight="bold">#003 69G 无故障</text>
+  <text x="585" y="198" fill="#ccc" font-size="11">电压: 132.8V</text>
+  <text x="585" y="218" fill="#ccc" font-size="11">送端轨面: 108.5V</text>
+  <text x="585" y="238" fill="#ccc" font-size="11">受端轨面: 105.6V</text>
+  
+  <!-- 第2行 -->
+  <rect x="50" y="270" width="250" height="110" rx="8" fill="#2a2a2a"/>
+  <rect x="50" y="270" width="4" height="110" rx="2" fill="#e74c3c"/>
+  <text x="65" y="295" fill="#3498db" font-size="12" font-weight="bold">#004 69G 故障类型1</text>
+  <text x="65" y="318" fill="#ccc" font-size="11">电压: 128.5V</text>
+  <text x="65" y="338" fill="#ccc" font-size="11">送端轨面: 98.3V</text>
+  <text x="65" y="358" fill="#e74c3c" font-size="11">受端轨面: 45.2V ⚠</text>
+  
+  <rect x="310" y="270" width="250" height="110" rx="8" fill="#2a2a2a"/>
+  <rect x="310" y="270" width="4" height="110" rx="2" fill="#e74c3c"/>
+  <text x="325" y="295" fill="#3498db" font-size="12" font-weight="bold">#005 69G 故障类型1</text>
+  <text x="325" y="318" fill="#ccc" font-size="11">电压: 130.2V</text>
+  <text x="325" y="338" fill="#ccc" font-size="11">送端轨面: 100.5V</text>
+  <text x="325" y="358" fill="#e74c3c" font-size="11">受端轨面: 52.6V ⚠</text>
+  
+  <rect x="570" y="270" width="280" height="110" rx="8" fill="#2a2a2a"/>
+  <rect x="570" y="270" width="4" height="110" rx="2" fill="#27ae60"/>
+  <text x="585" y="295" fill="#3498db" font-size="12" font-weight="bold">#006 69G 无故障</text>
+  <text x="585" y="318" fill="#ccc" font-size="11">电压: 135.1V</text>
+  <text x="585" y="338" fill="#ccc" font-size="11">送端轨面: 110.3V</text>
+  <text x="585" y="358" fill="#ccc" font-size="11">受端轨面: 108.2V</text>
+  
+  <!-- 第3行 -->
+  <rect x="50" y="390" width="250" height="110" rx="8" fill="#2a2a2a"/>
+  <rect x="50" y="390" width="4" height="110" rx="2" fill="#e74c3c"/>
+  <text x="65" y="415" fill="#3498db" font-size="12" font-weight="bold">#007 69G 故障类型2</text>
+  <text x="65" y="438" fill="#ccc" font-size="11">电压: 132.8V</text>
+  <text x="65" y="458" fill="#ccc" font-size="11">送端轨面: 95.6V</text>
+  <text x="65" y="478" fill="#e74c3c" font-size="11">受端轨面: 38.9V ⚠</text>
+  
+  <rect x="310" y="390" width="250" height="110" rx="8" fill="#2a2a2a"/>
+  <rect x="310" y="390" width="4" height="110" rx="2" fill="#27ae60"/>
+  <text x="325" y="415" fill="#3498db" font-size="12" font-weight="bold">#008 69G 无故障</text>
+  <text x="325" y="438" fill="#ccc" font-size="11">电压: 128.0V</text>
+  <text x="325" y="458" fill="#ccc" font-size="11">送端轨面: 104.8V</text>
+  <text x="325" y="478" fill="#ccc" font-size="11">受端轨面: 97.5V</text>
+  
+  <rect x="570" y="390" width="280" height="110" rx="8" fill="#2a2a2a"/>
+  <rect x="570" y="390" width="4" height="110" rx="2" fill="#e74c3c"/>
+  <text x="585" y="415" fill="#3498db" font-size="12" font-weight="bold">#009 69G 故障类型3</text>
+  <text x="585" y="438" fill="#ccc" font-size="11">电压: 135.1V</text>
+  <text x="585" y="458" fill="#ccc" font-size="11">送端轨面: 102.3V</text>
+  <text x="585" y="478" fill="#e74c3c" font-size="11">受端轨面: 48.7V ⚠</text>
+  
+  <!-- 图例 -->
+  <rect x="700" y="508" width="12" height="12" rx="2" fill="#27ae60"/>
+  <text x="718" y="518" fill="#999" font-size="11">正常数据</text>
+  <rect x="770" y="508" width="12" height="12" rx="2" fill="#e74c3c"/>
+  <text x="788" y="518" fill="#999" font-size="11">故障数据</text>
 </svg>

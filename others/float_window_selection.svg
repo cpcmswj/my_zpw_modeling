@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 450">
+  <!-- 背景 -->
+  <rect width="500" height="450" fill="#121212" rx="8"/>
+  
+  <!-- 标题 -->
+  <text x="250" y="40" text-anchor="middle" fill="#3498db" font-size="26" font-weight="bold">选择轨道区段和故障类型</text>
+  <text x="250" y="65" text-anchor="middle" fill="#999" font-size="14">left-menu</text>
+  
+  <!-- 主容器 -->
+  <rect x="50" y="90" width="400" height="330" rx="10" fill="#1e1e1e" stroke="#3498db" stroke-width="3"/>
+  
+  <!-- 标题栏 -->
+  <rect x="50" y="90" width="400" height="50" rx="10 10 0 0" fill="#1e1e1e"/>
+  <rect x="50" y="137" width="400" height="3" fill="#3498db"/>
+  
+  <!-- 标题文字 -->
+  <text x="80" y="122" fill="#3498db" font-size="18" font-weight="bold">选择轨道区段和故障类型</text>
+  
+  <!-- 关闭按钮 -->
+  <rect x="405" y="102" width="28" height="28" rx="4" fill="#1e1e1e" stroke="#3498db" stroke-width="1"/>
+  <text x="419" y="123" text-anchor="middle" fill="#fff" font-size="22" font-weight="bold">×</text>
+  
+  <!-- 轨道区段选择 -->
+  <text x="80" y="180" fill="#ccc" font-size="14" font-weight="bold">轨道区段:</text>
+  <rect x="80" y="195" width="340" height="35" rx="4" fill="#333" stroke="#3498db" stroke-width="1"/>
+  <text x="95" y="218" fill="#fff" font-size="13">请选择轨道区段</text>
+  <text x="400" y="218" fill="#3498db" font-size="12">▼</text>
+  
+  <!-- 下拉选项预览 -->
+  <rect x="80" y="235" width="340" height="30" rx="0" fill="none"/>
+  <text x="95" y="257" fill="#666" font-size="12">69G</text>
+  <text x="95" y="272" fill="#666" font-size="12">X1LQG</text>
+  <text x="95" y="287" fill="#666" font-size="12">IG1</text>
+  
+  <!-- 故障类型选择 -->
+  <text x="80" y="320" fill="#ccc" font-size="14" font-weight="bold">故障类型:</text>
+  <rect x="80" y="335" width="340" height="35" rx="4" fill="#333" stroke="#3498db" stroke-width="1"/>
+  <text x="95" y="358" fill="#fff" font-size="13">无故障</text>
+  <text x="400" y="358" fill="#3498db" font-size="12">▼</text>
+  
+  <!-- 下拉选项预览 -->
+  <rect x="80" y="375" width="340" height="30" rx="0" fill="none"/>
+  <text x="95" y="397" fill="#666" font-size="11">无故障</text>
+  <text x="95" y="412" fill="#666" font-size="11">接收端调谐单元1断路</text>
+  <text x="280" y="397" fill="#666" font-size="11">发送端调谐单元1断路</text>
+  
+  <!-- 保存按钮 -->
+  <rect x="80" y="380" width="340" height="40" rx="4" fill="#3498db"/>
+  <text x="250" y="406" text-anchor="middle" fill="white" font-size="15" font-weight="bold">保存选择</text>
+  
+  <!-- 说明 -->
+  <text x="250" y="435" text-anchor="middle" fill="#666" font-size="11">请先选择轨道区段和故障类型后点击保存</text>
+</svg>
