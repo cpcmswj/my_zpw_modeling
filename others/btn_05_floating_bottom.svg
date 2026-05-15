@@ -1,30 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" font-family="Arial, sans-serif">
-  <defs>
-    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
-    </filter>
-  </defs>
   <rect width="800" height="350" fill="#121212" rx="8"/>
   <text x="400" y="40" text-anchor="middle" fill="#3498db" font-size="22" font-weight="bold">5. 底部悬浮按钮</text>
   <text x="400" y="62" text-anchor="middle" fill="#999" font-size="12">来源：time_series_generator | position: fixed | border-radius: 20px (胶囊形)</text>
 
   <!-- .toggle-bottom-btn -->
   <text x="60" y="100" fill="#ccc" font-size="14" font-weight="bold">.toggle-bottom-btn 打开底部窗口</text>
-  <rect x="60" y="115" width="200" height="44" rx="20" fill="#3498db" filter="url(#shadow)"/>
+  <rect x="60" y="115" width="200" height="44" rx="20" fill="#3498db"/>
   <text x="160" y="143" text-anchor="middle" fill="white" font-size="15">查看生成结果</text>
   <text x="290" y="143" fill="#666" font-size="12">默认: #3498db</text>
 
-  <rect x="60" y="175" width="200" height="44" rx="20" fill="#2980b9" filter="url(#shadow)"/>
+  <rect x="60" y="175" width="200" height="44" rx="20" fill="#2980b9"/>
   <text x="160" y="203" text-anchor="middle" fill="white" font-size="15">:hover</text>
   <text x="290" y="203" fill="#666" font-size="12">悬停: #2980b9</text>
 
   <!-- .chart-toggle-btn -->
   <text x="460" y="100" fill="#ccc" font-size="14" font-weight="bold">.chart-toggle-btn 打开图表窗口</text>
-  <rect x="460" y="115" width="200" height="44" rx="20" fill="#27ae60" filter="url(#shadow)"/>
+  <rect x="460" y="115" width="200" height="44" rx="20" fill="#27ae60"/>
   <text x="560" y="143" text-anchor="middle" fill="white" font-size="15">查看数据图表</text>
   <text x="690" y="143" fill="#666" font-size="12">默认: #27ae60</text>
 
-  <rect x="460" y="175" width="200" height="44" rx="20" fill="#219653" filter="url(#shadow)"/>
+  <rect x="460" y="175" width="200" height="44" rx="20" fill="#219653"/>
   <text x="560" y="203" text-anchor="middle" fill="white" font-size="15">:hover</text>
   <text x="690" y="203" fill="#666" font-size="12">悬停: #219653</text>
 

@@ -1,9 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" font-family="Arial, sans-serif">
-  <defs>
-    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
-    </filter>
-  </defs>
   <rect width="800" height="380" fill="#121212" rx="8"/>
   <text x="400" y="40" text-anchor="middle" fill="#3498db" font-size="22" font-weight="bold">7. 关闭按钮</text>
   <text x="400" y="62" text-anchor="middle" fill="#999" font-size="12">来源：所有页面 | background: none/transparent | font-size: 24-28px | 颜色变化</text>

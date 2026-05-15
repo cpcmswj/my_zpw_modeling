@@ -1,26 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" font-family="Arial, sans-serif">
-  <defs>
-    <filter id="shadow" x="-2%" y="-2%" width="104%" height="104%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
-    </filter>
-  </defs>
   <rect width="800" height="350" fill="#121212" rx="8"/>
   <text x="400" y="40" text-anchor="middle" fill="#3498db" font-size="22" font-weight="bold">9. 注册页面按钮 (register.html)</text>
   <text x="400" y="62" text-anchor="middle" fill="#999" font-size="12">来源：register.html | width: 100% | padding: 12px | border-radius: 4px</text>
 
   <!-- .btn-primary (注册) -->
   <text x="60" y="100" fill="#ccc" font-size="14" font-weight="bold">.btn-primary 注册按钮</text>
-  <rect x="60" y="115" width="300" height="44" rx="4" fill="#27ae60" filter="url(#shadow)"/>
+  <rect x="60" y="115" width="300" height="44" rx="4" fill="#27ae60"/>
   <text x="210" y="143" text-anchor="middle" fill="white" font-size="16">注册</text>
   <text x="400" y="143" fill="#666" font-size="12">background: #27ae60 (绿色主按钮)</text>
 
-  <rect x="60" y="175" width="300" height="44" rx="4" fill="#219653" filter="url(#shadow)"/>
+  <rect x="60" y="175" width="300" height="44" rx="4" fill="#219653"/>
   <text x="210" y="203" text-anchor="middle" fill="white" font-size="16">注册 :hover</text>
   <text x="400" y="203" fill="#666" font-size="12">background: #219653</text>
 
   <!-- .btn-secondary (返回) -->
   <text x="60" y="255" fill="#ccc" font-size="14" font-weight="bold">.btn-secondary 返回按钮</text>
-  <rect x="60" y="270" width="300" height="44" rx="4" fill="#3498db" filter="url(#shadow)"/>
+  <rect x="60" y="270" width="300" height="44" rx="4" fill="#3498db"/>
   <text x="210" y="298" text-anchor="middle" fill="white" font-size="16">返回登录</text>
   <text x="400" y="298" fill="#666" font-size="12">background: #3498db (蓝色次要按钮)</text>
 

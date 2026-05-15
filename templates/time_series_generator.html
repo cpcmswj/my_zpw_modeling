@@ -781,6 +781,62 @@
         .chart-toggle-btn:hover {
             background-color: #219653;
         }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 5000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background-color: #1e1e1e;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal h3 {
+            color: #e74c3c;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .modal p {
+            color: #ccc;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .modal .modal-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal .modal-btn:hover {
+            background-color: #2980b9;
+        }
     </style>
 </head>
 <body>
@@ -922,6 +978,15 @@
     </div>
 
     <div class="container">
+        <!-- 错误提示弹窗 -->
+        <div class="modal-overlay" id="errorModal">
+            <div class="modal">
+                <h3>参数未设置</h3>
+                <p id="modalMessage">请先设置轨道区段和故障类型</p>
+                <button class="modal-btn" onclick="closeModal()">确定</button>
+            </div>
+        </div>
+        
         <header>
             <h1>时序数据生成</h1>
             <p class="subtitle">铁路轨道电路故障模拟系统</p>
@@ -1294,6 +1359,15 @@
             }, 3000);  // 3秒后开始淡出
         }
 
+        function showModal(message) {
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('errorModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('errorModal').classList.remove('active');
+        }
+
         function getVoltageRange(level) {
             switch(level) {
                 case 1:
@@ -1536,10 +1610,18 @@
                 return;
             }
 
+            // 检查轨道区段是否设置
             if (!currentSelection.trackSection) {
-                showStatusMessage('请先选择轨道区段和故障类型！', 'error');
+                showModal('请先选择轨道区段！');
                 return;
             }
+
+            // 检查故障类型是否设置
+            if (!currentSelection.faultType || currentSelection.faultType === '') {
+                showModal('请先选择故障类型！');
+                return;
+            }
+
             const sectionId = currentSelection.trackSection;
             const selectedErrorType = parseInt(currentSelection.faultType);
             const { trackLength, resistance, inductance, capacitance, leakageResistance, cableLength, errorValue, r1, r2 } = trackParameters;
