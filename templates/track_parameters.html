@@ -1022,10 +1022,19 @@
         
         // 保存参数
         function saveParameters() {
+            // 验证轨道长度
+            const trackLengthInput = document.getElementById('trackLength').value;
+            const trackLengthValue = parseFloat(trackLengthInput);
+            
+            if (trackLengthValue < 0) {
+                alert('轨道长度不能为负数！');
+                return;
+            }
+            
             // 获取表单数据
             trackParameters = {
                 trackName: document.getElementById('trackName').value,
-                trackLength: parseFloat(document.getElementById('trackLength').value),
+                trackLength: parseFloat(trackLengthInput),
                 frequency: parseInt(document.getElementById('frequency').value),
                 resistance: parseFloat(document.getElementById('resistance').value),
                 inductance: parseFloat(document.getElementById('inductance').value),

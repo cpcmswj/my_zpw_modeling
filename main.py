@@ -170,6 +170,11 @@ async def read_time_series_generator(request: Request):
 async def read_voltage_evaluation(request: Request):
     return templates.TemplateResponse("voltage_evaluation.html", {"request": request})
 
+# 性能评估系统页面
+@app.get("/performance-evaluation", response_class=HTMLResponse)
+async def read_performance_evaluation(request: Request):
+    return templates.TemplateResponse("performance_evaluation.html", {"request": request})
+
 # 构建电路模型API端点
 @app.post("/api/build-circuit-model")
 async def build_circuit_model(

@@ -2351,6 +2351,15 @@
             const resultContent = document.getElementById('resultContent');
             resultContent.innerHTML = '<p class="loading">正在进行故障模拟计算...</p>';
             
+            // 验证轨道长度
+            const trackLengthInput = document.getElementById('trackLength').value;
+            const trackLengthValue = parseFloat(trackLengthInput);
+            
+            if (trackLengthValue < 0) {
+                alert('轨道长度不能为负数！');
+                return;
+            }
+            
             // 显示集成故障模拟相关的下载按钮
             showDownloadButtons('integrated');
             
@@ -4810,7 +4819,15 @@
             // 获取参数
             const sectionId = document.getElementById('section').value;
             const errorType = parseInt(document.getElementById('errorType').value);
-            const trackLength = parseFloat(document.getElementById('trackLength').value);
+            const trackLengthInput = document.getElementById('trackLength').value;
+            const trackLengthValue = parseFloat(trackLengthInput);
+            
+            if (trackLengthValue < 0) {
+                alert('轨道长度不能为负数！');
+                return;
+            }
+            
+            const trackLength = trackLengthValue;
             const resistance = parseFloat(document.getElementById('resistance').value);
             const inductance = parseFloat(document.getElementById('inductance').value);
             const capacitance = parseFloat(document.getElementById('capacitance').value);

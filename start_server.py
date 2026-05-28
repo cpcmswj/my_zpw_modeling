@@ -10,6 +10,9 @@
     python start_server.py index         # 启动服务器并只打开首页
     python start_server.py fsk_signal    # 启动服务器并只打开FSK信号页面
     python start_server.py --help        # 查看帮助信息
+
+环境配置：
+    NEON_DATABASE_URL - Neon数据库连接URL（用于持久化用户数据）
 """
 
 import argparse
@@ -18,6 +21,9 @@ import webbrowser
 import time
 import os
 import sys
+
+# Neon数据库连接配置（请根据实际情况修改）
+NEON_DATABASE_URL = "postgresql://neondb_owner:npg_JSBvQlmq4rz9@ep-fragrant-mud-aohlkatr-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require"
 
 # 定义页面映射
 define_pages = {
@@ -39,8 +45,18 @@ define_pages = {
     'track_parameters': 'http://127.0.0.1:8000/track-parameters',
     'time_series_generator': 'http://127.0.0.1:8000/time-series-generator',
     'register': 'http://127.0.0.1:8000/register',
-    'voltage_evaluation': 'http://127.0.0.1:8000/voltage-evaluation'
+    'voltage_evaluation': 'http://127.0.0.1:8000/voltage-evaluation',
+    'performance_evaluation': 'http://127.0.0.1:8000/performance-evaluation'
 }
+
+def set_environment_variables():
+    """设置环境变量，包括Neon数据库连接"""
+    # 设置Neon数据库连接URL
+    os.environ['NEON_DATABASE_URL'] = NEON_DATABASE_URL
+    print(f"✅ 设置NEON_DATABASE_URL: {NEON_DATABASE_URL[:50]}...")
+    
+    # 可以添加其他环境变量
+    # os.environ['OTHER_VAR'] = 'value'
 
 def is_port_in_use(port):
     """检查端口是否被占用"""
@@ -99,6 +115,9 @@ def kill_process(pid):
 def start_server():
     """启动Uvicorn服务器"""
     print("正在启动FastAPI服务器...")
+    
+    # 设置环境变量（包括Neon数据库）
+    set_environment_variables()
     
     # 默认端口
     port = 8000

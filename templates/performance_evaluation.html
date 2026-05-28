@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>性能评估系统 - 铁路轨道电路故障模拟</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #3498db; text-align: center; margin-bottom: 30px; font-size: 28px; }
+        h2 { color: #3498db; margin-bottom: 15px; font-size: 20px; }
+        h3 { color: #27ae60; margin: 10px 0; font-size: 16px; }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+        }
+        .tab-button {
+            background-color: #2a2a2a;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .tab-button:hover { background-color: #3498db; }
+        .tab-button.active { background-color: #3498db; color: white; }
+        .tab-content { display: none; padding: 20px 0; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background-color: #1e1e1e;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .form-col { flex: 1; min-width: 200px; }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #ccc;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            background-color: #2a2a2a;
+            color: #fff;
+            font-size: 14px;
+        }
+        input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn:hover { background-color: #2980b9; }
+        .btn.success { background-color: #27ae60; }
+        .btn.success:hover { background-color: #219653; }
+        .btn.danger { background-color: #e74c3c; }
+        .btn.danger:hover { background-color: #c0392b; }
+        .btn.secondary { background-color: #95a5a6; }
+        .btn.secondary:hover { background-color: #7f8c8d; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #3498db;
+            padding: 10px;
+            text-align: center;
+        }
+        .data-table th {
+            background-color: #2a2a2a;
+            color: #3498db;
+            font-weight: bold;
+        }
+        .data-table tr:nth-child(even) { background-color: #2a2a2a; }
+        .data-table tr:hover { background-color: #333; }
+
+        .positive-diff { color: #27ae60; font-weight: bold; }
+        .negative-diff { color: #e74c3c; font-weight: bold; }
+        .warning-diff { color: #f39c12; font-weight: bold; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .summary-item {
+            background-color: #2a2a2a;
+            border: 1px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .summary-label { color: #ccc; font-size: 14px; margin-bottom: 5px; }
+        .summary-value { color: #3498db; font-size: 24px; font-weight: bold; }
+        .summary-value.success { color: #27ae60; }
+        .summary-value.warning { color: #f39c12; }
+        .summary-value.danger { color: #e74c3c; }
+
+        .chart-container {
+            background-color: #2a2a2a;
+            border: 1px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            display: none;
+        }
+        .status-message.success {
+            background-color: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+            border: 1px solid #27ae60;
+            display: block;
+        }
+        .status-message.error {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+            display: block;
+        }
+        .status-message.info {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            border: 1px solid #3498db;
+            display: block;
+        }
+
+        .voltage-preview {
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .voltage-preview p { color: #999; margin-bottom: 5px; }
+        .voltage-tag {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin: 3px;
+            font-size: 12px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #27ae60);
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            color: #3498db;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ 性能评估系统</h1>
+        <p style="text-align: center; color: #999; margin-bottom: 20px;">
+            对比正常状态与故障状态下的电压响应差异
+        </p>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab('params')">⚙️ 参数设置</button>
+            <button class="tab-button" onclick="openTab('results')">📊 评估结果</button>
+        </div>
+
+        <div id="params" class="tab-content active">
+            <div class="card">
+                <h2>🎯 电压范围设置</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="voltageLevel">电压档位</label>
+                        <select id="voltageLevel" onchange="updateVoltageRange()">
+                            <option value="1">1档 (161-170V)</option>
+                            <option value="2">2档 (146-154V)</option>
+                            <option value="3" selected>3档 (128-135V)</option>
+                            <option value="4">4档 (104.5-110.5V)</option>
+                            <option value="5">5档 (75-79.5V)</option>
+                            <option value="6">6档 (75-170V)</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="voltageCount">数据点数量</label>
+                        <input type="number" id="voltageCount" value="13" min="2" max="50">
+                    </div>
+                    <div class="form-col">
+                        <label for="useRandomVoltage">
+                            <input type="checkbox" id="useRandomVoltage"> 随机电压
+                        </label>
+                    </div>
+                </div>
+                <div class="voltage-preview" id="voltagePreview">
+                    <p>电压值预览：</p>
+                    <div id="voltageTags"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🛤️ 轨道电路参数</h2>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="trackSection">轨道区段</label>
+                        <select id="trackSection">
+                            <option value="69G">69G</option>
+                            <option value="X1LQG">X1LQG</option>
+                            <option value="IG1">IG1</option>
+                            <option value="57G">57G</option>
+                            <option value="3DG">3DG</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="faultType">故障类型</label>
+                        <select id="faultType">
+                            <option value="1">1 - 接收端调谐单元1断路</option>
+                            <option value="2">2 - 发送端调谐单元1断路</option>
+                            <option value="3">3 - 接收端空心线圈断路</option>
+                            <option value="4">4 - 接收端空芯线圈短路</option>
+                            <option value="5">5 - 接收端调谐单元2断路</option>
+                            <option value="6">6 - 补偿电容3断路</option>
+                            <option value="7">7 - 补偿电容3短路</option>
+                            <option value="8">8 - 发送端SPT电缆断路</option>
+                            <option value="9">9 - 接收端SPT电缆断路</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="faultValue">故障值</label>
+                        <input type="number" id="faultValue" value="1.0" step="0.1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="trackLength">轨道长度 (m)</label>
+                        <input type="number" id="trackLength" value="1200" step="0.1">
+                    </div>
+                    <div class="form-col">
+                        <label for="cableLength">SPT电缆长度 (km)</label>
+                        <input type="number" id="cableLength" value="10" step="0.1">
+                    </div>
+                    <div class="form-col">
+                        <label for="frequency">频率 (Hz)</label>
+                        <input type="number" id="frequency" value="1700" step="1" disabled>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="r1">衰耗盘端子1</label>
+                        <select id="r1">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="r2">衰耗盘端子2</label>
+                        <select id="r2">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="dataType">评估数据类型</label>
+                        <select id="dataType">
+                            <option value="receive_end">受端轨面电压 (V)</option>
+                            <option value="send_end">送端轨面电压 (V)</option>
+                            <option value="input_current">输入电流 (A)</option>
+                            <option value="input_impedance">输入阻抗 (Ω)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🔘 控制按钮</h2>
+                <button class="btn success" onclick="startEvaluation()">🚀 开始评估</button>
+                <button class="btn secondary" onclick="resetAll()">🔄 重置</button>
+                <div id="statusMessage" class="status-message"></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progressText">准备开始...</div>
+            </div>
+        </div>
+
+        <div id="results" class="tab-content">
+            <div id="summaryCard" class="card" style="display: none;">
+                <h2>📊 评估摘要</h2>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-label">数据点数量</div>
+                        <div class="summary-value" id="totalPoints">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">平均差值</div>
+                        <div class="summary-value" id="avgDiff">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">最大差值</div>
+                        <div class="summary-value" id="maxDiff">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">平均变化率</div>
+                        <div class="summary-value" id="avgChangeRate">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">最大变化率</div>
+                        <div class="summary-value" id="maxChangeRate">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">评估结论</div>
+                        <div class="summary-value" id="evaluationResult">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chartCard" class="card" style="display: none;">
+                <h2>📈 电压对比图表</h2>
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+
+            <div id="diffChartCard" class="card" style="display: none;">
+                <h2>📉 差值与变化率图表</h2>
+                <div class="chart-container">
+                    <canvas id="diffChart"></canvas>
+                </div>
+            </div>
+
+            <div id="tableCard" class="card" style="display: none;">
+                <h2>📋 详细数据对比</h2>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>输入电压 (V)</th>
+                                <th>正常状态值</th>
+                                <th>故障状态值</th>
+                                <th>差值</th>
+                                <th>变化率 (%)</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="exportCSV()">📥 导出CSV</button>
+                    <button class="btn secondary" onclick="exportJSON()">📥 导出JSON</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let voltageValues = [];
+        let normalResults = [];
+        let faultResults = [];
+        let comparisonResults = [];
+        let comparisonChart = null;
+        let diffChart = null;
+        let isEvaluating = false;
+
+        function openTab(tabName) {
+            const tabButtons = document.getElementsByClassName('tab-button');
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+                tabButtons[i].classList.remove('active');
+            }
+            document.getElementById(tabName).classList.add('active');
+            for (let i = 0; i < tabButtons.length; i++) {
+                if (tabButtons[i].getAttribute('onclick') && tabButtons[i].getAttribute('onclick').includes(tabName)) {
+                    tabButtons[i].classList.add('active');
+                    break;
+                }
+            }
+        }
+
+        function getVoltageRange(level) {
+            const switcher = {
+                1: { min: 161, max: 170 },
+                2: { min: 146, max: 154 },
+                3: { min: 128, max: 135 },
+                4: { min: 104.5, max: 110.5 },
+                5: { min: 75, max: 79.5 },
+                6: { min: 75, max: 170 }
+            };
+            return switcher[level] || { min: 128, max: 135 };
+        }
+
+        function generateVoltageValues() {
+            const voltageLevel = parseInt(document.getElementById('voltageLevel').value);
+            const useRandomVoltage = document.getElementById('useRandomVoltage').checked;
+            const voltageCount = parseInt(document.getElementById('voltageCount').value);
+
+            const range = getVoltageRange(voltageLevel);
+            const values = [];
+
+            if (useRandomVoltage) {
+                for (let i = 0; i < voltageCount; i++) {
+                    const voltage = range.min + Math.random() * (range.max - range.min);
+                    values.push(parseFloat(voltage.toFixed(1)));
+                }
+                values.sort((a, b) => a - b);
+            } else {
+                const step = voltageCount > 1 ? (range.max - range.min) / (voltageCount - 1) : 0;
+                for (let i = 0; i < voltageCount; i++) {
+                    const voltage = range.min + i * step;
+                    values.push(parseFloat(voltage.toFixed(1)));
+                }
+            }
+
+            return values;
+        }
+
+        function updateVoltageRange() {
+            voltageValues = generateVoltageValues();
+            updateVoltagePreview();
+            updateFrequency();
+        }
+
+        function updateVoltagePreview() {
+            const tagsDiv = document.getElementById('voltageTags');
+            tagsDiv.innerHTML = voltageValues.map(v => 
+                `<span class="voltage-tag">${v}V</span>`
+            ).join('');
+        }
+
+        function updateFrequency() {
+            const sectionId = document.getElementById('trackSection').value;
+            const frequency = (sectionId === "69G" || sectionId === "X1LQG" || sectionId === "IG1") ? 1700 : 2300;
+            document.getElementById('frequency').value = frequency;
+        }
+
+        document.getElementById('voltageLevel').addEventListener('change', updateVoltageRange);
+        document.getElementById('voltageCount').addEventListener('change', updateVoltageRange);
+        document.getElementById('useRandomVoltage').addEventListener('change', updateVoltageRange);
+        document.getElementById('trackSection').addEventListener('change', updateFrequency);
+
+        updateVoltageRange();
+
+        async function startEvaluation() {
+            if (isEvaluating) {
+                showStatus('评估正在进行中，请等待完成！', 'error');
+                return;
+            }
+
+            voltageValues = generateVoltageValues();
+            if (voltageValues.length === 0) {
+                showStatus('请先设置电压参数！', 'error');
+                return;
+            }
+
+            isEvaluating = true;
+            normalResults = [];
+            faultResults = [];
+            comparisonResults = [];
+
+            showStatus('开始评估...', 'info');
+            openTab('results');
+
+            try {
+                document.getElementById('summaryCard').style.display = 'none';
+                document.getElementById('chartCard').style.display = 'none';
+                document.getElementById('diffChartCard').style.display = 'none';
+                document.getElementById('tableCard').style.display = 'none';
+
+                const sectionId = document.getElementById('trackSection').value;
+                const faultType = parseInt(document.getElementById('faultType').value);
+                const faultValue = parseFloat(document.getElementById('faultValue').value);
+                const frequency = parseInt(document.getElementById('frequency').value);
+                const dataType = document.getElementById('dataType').value;
+
+                const totalSteps = voltageValues.length * 2;
+                let currentStep = 0;
+
+                document.getElementById('progressFill').style.width = '0%';
+                document.getElementById('progressText').textContent = '正在生成正常状态数据...';
+
+                for (let i = 0; i < voltageValues.length; i++) {
+                    if (!isEvaluating) break;
+
+                    const voltage = voltageValues[i];
+                    document.getElementById('progressText').textContent = '正常状态: ' + (i + 1) + '/' + voltageValues.length;
+
+                    const result = await simulateSingle(voltage, 0, sectionId, faultValue, frequency);
+                    normalResults.push({ voltage, ...extractResult(result, dataType) });
+
+                    currentStep++;
+                    document.getElementById('progressFill').style.width = ((currentStep / totalSteps) * 100) + '%';
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                document.getElementById('progressText').textContent = '正在生成故障状态数据...';
+
+                for (let i = 0; i < voltageValues.length; i++) {
+                    if (!isEvaluating) break;
+
+                    const voltage = voltageValues[i];
+                    document.getElementById('progressText').textContent = '故障状态: ' + (i + 1) + '/' + voltageValues.length;
+
+                    const result = await simulateSingle(voltage, faultType, sectionId, faultValue, frequency);
+                    faultResults.push({ voltage, ...extractResult(result, dataType) });
+
+                    currentStep++;
+                    document.getElementById('progressFill').style.width = ((currentStep / totalSteps) * 100) + '%';
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                calculateComparison();
+                showResults();
+                showStatus('评估完成！', 'success');
+            } catch (error) {
+                console.error('评估过程出错:', error);
+                showStatus('评估过程出错: ' + error.message, 'error');
+            } finally {
+                isEvaluating = false;
+            }
+        }
+
+        async function simulateSingle(voltage, errorType, sectionId, errorValue, frequency) {
+            const formData = new FormData();
+            formData.append('trail', 'evaluation_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
+            formData.append('error_type', errorType);
+            formData.append('error_value', errorValue);
+            formData.append('error_position', sectionId);
+            formData.append('track_length', document.getElementById('trackLength').value);
+            formData.append('resist_per_meter', '0.1');
+            formData.append('induct_per_meter', '0.001');
+            formData.append('capacit_per_meter', '1e-9');
+            formData.append('conduct_per_meter', '0.000001');
+            formData.append('frequency', frequency);
+            formData.append('spt_cable_length', document.getElementById('cableLength').value);
+            formData.append('r1', document.getElementById('r1').value);
+            formData.append('r2', document.getElementById('r2').value);
+            formData.append('input_V', voltage);
+
+            try {
+                const response = await fetch('/api/calculate/track-circuit?_=' + Date.now(), {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('API调用失败: ' + response.status);
+                }
+
+                const result = await response.json();
+                if (result.status !== 'success') {
+                    throw new Error(result.message || '模拟失败');
+                }
+
+                return result;
+            } catch (error) {
+                console.error('模拟失败:', error);
+                throw new Error('模拟失败: ' + error.message);
+            }
+        }
+
+        function extractResult(result, dataType) {
+            const v = result.voltage_results || result;
+            switch (dataType) {
+                case 'receive_end':
+                    return { value: parseFloat(v.receive_end_track_voltage) || parseFloat(v.rail_output_1_voltage) || 0 };
+                case 'send_end':
+                    return { value: parseFloat(v.send_end_track_voltage) || parseFloat(v.rail_output_2_voltage) || 0 };
+                case 'input_current':
+                    return { value: parseFloat(v.input_current) || 0 };
+                case 'input_impedance':
+                    return { value: parseFloat(v.input_impedance) || 0 };
+                default:
+                    return { value: parseFloat(v.receive_end_track_voltage) || 0 };
+            }
+        }
+
+        function calculateComparison() {
+            comparisonResults = [];
+            const dataType = document.getElementById('dataType').value;
+            const unit = dataType.includes('current') ? 'A' : dataType.includes('impedance') ? 'Ω' : 'V';
+
+            for (let i = 0; i < voltageValues.length; i++) {
+                const normal = normalResults[i]?.value || 0;
+                const fault = faultResults[i]?.value || 0;
+                const diff = fault - normal;
+                const changeRate = normal !== 0 ? (diff / normal) * 100 : 0;
+
+                comparisonResults.push({
+                    index: i + 1,
+                    voltage: voltageValues[i],
+                    normal,
+                    fault,
+                    diff,
+                    changeRate,
+                    unit,
+                    status: Math.abs(changeRate) > 10 ? '异常' : Math.abs(changeRate) > 5 ? '警告' : '正常'
+                });
+            }
+        }
+
+        function showResults() {
+            document.getElementById('summaryCard').style.display = 'block';
+            document.getElementById('chartCard').style.display = 'block';
+            document.getElementById('diffChartCard').style.display = 'block';
+            document.getElementById('tableCard').style.display = 'block';
+
+            const totalPoints = comparisonResults.length;
+            const avgDiff = comparisonResults.reduce((sum, r) => sum + Math.abs(r.diff), 0) / totalPoints;
+            const maxDiff = Math.max(...comparisonResults.map(r => Math.abs(r.diff)));
+            const avgChangeRate = comparisonResults.reduce((sum, r) => sum + Math.abs(r.changeRate), 0) / totalPoints;
+            const maxChangeRate = Math.max(...comparisonResults.map(r => Math.abs(r.changeRate)));
+
+            const dataType = document.getElementById('dataType').value;
+            const unit = dataType.includes('current') ? 'A' : dataType.includes('impedance') ? 'Ω' : 'V';
+
+            document.getElementById('totalPoints').textContent = totalPoints;
+            document.getElementById('avgDiff').textContent = avgDiff.toFixed(3) + unit;
+            document.getElementById('maxDiff').textContent = maxDiff.toFixed(3) + unit;
+            document.getElementById('avgChangeRate').textContent = avgChangeRate.toFixed(2) + '%';
+            document.getElementById('maxChangeRate').textContent = maxChangeRate.toFixed(2) + '%';
+
+            const evaluationResult = avgChangeRate > 10 ? { text: '故障影响显著', class: 'danger' } :
+                                   avgChangeRate > 5 ? { text: '故障影响中等', class: 'warning' } :
+                                   { text: '故障影响轻微', class: 'success' };
+            document.getElementById('evaluationResult').textContent = evaluationResult.text;
+            document.getElementById('evaluationResult').className = 'summary-value ' + evaluationResult.class;
+
+            updateCharts();
+            updateTable();
+        }
+
+        function updateCharts() {
+            if (comparisonChart) comparisonChart.destroy();
+            if (diffChart) diffChart.destroy();
+
+            const ctx1 = document.getElementById('comparisonChart').getContext('2d');
+            comparisonChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: comparisonResults.map(r => r.voltage + 'V'),
+                    datasets: [
+                        {
+                            label: '正常状态',
+                            data: comparisonResults.map(r => r.normal),
+                            borderColor: '#27ae60',
+                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                            fill: false,
+                            tension: 0.3,
+                            borderWidth: 2
+                        },
+                        {
+                            label: '故障状态',
+                            data: comparisonResults.map(r => r.fault),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: false,
+                            tension: 0.3,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#fff' } },
+                        title: {
+                            display: true,
+                            text: '正常状态 vs 故障状态对比',
+                            color: '#3498db',
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: '输入电压 (V)', color: '#fff' },
+                            ticks: { color: '#ccc' },
+                            grid: { color: '#333' }
+                        },
+                        y: {
+                            title: { display: true, text: '输出值', color: '#fff' },
+                            ticks: { color: '#ccc' },
+                            grid: { color: '#333' }
+                        }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('diffChart').getContext('2d');
+            diffChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: comparisonResults.map(r => r.voltage + 'V'),
+                    datasets: [
+                        {
+                            label: '差值',
+                            data: comparisonResults.map(r => r.diff),
+                            backgroundColor: comparisonResults.map(r => 
+                                r.diff > 0 ? 'rgba(231, 76, 60, 0.7)' : 'rgba(39, 174, 96, 0.7)'
+                            ),
+                            borderColor: comparisonResults.map(r => 
+                                r.diff > 0 ? '#e74c3c' : '#27ae60'
+                            ),
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#fff' } },
+                        title: {
+                            display: true,
+                            text: '故障状态与正常状态差值',
+                            color: '#3498db',
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: '输入电压 (V)', color: '#fff' },
+                            ticks: { color: '#ccc' },
+                            grid: { color: '#333' }
+                        },
+                        y: {
+                            title: { display: true, text: '差值', color: '#fff' },
+                            ticks: { color: '#ccc' },
+                            grid: { color: '#333' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = comparisonResults.map(r => {
+                const diffClass = r.diff > 0 ? 'negative-diff' : 'positive-diff';
+                const rateClass = Math.abs(r.changeRate) > 10 ? 'negative-diff' : Math.abs(r.changeRate) > 5 ? 'warning-diff' : 'positive-diff';
+                const statusColor = r.status === '异常' ? '#e74c3c' : r.status === '警告' ? '#f39c12' : '#27ae60';
+                
+                return '<tr>' +
+                    '<td>' + r.index + '</td>' +
+                    '<td>' + r.voltage.toFixed(1) + '</td>' +
+                    '<td>' + r.normal.toFixed(4) + '</td>' +
+                    '<td>' + r.fault.toFixed(4) + '</td>' +
+                    '<td class="' + diffClass + '">' + r.diff.toFixed(4) + '</td>' +
+                    '<td class="' + rateClass + '">' + r.changeRate.toFixed(2) + '%</td>' +
+                    '<td><span style="color: ' + statusColor + '; font-weight: bold;">' + r.status + '</span></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status-message ' + type;
+            statusDiv.style.display = 'block';
+            if (type === 'success') {
+                setTimeout(() => statusDiv.style.display = 'none', 3000);
+            }
+        }
+
+        function resetAll() {
+            isEvaluating = false;
+            voltageValues = [];
+            normalResults = [];
+            faultResults = [];
+            comparisonResults = [];
+
+            document.getElementById('voltageLevel').value = '3';
+            document.getElementById('voltageCount').value = '13';
+            document.getElementById('useRandomVoltage').checked = false;
+            document.getElementById('trackSection').value = '69G';
+            document.getElementById('faultType').value = '1';
+            document.getElementById('faultValue').value = '1.0';
+            document.getElementById('trackLength').value = '1200';
+            document.getElementById('cableLength').value = '10';
+            document.getElementById('r1').value = '1';
+            document.getElementById('r2').value = '1';
+            document.getElementById('dataType').value = 'receive_end';
+
+            updateVoltageRange();
+
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressText').textContent = '准备开始...';
+            document.getElementById('statusMessage').style.display = 'none';
+
+            document.getElementById('summaryCard').style.display = 'none';
+            document.getElementById('chartCard').style.display = 'none';
+            document.getElementById('diffChartCard').style.display = 'none';
+            document.getElementById('tableCard').style.display = 'none';
+
+            if (comparisonChart) { comparisonChart.destroy(); comparisonChart = null; }
+            if (diffChart) { diffChart.destroy(); diffChart = null; }
+
+            openTab('params');
+        }
+
+        function exportCSV() {
+            let csv = '序号,输入电压(V),正常状态值,故障状态值,差值,变化率(%),状态\n';
+            comparisonResults.forEach(r => {
+                csv += r.index + ',' + r.voltage.toFixed(1) + ',' + r.normal.toFixed(4) + ',' + 
+                       r.fault.toFixed(4) + ',' + r.diff.toFixed(4) + ',' + r.changeRate.toFixed(2) + ',' + r.status + '\n';
+            });
+            downloadFile(csv, 'performance_evaluation.csv', 'text/csv');
+        }
+
+        function exportJSON() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                parameters: {
+                    voltageLevel: document.getElementById('voltageLevel').value,
+                    voltageCount: document.getElementById('voltageCount').value,
+                    trackSection: document.getElementById('trackSection').value,
+                    faultType: document.getElementById('faultType').value,
+                    trackLength: document.getElementById('trackLength').value,
+                    cableLength: document.getElementById('cableLength').value,
+                    dataType: document.getElementById('dataType').value
+                },
+                comparisonResults
+            };
+            downloadFile(JSON.stringify(data, null, 2), 'performance_evaluation.json', 'application/json');
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

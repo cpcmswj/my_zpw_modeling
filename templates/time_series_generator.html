@@ -1294,9 +1294,18 @@
         }
 
         function saveParameters() {
+            // 验证轨道长度
+            const trackLengthInput = document.getElementById('trackLength').value;
+            const trackLengthValue = parseFloat(trackLengthInput);
+            
+            if (trackLengthValue < 0) {
+                alert('轨道长度不能为负数！');
+                return;
+            }
+            
             trackParameters = {
                 trackName: document.getElementById('trackName').value,
-                trackLength: parseFloat(document.getElementById('trackLength').value),
+                trackLength: parseFloat(trackLengthInput),
                 resistance: parseFloat(document.getElementById('resistance').value),
                 inductance: parseFloat(document.getElementById('inductance').value),
                 capacitance: parseFloat(document.getElementById('capacitance').value),

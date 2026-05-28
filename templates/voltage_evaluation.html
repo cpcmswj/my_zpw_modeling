@@ -288,15 +288,6 @@
                 
                 <div id="voltageList" style="margin-top: 15px;"></div>
             </div>
-
-            <div class="card">
-                <h2>🎯 快速示例数据</h2>
-                <div class="form-row">
-                    <button class="btn" onclick="loadExample1()">示例1：正常电压范围</button>
-                    <button class="btn" onclick="loadExample2()">示例2：故障电压范围</button>
-                    <button class="btn" onclick="loadExample3()">示例3：混合范围</button>
-                </div>
-            </div>
         </div>
 
         <div id="params" class="tab-content">
@@ -409,6 +400,32 @@
                         <label for="conduct">漏泄电导 (S/m)</label>
                         <input type="number" id="conduct" value="0.001" step="0.0001">
                     </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📋 标准值参考</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                        <strong style="color: #27ae60;">⚡ 送端轨面电压</strong><br>
+                        <span style="font-size: 24px; font-weight: bold; color: #fff;">44.1V</span>
+                    </div>
+                    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                        <strong style="color: #27ae60;">⚡ 送端电流</strong><br>
+                        <span style="font-size: 24px; font-weight: bold; color: #fff;">362mA</span>
+                    </div>
+                    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                        <strong style="color: #27ae60;">⚡ 受端轨面电压</strong><br>
+                        <span style="font-size: 24px; font-weight: bold; color: #fff;">5.1V</span>
+                    </div>
+                </div>
+                
+                <h3 style="color: #3498db; margin-bottom: 15px;">🎯 快速加载示例数据</h3>
+                <div class="form-row">
+                    <button class="btn success" onclick="loadStandardValues()">⚡ 快速正常标准值（送端44.1V/受端5.1V）</button>
+                    <button class="btn" onclick="loadExample1()">📊 正常电压范围 (128-135V)</button>
+                    <button class="btn" onclick="loadExample2()">⚠️ 故障电压范围 (60-95V)</button>
+                    <button class="btn" onclick="loadExample3()">🔄 混合电压范围</button>
                 </div>
             </div>
 
@@ -577,6 +594,13 @@
             expectedVoltages = [130.0, 100.0, 80.0, 130.0, 90.0, 130.0, 70.0, 130.0];
             document.getElementById('expectedVoltages').value = expectedVoltages.join('\n');
             updateVoltageList();
+        }
+
+        function loadStandardValues() {
+            expectedVoltages = [44.1, 5.1, 128.0, 129.0, 130.0, 131.0, 132.0, 133.0, 134.0, 135.0];
+            document.getElementById('expectedVoltages').value = expectedVoltages.join('\n');
+            updateVoltageList();
+            showInputStatus('✅ 已加载快速正常标准值（送端44.1V，受端5.1V + 正常电压范围128-135V）', 'success');
         }
 
         // 显示输入页面状态
@@ -764,15 +788,15 @@
 
         async function simulateSinglePoint(inputVoltage, index) {
             const formData = new FormData();
-            formData.append('trail', 'evaluation_test');
+            formData.append('trail', `evaluation_${Date.now()}_${index}`);
             formData.append('error_type', document.getElementById('faultType').value);
-            formData.append('error_value', '1.0');
+            formData.append('error_value', document.getElementById('errorValue')?.value || '1.0');
             formData.append('error_position', document.getElementById('trackSection').value);
             formData.append('track_length', document.getElementById('trackLength').value);
             formData.append('resist_per_meter', document.getElementById('resist').value);
             formData.append('induct_per_meter', document.getElementById('induct').value);
             formData.append('capacit_per_meter', document.getElementById('capacit').value);
-            formData.append('conduct_per_meter', document.getElementById('conduct').value);
+            formData.append('conduct_per_meter', 1.0 / (parseFloat(document.getElementById('conduct').value) * 1000));
             formData.append('frequency', document.getElementById('frequency').value);
             formData.append('spt_cable_length', document.getElementById('cableLength').value);
             formData.append('r1', document.getElementById('r1').value);
@@ -780,21 +804,64 @@
             formData.append('input_V', inputVoltage);
 
             try {
-                const response = await fetch('/api/calculate/track-circuit', {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                const response = await fetch(`/api/calculate/track-circuit?_=${Date.now()}`, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    signal: controller.signal,
+                    headers: { 'Accept': 'application/json' }
                 });
-                
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`API调用失败: ${response.status}`);
+                }
+
                 const result = await response.json();
-                
+
                 if (result.status === 'success') {
-                    const railOutput = result.voltage_results?.rail_output_1_voltage || 
-                                      result.voltage_results?.main_track_output_voltage_1 ||
-                                      result.output_voltage ||
-                                      (inputVoltage * 0.9 + Math.random() * 5 - 2.5);
-                    return typeof railOutput === 'number' ? railOutput : parseFloat(railOutput) || inputVoltage * 0.9;
+                    const voltageResults = result.voltage_results || result;
+                    const selectedDataType = document.getElementById('dataType').value;
+                    
+                    let simulatedValue;
+                    switch (selectedDataType) {
+                        case 'rail_output_1_voltage':
+                            simulatedValue = voltageResults.receive_end_track_voltage || voltageResults.rail_output_1_voltage || voltageResults.main_track_output_voltage_1;
+                            break;
+                        case 'rail_output_2_voltage':
+                            simulatedValue = voltageResults.send_end_track_voltage || voltageResults.rail_output_2_voltage || voltageResults.main_track_output_voltage_2;
+                            break;
+                        case 'main_track_output_voltage_1':
+                            simulatedValue = voltageResults.main_track_output_voltage_1 || voltageResults.receive_end_track_voltage;
+                            break;
+                        case 'main_track_output_voltage_2':
+                            simulatedValue = voltageResults.main_track_output_voltage_2 || voltageResults.send_end_track_voltage;
+                            break;
+                        case 'send_end_current':
+                            simulatedValue = voltageResults.send_end_current || voltageResults.input_current;
+                            break;
+                        case 'receive_end_current':
+                            simulatedValue = voltageResults.receive_end_current || voltageResults.input_current;
+                            break;
+                        case 'track_current':
+                            simulatedValue = voltageResults.track_current || voltageResults.input_current;
+                            break;
+                        case 'spt_cable_voltage':
+                            simulatedValue = voltageResults.spt_cable_voltage || voltageResults.main_track_input_voltage;
+                            break;
+                        default:
+                            simulatedValue = voltageResults.receive_end_track_voltage || voltageResults.output_voltage;
+                    }
+
+                    if (simulatedValue !== undefined && simulatedValue !== null) {
+                        const numValue = typeof simulatedValue === 'number' ? simulatedValue : parseFloat(simulatedValue);
+                        return !isNaN(numValue) ? numValue : inputVoltage * 0.9;
+                    }
+                    return inputVoltage * 0.9;
                 } else {
-                    return inputVoltage * 0.9 + Math.random() * 5 - 2.5;
+                    throw new Error(result.message || '模拟失败');
                 }
             } catch (error) {
                 console.warn('API调用失败，使用模拟数据:', error);
