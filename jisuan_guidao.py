@@ -529,7 +529,7 @@ def get_rail_parameters(frequency):
     return resist_per_meter, induct_per_meter
 
 def SPTcable_matrix(frequency, length):
-    """根据电缆参数和长度计算电缆矩阵,gamma_cable为单位长度电缆的传输常数 Z_d为单位长度电缆的特性阻抗 length为电缆长度(单位:米)
+    """根据电缆参数和长度计算电缆矩阵,gamma_cable为单位长度电缆的传输常数 Z_d为单位长度电缆的特性阻抗 length为电缆长度(单位:千米)
     输入输出关系: [V_in, I_in]^T = T * [V_out, I_out]^T
     其中T为电缆传输矩阵，[V_in, I_in]^T为输入端电压电流向量，[V_out, I_out]^T为输出端电压电流向量"""
     # 计算电缆的复数阻抗

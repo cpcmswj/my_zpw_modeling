@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册 - 铁路轨道电路故障模拟系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 400px;
+            width: 90%;
+            padding: 30px;
+            background-color: #000;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 2px solid #3498db;
+        }
+        h1 {
+            color: #3498db;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        .subtitle {
+            color: #ccc;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #fff;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #333;
+            color: #fff;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+        .btn-primary {
+            background-color: #27ae60;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #219653;
+        }
+        .btn-secondary {
+            background-color: #3498db;
+            color: white;
+            margin-top: 15px;
+        }
+        .btn-secondary:hover {
+            background-color: #2980b9;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+        }
+        .message.success {
+            background-color: #333;
+            color: #27ae60;
+            border: 1px solid #27ae60;
+            display: block;
+        }
+        .message.error {
+            background-color: #333;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+            display: block;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #ccc;
+        }
+        .login-link a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>用户注册</h1>
+        <p class="subtitle">铁路轨道电路故障模拟系统</p>
+        
+        <form id="registerForm" onsubmit="event.preventDefault(); register()">
+            <div class="form-group">
+                <label for="username">用户名:</label>
+                <input type="text" id="username" name="username" required placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label for="password">密码:</label>
+                <input type="password" id="password" name="password" required placeholder="请输入密码（至少4位）">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">确认密码:</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="请再次输入密码">
+            </div>
+            <button type="submit" class="btn btn-primary">注册</button>
+        </form>
+        
+        <div id="message" class="message"></div>
+        
+        <div class="login-link">
+            已有账号？<a href="/">返回登录</a>
+        </div>
+    </div>
+
+    <script>
+        async function register() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('message');
+            
+            // 验证用户名
+            if (!username) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '请输入用户名';
+                return;
+            }
+            
+            // 验证密码
+            if (password.length < 4) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '密码长度至少为4位';
+                return;
+            }
+            
+            // 验证密码是否匹配
+            if (password !== confirmPassword) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '两次输入的密码不一致';
+                return;
+            }
+            
+            console.log('开始注册流程:', { username });
+            
+            try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = '注册成功！即将跳转到登录页面...';
+                    
+                    // 2秒后跳转到首页
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = result.message || '注册失败';
+                }
+            } catch (error) {
+                console.error('注册失败:', error);
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '注册失败，请稍后重试';
+            }
+        }
+    </script>
+</body>
+</html>

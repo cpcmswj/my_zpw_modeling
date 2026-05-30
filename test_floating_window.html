@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>悬浮窗测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+            color: #fff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .params-floating-window {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background-color: #000;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 20px;
+            border: 2px solid #3498db;
+            width: 350px;
+            max-width: 90%;
+            display: none;
+        }
+        .params-floating-window.active {
+            display: block;
+        }
+        .params-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #555;
+        }
+        .params-header h3 {
+            color: #3498db;
+            margin: 0;
+        }
+        .params-close {
+            color: #3498db;
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .params-close:hover {
+            color: #2196f3;
+        }
+        .params-content {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .params-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            display: block;
+        }
+        .params-toggle-btn:hover {
+            background-color: #2196f3;
+            transform: translateX(-50%) scale(1.05);
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .form-col {
+            flex: 1;
+            min-width: 150px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #fff;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #333;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>悬浮窗测试</h1>
+        <p>点击下方的"轨道参数设置"按钮来测试悬浮窗功能。</p>
+    </div>
+    
+    <!-- 轨道参数设置切换按钮 -->
+    <button class="params-toggle-btn" onclick="toggleParamsWindow()">轨道参数设置</button>
+    
+    <!-- 轨道参数设置悬浮窗 -->
+    <div id="paramsWindow" class="params-floating-window">
+        <div class="params-header">
+            <h3>🛤️ 轨道参数设置</h3>
+            <span class="params-close" onclick="toggleParamsWindow()">&times;</span>
+        </div>
+        <div class="params-content">
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="trackLength">轨道长度 (m):</label>
+                    <input type="number" id="trackLength" name="trackLength" value="800" min="10">
+                </div>
+                <div class="form-col">
+                    <label for="resistance">钢轨电阻 (Ω/m):</label>
+                    <input type="number" id="resistance" name="resistance" value="0.1" step="0.01" min="0.01">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="inductance">钢轨电感 (H/m):</label>
+                    <input type="number" id="inductance" name="inductance" value="1.0e-3" step="0.0001" min="0.0001">
+                </div>
+                <div class="form-col">
+                    <label for="capacitance">漏泄电容 (F/m):</label>
+                    <input type="number" id="capacitance" name="capacitance" value="1.0e-9" step="0.0000000001" min="0.0000000001">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 切换轨道参数设置悬浮窗
+        function toggleParamsWindow() {
+            console.log('toggleParamsWindow called');
+            const paramsWindow = document.getElementById('paramsWindow');
+            console.log('paramsWindow:', paramsWindow);
+            if (paramsWindow) {
+                console.log('Current classes:', paramsWindow.classList);
+                paramsWindow.classList.toggle('active');
+                console.log('New classes:', paramsWindow.classList);
+            } else {
+                console.log('paramsWindow not found');
+            }
+        }
+    </script>
+</body>
+</html>
