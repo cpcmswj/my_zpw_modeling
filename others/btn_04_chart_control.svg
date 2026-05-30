@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 300" font-family="Arial, sans-serif">
+  <rect width="700" height="300" fill="#121212" rx="8"/>
+  <text x="350" y="40" text-anchor="middle" fill="#3498db" font-size="22" font-weight="bold">4. 图表控制按钮 (.chart-control-btn)</text>
+  <text x="350" y="62" text-anchor="middle" fill="#999" font-size="12">来源：time_series_generator | padding: 8px 16px | border-radius: 4px | font-size: 14px</text>
+
+  <!-- 默认 -->
+  <text x="60" y="100" fill="#ccc" font-size="14" font-weight="bold">默认状态</text>
+  <rect x="60" y="115" width="140" height="36" rx="4" fill="#3498db"/>
+  <text x="130" y="139" text-anchor="middle" fill="white" font-size="13">默认</text>
+  <text x="230" y="139" fill="#666" font-size="12">background: #3498db, padding: 8px 16px</text>
+
+  <!-- hover -->
+  <text x="60" y="185" fill="#ccc" font-size="14" font-weight="bold">悬停状态</text>
+  <rect x="60" y="200" width="140" height="36" rx="4" fill="#2980b9"/>
+  <text x="130" y="224" text-anchor="middle" fill="white" font-size="13">:hover</text>
+  <text x="230" y="224" fill="#666" font-size="12">background: #2980b9</text>
+
+  <!-- active -->
+  <text x="60" y="270" fill="#ccc" font-size="14" font-weight="bold">激活状态</text>
+  <rect x="60" y="255" width="140" height="36" rx="4" fill="#27ae60"/>
+  <text x="130" y="279" text-anchor="middle" fill="white" font-size="13">.active</text>
+  <text x="230" y="279" fill="#666" font-size="12">background: #27ae60 (绿色表示当前选中)</text>
+</svg>

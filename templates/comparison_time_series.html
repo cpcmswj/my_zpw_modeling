@@ -308,6 +308,8 @@
                         <option value="5">5 - 接收端调谐单元2断路</option>
                         <option value="6">6 - 补偿电容3断路</option>
                         <option value="7">7 - 补偿电容3短路</option>
+                        <option value="8">8 - 发送端SPT电缆断路</option>
+                        <option value="9">9 - 接收端SPT电缆断路</option>
                     </select>
                 </div>
                 <div class="form-col">
@@ -321,6 +323,8 @@
                         <option value="5">5 - 接收端调谐单元2断路</option>
                         <option value="6">6 - 补偿电容3断路</option>
                         <option value="7">7 - 补偿电容3短路</option>
+                        <option value="8">8 - 发送端SPT电缆断路</option>
+                        <option value="9">9 - 接收端SPT电缆断路</option>
                     </select>
                 </div>
             </div>
@@ -653,9 +657,11 @@
                 3: '接收端空心线圈断路',
                 4: '接收端空芯线圈短路',
                 5: '接收端调谐单元2断路',
-                6: '补偿电容3断路',
-                7: '补偿电容3短路'
-            };
+            6: '补偿电容3断路',
+            7: '补偿电容3短路',
+            8: '发送端SPT电缆断路',
+            9: '接收端SPT电缆断路'
+        };
             
             const errorTypeName1 = errorTypeNames[errorType1] || `故障类型 ${errorType1}`;
             const errorTypeName2 = errorTypeNames[errorType2] || `故障类型 ${errorType2}`;

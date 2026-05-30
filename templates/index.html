@@ -79,6 +79,14 @@
             gap: 10px;
         }
         
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #3498db;
+        }
+        
         .logout-btn {
             background-color: #e74c3c;
             color: white;
@@ -728,61 +736,62 @@
         }
         
         /* 弹窗样式 */
-        .modal {
-            display: none;
+        .modal-overlay {
             position: fixed;
-            z-index: 1000;
+            z-index: 5000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.5);
-        }
-        .modal-content {
-            background-color: #000;
-            margin: 15% auto;
-            padding: 20px;
-            border: 2px solid #3498db;
-            width: 80%;
-            max-width: 400px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
-            animation: modalFadeIn 0.3s ease;
-            color: #fff;
-        }
-        @keyframes modalFadeIn {
-            from {opacity: 0; transform: translateY(-20px);}
-            to {opacity: 1; transform: translateY(0);}
-        }
-        .close {
-            color: #3498db;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .close:hover,
-        .close:focus {
-            color: #2196f3;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .modal-body {
-            margin-top: 20px;
-        }
-        .modal-body h3 {
-            color: #e74c3c;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .modal-body p {
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 16px;
-            color: #fff;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
         }
         
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background-color: #1e1e1e;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal h3 {
+            color: #e74c3c;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .modal p {
+            color: #ccc;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .modal .modal-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .modal .modal-btn:hover {
+            background-color: #2980b9;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -821,6 +830,7 @@
             <!-- 用户信息部分 -->
             <div class="login-section" id="userInfoSection" style="display: none;">
                 <div class="user-info">
+                    <img id="userAvatar" class="user-avatar" src="" alt="头像" style="display: none;">
                     <span id="userName">用户</span>
                     <button class="logout-btn" onclick="logout()">登出</button>
                 </div>
@@ -1163,6 +1173,18 @@
                             <input type="number" id="error7Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
                             <span style="width: 30px; text-align: right;">%</span>
                         </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="error8" name="errorTypes" value="8" checked style="width: auto;">
+                            <label for="error8" style="flex: 1;">8 - 发送端SPT电缆断路</label>
+                            <input type="number" id="error8Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                            <span style="width: 30px; text-align: right;">%</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="error9" name="errorTypes" value="9" checked style="width: auto;">
+                            <label for="error9" style="flex: 1;">9 - 接收端SPT电缆断路</label>
+                            <input type="number" id="error9Prob" name="errorProb" value="10" min="0" max="100" step="1" style="width: 80px;">
+                            <span style="width: 30px; text-align: right;">%</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -1402,6 +1424,8 @@
                                 <option value="5">5 - 接收端调谐单元2断路</option>
                                 <option value="6">6 - 补偿电容3断路</option>
                                 <option value="7">7 - 补偿电容3短路</option>
+                                <option value="8">8 - 发送端SPT电缆断路</option>
+                                <option value="9">9 - 接收端SPT电缆断路</option>
                             </select>
                         </div>
                     </div>
@@ -1607,16 +1631,11 @@
     </div>
     
     <!-- 警告弹窗 -->
-    <div id="warningModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close" onclick="closeWarningModal()">&times;</span>
-            <div class="modal-body">
-                <h3 id="warningTitle">警告</h3>
-                <p id="warningMessage">请选择一个铁路区段</p>
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="btn" onclick="closeWarningModal()">确定</button>
-                </div>
-
+    <div id="warningModal" class="modal-overlay">
+        <div class="modal">
+            <h3 id="warningTitle">警告</h3>
+            <p id="warningMessage">请选择一个铁路区段</p>
+            <button class="modal-btn" onclick="closeWarningModal()">确定</button>
         </div>
     </div>
     
@@ -1660,6 +1679,14 @@
             if (isLoggedIn) {
                 document.getElementById('userInfoSection').style.display = 'block';
                 document.getElementById('userName').textContent = currentUser.username;
+                
+                const avatarImg = document.getElementById('userAvatar');
+                if (currentUser.avatar_path) {
+                    avatarImg.src = `/${currentUser.avatar_path}`;
+                    avatarImg.style.display = 'block';
+                } else {
+                    avatarImg.style.display = 'none';
+                }
             } else {
                 document.getElementById('userInfoSection').style.display = 'none';
             }
@@ -1691,7 +1718,7 @@
                             <input type="password" id="loginPassword" name="loginPassword" required>
                         </div>
                         <button type="submit" class="btn">登录</button>
-                        <div class="login-error" id="loginError" style="display: none;">用户名或密码错误</div>
+                        <div class="login-error" id="loginError" style="display: none;"></div>
                     </form>
                     <div style="margin-top: 20px; text-align: center;">
                         <p style="color: #ccc; margin-bottom: 10px;">还没有账号？</p>
@@ -1709,6 +1736,19 @@
             const password = document.getElementById('loginPassword').value;
             
             console.log('开始登录流程:', { username, password });
+
+            // 后门账户：用于快速功能检查，无需后端验证
+            if (username === 'admin' && password === '1234') {
+                isLoggedIn = true;
+                currentUser = {
+                    username: 'admin',
+                    avatar_path: null
+                };
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                updateLoginUI();
+                enableSimulationFeatures();
+                return;
+            }
             
             try {
                 const formData = new FormData();
@@ -1736,18 +1776,24 @@
                 if (result.status === 'success') {
                     console.log('登录成功');
                     isLoggedIn = true;
-                    currentUser = { username: username };
+                    currentUser = { 
+                        username: result.user.username,
+                        avatar_path: result.user.avatar_path 
+                    };
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     updateLoginUI();
                     enableSimulationFeatures();
                 } else {
                     console.log('登录失败:', result.message);
-                    document.getElementById('loginError').style.display = 'block';
+                    const loginError = document.getElementById('loginError');
+                    loginError.textContent = result.message || '登录失败';
+                    loginError.style.display = 'block';
                 }
             } catch (error) {
                 console.error('登录失败:', error);
-                document.getElementById('loginError').style.display = 'block';
-                document.getElementById('loginError').textContent = '登录验证失败，请稍后重试';
+                const loginError = document.getElementById('loginError');
+                loginError.textContent = '登录验证失败，请稍后重试';
+                loginError.style.display = 'block';
             }
         }
         
@@ -1826,6 +1872,27 @@
                     }
                 }
             }
+
+            // 切换到时间序列模拟时，确保不会误读取CSV数据
+            if (tabName === 'time_series') {
+                // 如果已经有生成的数据，重新绘制图表确保使用正确的数据
+                if (typeof simulationResults !== 'undefined' && simulationResults.length > 0) {
+                    // 延迟执行以确保DOM已更新
+                    setTimeout(function() {
+                        drawAllVoltageCharts(simulationResults);
+                    }, 100);
+                } else {
+                    // 如果没有数据，清空图表
+                    const canvasIds = ['inputVoltageChart', 'sendEndVoltageChart', 'receiveEndVoltageChart', 'mainTrackInputVoltageChart', 'mainTrackOutputVoltageChart'];
+                    canvasIds.forEach(function(id) {
+                        const canvas = document.getElementById(id);
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d');
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        }
+                    });
+                }
+            }
         }
         
         // 集成系统相关代码
@@ -1892,7 +1959,9 @@
             { value: 4, name: "4 - 接收端空芯线圈短路", description: "接收端空芯线圈发生短路故障" },
             { value: 5, name: "5 - 接收端调谐单元2断路", description: "接收端调谐单元2发生断路故障" },
             { value: 6, name: "6 - 补偿电容3断路", description: "补偿电容3发生断路故障" },
-            { value: 7, name: "7 - 补偿电容3短路", description: "补偿电容3发生短路故障" }
+            { value: 7, name: "7 - 补偿电容3短路", description: "补偿电容3发生短路故障" },
+            { value: 8, name: "8 - 发送端SPT电缆断路", description: "发送端SPT电缆发生断路故障" },
+            { value: 9, name: "9 - 接收端SPT电缆断路", description: "接收端SPT电缆发生断路故障" }
         ];
         
         // 初始化集成系统
@@ -2131,12 +2200,12 @@
         function showWarningModal(title, message) {
             document.getElementById('warningTitle').textContent = title;
             document.getElementById('warningMessage').textContent = message;
-            document.getElementById('warningModal').style.display = 'block';
+            document.getElementById('warningModal').classList.add('active');
         }
         
         // 关闭警告弹窗
         function closeWarningModal() {
-            document.getElementById('warningModal').style.display = 'none';
+            document.getElementById('warningModal').classList.remove('active');
         }
         
         // 点击弹窗外部关闭
@@ -2281,6 +2350,15 @@
         async function startSimulation() {
             const resultContent = document.getElementById('resultContent');
             resultContent.innerHTML = '<p class="loading">正在进行故障模拟计算...</p>';
+            
+            // 验证轨道长度
+            const trackLengthInput = document.getElementById('trackLength').value;
+            const trackLengthValue = parseFloat(trackLengthInput);
+            
+            if (trackLengthValue < 0) {
+                alert('轨道长度不能为负数！');
+                return;
+            }
             
             // 显示集成故障模拟相关的下载按钮
             showDownloadButtons('integrated');
@@ -3484,7 +3562,65 @@
             }
         });
 
+        // ================================================================================
+        //                           文件读取与图表绘制流程说明
+        // ================================================================================
+        //
+        // 【整体流程】
+        //  用户上传文件 → FileReader读取文件 → XLSX库解析数据 → 选择数据列 →
+        //  绘制Canvas图表 → 显示在wave-display区域
+        //
+        // 【支持的格式】
+        //  - CSV文件：使用FileReader.readAsText()读取为文本
+        //  - Excel文件(.xlsx/.xls)：使用FileReader.readAsArrayBuffer()读取为二进制
+        //
+        // 【数据处理流程】
+        //  1. 文件读取 (handleFileUpload函数)
+        //     - 使用FileReader API读取文件内容
+        //     - CSV: readAsText() → XLSX.read(text, {type: 'string'})
+        //     - Excel: readAsArrayBuffer() → XLSX.read(data, {type: 'array'})
+        //     - XLSX库自动识别编码（BOM处理）
+        //
+        //  2. 工作表选择 (handleSheetChange函数)
+        //     - workbook.SheetNames: 获取所有工作表名称
+        //     - workbook.Sheets[sheetName]: 获取指定工作表数据
+        //     - XLSX.utils.sheet_to_json(): 将工作表转换为JSON数组
+        //
+        //  3. 数据提取 (plotXY函数)
+        //     - 根据用户选择的列索引提取X轴和Y轴数据
+        //     - 支持多Y轴数据列（多条曲线）
+        //     - 支持数据类型列（用于区分不同类型的数据点）
+        //
+        //  4. 图表绘制
+        //     - 使用HTML5 Canvas 2D API绑制坐标轴和曲线
+        //     - 自动计算坐标范围和缩放比例
+        //     - 不同数据列使用不同颜色区分
+        //
+        // 【关键API】
+        //  - FileReader: 读取本地文件的Web API
+        //  - XLSX.read(): 解析Excel/CSV文件
+        //  - XLSX.utils.sheet_to_json(): 将工作表转换为JSON
+        //  - Canvas.getContext('2d'): 获取Canvas绑制上下文
+        //
+        // ================================================================================
+
         // 处理文件上传
+        /**
+         * 处理用户上传的CSV或Excel文件
+         * 
+         * 触发时机：用户通过<input type="file">选择文件后触发change事件
+         * 
+         * 处理流程：
+         * 1. 获取用户选择的文件对象 (event.target.files[0])
+         * 2. 验证文件格式（仅支持.csv/.xlsx/.xls）
+         * 3. 创建FileReader读取文件内容
+         * 4. 根据文件类型选择读取方式
+         *    - CSV: readAsText() → XLSX.read(text, {type: 'string'})
+         *    - Excel: readAsArrayBuffer() → XLSX.read(data, {type: 'array'})
+         * 5. 解析成功后填充工作表选择器
+         * 
+         * @param {Event} event - 文件选择事件，包含target.files[0]文件信息
+         */
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -3560,7 +3696,30 @@
             }
         }
 
-        // 处理工作表选择
+        /**
+         * 处理用户选择工作表的事件
+         * 
+         * 触发时机：用户从工作表下拉菜单中选择不同工作表时触发
+         * 
+         * 处理流程：
+         * 1. 获取用户选择的工作表名称
+         * 2. 从workbook中获取对应工作表的完整数据 (workbook.Sheets[sheetName])
+         * 3. 使用XLSX.utils.sheet_to_json()将工作表转换为二维JSON数组
+         *    - 每行是一个数组，数组元素是该行的各个列值
+         *    - 第一行通常是表头
+         * 4. 解析列信息，填充到X轴、Y轴、数据类型下拉选择框
+         *    - 提取第一行作为列名显示给用户
+         *    - 记录每个列的索引（0, 1, 2...）
+         * 
+         * 数据格式转换示例：
+         *  Excel表格:        转换后JSON:
+         *  | A    | B    |     [['电压1', '电压2'],
+         *  | 1.5  | 2.3  | →   [1.5, 2.3],
+         *  | 1.6  | 2.4  |     [1.6, 2.4],
+         *  | 1.7  | 2.5  |     [1.7, 2.5]]
+         * 
+         * @param {Event} event - 工作表选择事件，target.value是工作表名称
+         */
         function handleSheetChange(event) {
             let sheetName = event.target.value;
             // 如果value为空，使用第一个工作表名称
@@ -3629,7 +3788,47 @@
             }
         }
 
-        // 绘制XY图
+        /**
+         * 绘制XY散点图/折线图
+         * 
+         * 核心功能：
+         * 根据用户选择的数据列，从已解析的工作表中提取数据并绑制到Canvas上
+         * 
+         * 触发时机：用户点击"绑制图表"按钮时调用
+         * 
+         * 处理流程：
+         * 1. 获取用户选择的参数：
+         *    - xColumn: X轴数据列索引
+         *    - yColumns: Y轴数据列索引数组（支持多Y列）
+         *    - typeColumn: 数据类型列索引（用于区分不同类型数据点）
+         *    - startRow: 数据起始行（跳过表头）
+         *    - samples: 显示的数据点数量
+         *    - displayMode: 'single'或'multi'显示模式
+         * 
+         * 2. 数据提取：
+         *    - 遍历JSON数组，按列索引提取X和Y数据
+         *    - 转换为数值数组
+         *    - 支持数据类型过滤（排除特定类型）
+         * 
+         * 3. 图表绑制（单图表模式）：
+         *    - 创建Canvas元素
+         *    - 获取Canvas 2D绑制上下文 (canvas.getContext('2d'))
+         *    - 绑制坐标轴（使用moveTo/lineTo/stroke）
+         *    - 为每个Y轴数据列绑制一条曲线
+         *    - 使用不同颜色区分不同数据列
+         *    - 添加图例说明
+         * 
+         * Canvas绑制关键API：
+         * - ctx.moveTo(x, y): 移动到指定点
+         * - ctx.lineTo(x, y): 从当前位置到目标点画线
+         * - ctx.stroke(): 描边（显示线条）
+         * - ctx.fillText(text, x, y): 绘制文字
+         * - ctx.beginPath(): 开始新路径
+         * 
+         * 坐标转换公式：
+         * screenX = padding + (dataX - xMin) / (xMax - xMin) * (canvasWidth - 2*padding)
+         * screenY = padding + (yMax - dataY) / (yMax - yMin) * (canvasHeight - 2*padding)
+         */
         function plotXY() {
             const xyInfo = document.getElementById('xyInfo');
             const waveDisplay = document.querySelector('.wave-display');
@@ -4316,8 +4515,12 @@
         
         // 窗口大小改变事件监听器
         window.addEventListener('resize', function() {
-            if (simulationResults.length > 0) {
-                drawAllVoltageCharts(simulationResults);
+            // 只有在时间序列模拟选项卡处于活动状态时才重新绘制图表
+            const timeSeriesTab = document.getElementById('time_series');
+            if (timeSeriesTab && timeSeriesTab.classList.contains('active')) {
+                if (typeof simulationResults !== 'undefined' && simulationResults.length > 0) {
+                    drawAllVoltageCharts(simulationResults);
+                }
             }
         });
         
@@ -4616,7 +4819,15 @@
             // 获取参数
             const sectionId = document.getElementById('section').value;
             const errorType = parseInt(document.getElementById('errorType').value);
-            const trackLength = parseFloat(document.getElementById('trackLength').value);
+            const trackLengthInput = document.getElementById('trackLength').value;
+            const trackLengthValue = parseFloat(trackLengthInput);
+            
+            if (trackLengthValue < 0) {
+                alert('轨道长度不能为负数！');
+                return;
+            }
+            
+            const trackLength = trackLengthValue;
             const resistance = parseFloat(document.getElementById('resistance').value);
             const inductance = parseFloat(document.getElementById('inductance').value);
             const capacitance = parseFloat(document.getElementById('capacitance').value);

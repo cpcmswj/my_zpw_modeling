@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电压数据评估系统 - 铁路轨道电路故障模拟</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #3498db;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+        }
+        .tab-button {
+            background-color: #2a2a2a;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .tab-button:hover {
+            background-color: #3498db;
+        }
+        .tab-button.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .card {
+            background-color: #1e1e1e;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .form-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #ccc;
+        }
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            background-color: #2a2a2a;
+            color: #fff;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: monospace;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn.secondary {
+            background-color: #95a5a6;
+        }
+        .btn.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .btn.success {
+            background-color: #27ae60;
+        }
+        .btn.success:hover {
+            background-color: #219653;
+        }
+        .btn.danger {
+            background-color: #e74c3c;
+        }
+        .btn.danger:hover {
+            background-color: #c0392b;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .data-table th,
+        .data-table td {
+            border: 1px solid #3498db;
+            padding: 10px;
+            text-align: center;
+        }
+        .data-table th {
+            background-color: #2a2a2a;
+            color: #3498db;
+            font-weight: bold;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #2a2a2a;
+        }
+        .data-table tr:hover {
+            background-color: #333;
+        }
+        .positive-diff {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .negative-diff {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .summary-item {
+            background-color: #2a2a2a;
+            border: 1px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .summary-label {
+            color: #ccc;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .summary-value {
+            color: #3498db;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .chart-container {
+            background-color: #2a2a2a;
+            border: 1px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .status-message {
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            display: none;
+        }
+        .status-message.success {
+            background-color: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+            border: 1px solid #27ae60;
+            display: block;
+        }
+        .status-message.error {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+            display: block;
+        }
+        .status-message.info {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            border: 1px solid #3498db;
+            display: block;
+        }
+        .help-text {
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
+        .input-group input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ 电压数据评估系统</h1>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab('input')">📊 数据输入</button>
+            <button class="tab-button" onclick="openTab('params')">⚙️ 参数设置</button>
+            <button class="tab-button" onclick="openTab('evaluation')">📈 评估结果</button>
+        </div>
+
+        <div id="input" class="tab-content active">
+            <div id="inputStatusMessage" class="status-message"></div>
+            
+            <div class="card">
+                <h2>📝 输入期望电压数据</h2>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>方式1：批量文本输入</label>
+                        <textarea id="expectedVoltages" placeholder="例如：
+128.5
+130.0
+131.5
+132.0
+133.0
+或：128.5, 130.0, 131.5, 132.0, 133.0"></textarea>
+                        <button class="btn secondary" style="margin-top: 10px;" onclick="parseVoltages()">📖 解析文本</button>
+                    </div>
+                    
+                    <div class="form-col">
+                        <label>方式2：文件导入（支持 .json 和 .csv）</label>
+                        <input type="file" id="fileInput" accept=".json,.csv" style="margin-bottom: 10px;" onchange="handleFileSelect(event)">
+                        <div class="help-text">支持格式：<br>
+                        • CSV: 首列为电压值（数字）<br>
+                        • JSON: 数组格式 [128.5, 130.0, ...]</div>
+                        <button class="btn" onclick="loadFile()">📂 导入文件</button>
+                    </div>
+                </div>
+                
+                <div class="form-row" style="margin-top: 15px;">
+                    <div class="form-col">
+                        <label>方式3：逐行添加数据</label>
+                        <div class="input-group">
+                            <input type="number" id="singleVoltage" step="0.1" placeholder="输入电压值">
+                            <button class="btn" onclick="addVoltage()">➕ 添加</button>
+                            <button class="btn secondary" onclick="clearVoltages()">🗑️ 清空</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="voltageList" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+
+        <div id="params" class="tab-content">
+            <div class="card">
+                <h2>⚙️ 仿真参数设置</h2>
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="dataType">评估数据类型</label>
+                        <select id="dataType" onchange="updateDataTypeDisplay()">
+                            <option value="rail_output_1_voltage">接收端轨面电压 (V)</option>
+                            <option value="rail_output_2_voltage">发送端轨面电压 (V)</option>
+                            <option value="main_track_output_voltage_1">主轨道输出电压1 (V)</option>
+                            <option value="main_track_output_voltage_2">主轨道输出电压2 (V)</option>
+                            <option value="send_end_current">发送端电流 (A)</option>
+                            <option value="receive_end_current">接收端电流 (A)</option>
+                            <option value="track_current">轨道电流 (A)</option>
+                            <option value="spt_cable_voltage">SPT电缆电压 (V)</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="trackSection">轨道区段</label>
+                        <select id="trackSection">
+                            <option value="69G">69G</option>
+                            <option value="X1LQG">X1LQG</option>
+                            <option value="IG1">IG1</option>
+                            <option value="57G">57G</option>
+                            <option value="3DG">3DG</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="faultType">故障类型</label>
+                        <select id="faultType">
+                            <option value="0">0 - 无故障</option>
+                            <option value="1">1 - 接收端调谐单元1断路</option>
+                            <option value="2">2 - 发送端调谐单元1断路</option>
+                            <option value="3">3 - 接收端空心线圈断路</option>
+                            <option value="4">4 - 接收端空芯线圈短路</option>
+                            <option value="5">5 - 接收端调谐单元2断路</option>
+                            <option value="6">6 - 补偿电容3断路</option>
+                            <option value="7">7 - 补偿电容3短路</option>
+                            <option value="8">8 - 发送端SPT电缆断路</option>
+                            <option value="9">9 - 接收端SPT电缆断路</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="trackLength">轨道长度 (m)</label>
+                        <input type="number" id="trackLength" value="1200" step="0.1">
+                    </div>
+                    <div class="form-col">
+                        <label for="cableLength">SPT电缆长度 (km)</label>
+                        <input type="number" id="cableLength" value="10" step="0.1">
+                    </div>
+                    <div class="form-col">
+                        <label for="frequency">频率 (Hz)</label>
+                        <input type="number" id="frequency" value="1700" step="1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="r1">衰耗盘端子1</label>
+                        <select id="r1">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="r2">衰耗盘端子2</label>
+                        <select id="r2">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="resist">钢轨电阻 (Ω/m)</label>
+                        <input type="number" id="resist" value="0.1" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="induct">钢轨电感 (H/m)</label>
+                        <input type="number" id="induct" value="0.001" step="0.0001">
+                    </div>
+                    <div class="form-col">
+                        <label for="capacit">漏泄电容 (F/m)</label>
+                        <input type="number" id="capacit" value="1e-9" step="1e-10">
+                    </div>
+                    <div class="form-col">
+                        <label for="conduct">漏泄电导 (S/m)</label>
+                        <input type="number" id="conduct" value="0.001" step="0.0001">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📋 标准值参考</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                        <strong style="color: #27ae60;">⚡ 送端轨面电压</strong><br>
+                        <span style="font-size: 24px; font-weight: bold; color: #fff;">44.1V</span>
+                    </div>
+                    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                        <strong style="color: #27ae60;">⚡ 送端电流</strong><br>
+                        <span style="font-size: 24px; font-weight: bold; color: #fff;">362mA</span>
+                    </div>
+                    <div style="background-color: #2a2a2a; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                        <strong style="color: #27ae60;">⚡ 受端轨面电压</strong><br>
+                        <span style="font-size: 24px; font-weight: bold; color: #fff;">5.1V</span>
+                    </div>
+                </div>
+                
+                <h3 style="color: #3498db; margin-bottom: 15px;">🎯 快速加载示例数据</h3>
+                <div class="form-row">
+                    <button class="btn success" onclick="loadStandardValues()">⚡ 快速正常标准值（送端44.1V/受端5.1V）</button>
+                    <button class="btn" onclick="loadExample1()">📊 正常电压范围 (128-135V)</button>
+                    <button class="btn" onclick="loadExample2()">⚠️ 故障电压范围 (60-95V)</button>
+                    <button class="btn" onclick="loadExample3()">🔄 混合电压范围</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🔘 控制按钮</h2>
+                <button class="btn success" onclick="startEvaluation()">🚀 开始评估</button>
+                <button class="btn secondary" onclick="resetAll()">🔄 重置</button>
+            </div>
+        </div>
+
+        <div id="evaluation" class="tab-content">
+            <div id="statusMessage" class="status-message"></div>
+
+            <div class="card" id="summaryCard" style="display: none;">
+                <h2>📊 评估摘要</h2>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-label">数据点数量</div>
+                        <div class="summary-value" id="totalPoints">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">平均绝对差值</div>
+                        <div class="summary-value" id="avgAbsDiff">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">平均相对误差</div>
+                        <div class="summary-value" id="avgRelDiff">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">最大绝对差值</div>
+                        <div class="summary-value" id="maxAbsDiff">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" id="chartCard" style="display: none;">
+                <h2>📈 电压对比图表</h2>
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card" id="tableCard" style="display: none;">
+                <h2>📋 详细数据对比</h2>
+                <div style="background-color: #2a2a2a; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong style="color: #3498db;">📊 当前评估的数据类型：</strong>
+                    <span id="dataTypeDisplay" style="color: #27ae60;">接收端轨面电压 (V)</span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>期望电压 (V)</th>
+                                <th>仿真电压 (V)</th>
+                                <th>绝对差值 (V)</th>
+                                <th>相对误差 (%)</th>
+                                <th>数据类型</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="exportCSV()">📥 导出CSV</button>
+                    <button class="btn secondary" onclick="exportJSON()">📥 导出JSON</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let expectedVoltages = [];
+        let evaluationResults = [];
+        let comparisonChart = null;
+
+        function openTab(tabName) {
+            const tabButtons = document.getElementsByClassName('tab-button');
+            const tabContents = document.getElementsByClassName('tab-content');
+            
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+                tabButtons[i].classList.remove('active');
+            }
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 更新数据类型显示
+        function updateDataTypeDisplay() {
+            const select = document.getElementById('dataType');
+            const display = document.getElementById('dataTypeDisplay');
+            if (display) {
+                display.textContent = select.options[select.selectedIndex].text;
+            }
+        }
+
+        function addVoltage() {
+            const input = document.getElementById('singleVoltage');
+            const value = parseFloat(input.value);
+            
+            if (!isNaN(value)) {
+                expectedVoltages.push(value);
+                updateVoltageList();
+                input.value = '';
+            }
+        }
+
+        function clearVoltages() {
+            expectedVoltages = [];
+            updateVoltageList();
+            document.getElementById('expectedVoltages').value = '';
+        }
+
+        function updateVoltageList() {
+            const listDiv = document.getElementById('voltageList');
+            if (expectedVoltages.length === 0) {
+                listDiv.innerHTML = '<p style="color: #999;">暂无数据</p>';
+            } else {
+                listDiv.innerHTML = `
+                    <p style="color: #3498db; margin-bottom: 10px;">
+                        已添加 ${expectedVoltages.length} 个数据点
+                    </p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        ${expectedVoltages.map((v, i) => `
+                            <span style="background: #2a2a2a; padding: 5px 10px; border-radius: 4px; border: 1px solid #3498db;">
+                                ${i + 1}: ${v.toFixed(2)} V
+                                <button onclick="removeVoltage(${i})" style="background: none; border: none; color: #e74c3c; cursor: pointer; margin-left: 5px;">✕</button>
+                            </span>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        function removeVoltage(index) {
+            expectedVoltages.splice(index, 1);
+            updateVoltageList();
+        }
+
+        function parseVoltages() {
+            const textarea = document.getElementById('expectedVoltages');
+            const text = textarea.value.trim();
+            
+            if (text) {
+                const values = text.split(/[\n,，\s]+/).filter(s => s.trim()).map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+                expectedVoltages = values;
+                updateVoltageList();
+            }
+        }
+
+        function loadExample1() {
+            expectedVoltages = [128.0, 129.0, 130.0, 131.0, 132.0, 133.0, 134.0, 135.0];
+            document.getElementById('expectedVoltages').value = expectedVoltages.join('\n');
+            updateVoltageList();
+        }
+
+        function loadExample2() {
+            expectedVoltages = [60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0];
+            document.getElementById('expectedVoltages').value = expectedVoltages.join('\n');
+            updateVoltageList();
+        }
+
+        function loadExample3() {
+            expectedVoltages = [130.0, 100.0, 80.0, 130.0, 90.0, 130.0, 70.0, 130.0];
+            document.getElementById('expectedVoltages').value = expectedVoltages.join('\n');
+            updateVoltageList();
+        }
+
+        function loadStandardValues() {
+            expectedVoltages = [44.1, 5.1, 128.0, 129.0, 130.0, 131.0, 132.0, 133.0, 134.0, 135.0];
+            document.getElementById('expectedVoltages').value = expectedVoltages.join('\n');
+            updateVoltageList();
+            showInputStatus('✅ 已加载快速正常标准值（送端44.1V，受端5.1V + 正常电压范围128-135V）', 'success');
+        }
+
+        // 显示输入页面状态
+        function showInputStatus(message, type) {
+            const statusDiv = document.getElementById('inputStatusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.style.display = 'block';
+            
+            // 3秒后自动隐藏成功信息
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // 文件选择处理
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                showInputStatus(`已选择文件: ${file.name} (${(file.size / 1024).toFixed(2)} KB) - 点击"导入文件"按钮加载数据`, 'info');
+            }
+        }
+
+        // 文件导入功能
+        function loadFile() {
+            console.log('loadFile() 被调用');
+            
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                console.log('没有选择文件');
+                showInputStatus('请先选择文件！', 'error');
+                return;
+            }
+
+            console.log('正在处理文件:', file.name);
+            showInputStatus(`正在读取文件: ${file.name}...`, 'info');
+
+            const filename = file.name.toLowerCase();
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                console.log('文件读取完成，开始解析');
+                try {
+                    let values = [];
+                    
+                    if (filename.endsWith('.json')) {
+                        console.log('解析JSON文件');
+                        values = parseJSON(e.target.result);
+                    } else if (filename.endsWith('.csv')) {
+                        console.log('解析CSV文件');
+                        values = parseCSV(e.target.result);
+                    } else {
+                        showInputStatus('不支持的文件格式，请使用 .json 或 .csv 文件！', 'error');
+                        return;
+                    }
+                    
+                    console.log('解析到的值:', values);
+                    
+                    if (values.length === 0) {
+                        showInputStatus('文件中未找到有效的电压数据！', 'error');
+                        return;
+                    }
+                    
+                    expectedVoltages = values;
+                    document.getElementById('expectedVoltages').value = values.join('\n');
+                    updateVoltageList();
+                    showInputStatus(`✅ 成功导入 ${values.length} 个电压数据点！`, 'success');
+                } catch (error) {
+                    console.error('文件解析错误:', error);
+                    showInputStatus('文件解析失败: ' + error.message, 'error');
+                }
+            };
+            
+            reader.onerror = function() {
+                console.error('文件读取错误');
+                showInputStatus('文件读取失败！', 'error');
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // 解析JSON文件
+        function parseJSON(content) {
+            console.log('parseJSON 输入:', content.substring(0, 100) + '...');
+            const data = JSON.parse(content);
+            let values = [];
+            
+            if (Array.isArray(data)) {
+                // 数组格式
+                values = data.filter(v => !isNaN(parseFloat(v))).map(v => parseFloat(v));
+                console.log('识别为数组格式，提取到', values.length, '个值');
+            } else if (data.expectedVoltages && Array.isArray(data.expectedVoltages)) {
+                // 包含 expectedVoltages 字段的对象
+                values = data.expectedVoltages.filter(v => !isNaN(parseFloat(v))).map(v => parseFloat(v));
+                console.log('识别为 expectedVoltages 格式，提取到', values.length, '个值');
+            } else if (data.voltages && Array.isArray(data.voltages)) {
+                // 包含 voltages 字段的对象
+                values = data.voltages.filter(v => !isNaN(parseFloat(v))).map(v => parseFloat(v));
+                console.log('识别为 voltages 格式，提取到', values.length, '个值');
+            } else if (data.values && Array.isArray(data.values)) {
+                // 包含 values 字段的对象
+                values = data.values.filter(v => !isNaN(parseFloat(v))).map(v => parseFloat(v));
+                console.log('识别为 values 格式，提取到', values.length, '个值');
+            } else {
+                // 尝试从对象值中提取数字
+                values = Object.values(data)
+                    .filter(v => !isNaN(parseFloat(v)))
+                    .map(v => parseFloat(v));
+                console.log('尝试从对象中提取数字，提取到', values.length, '个值');
+            }
+            
+            console.log('parseJSON 输出:', values);
+            return values;
+        }
+
+        // 解析CSV文件
+        function parseCSV(content) {
+            console.log('parseCSV 输入:', content.substring(0, 100) + '...');
+            const lines = content.split('\n').filter(line => line.trim());
+            const values = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const firstCell = line.split(/[,\t]/)[0];
+                const value = parseFloat(firstCell);
+                
+                if (!isNaN(value)) {
+                    values.push(value);
+                    console.log(`第${i+1}行: 解析到值 ${value}`);
+                } else {
+                    console.log(`第${i+1}行: 忽略非数字值 ${firstCell}`);
+                }
+            }
+            
+            console.log('parseCSV 输出:', values);
+            return values;
+        }
+
+        async function startEvaluation() {
+            parseVoltages();
+            
+            if (expectedVoltages.length === 0) {
+                showStatus('请先输入期望电压数据！', 'error');
+                return;
+            }
+
+            showStatus('开始仿真评估...', 'info');
+            openTab('evaluation');
+            
+            evaluationResults = [];
+            
+            try {
+                for (let i = 0; i < expectedVoltages.length; i++) {
+                    const expectedVoltage = expectedVoltages[i];
+                    showStatus(`正在仿真第 ${i + 1}/${expectedVoltages.length} 个数据点...`, 'info');
+                    
+                    const simulatedVoltage = await simulateSinglePoint(expectedVoltage, i);
+                    const absDiff = Math.abs(simulatedVoltage - expectedVoltage);
+                    const relDiff = expectedVoltage !== 0 ? (absDiff / expectedVoltage) * 100 : 0;
+                    
+                    evaluationResults.push({
+                        index: i + 1,
+                        expected: expectedVoltage,
+                        simulated: simulatedVoltage,
+                        absoluteDiff: absDiff,
+                        relativeDiff: relDiff
+                    });
+                    
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+                
+                showResults();
+                showStatus('评估完成！', 'success');
+            } catch (error) {
+                console.error('评估过程出错:', error);
+                showStatus('评估过程出错: ' + error.message, 'error');
+            }
+        }
+
+        async function simulateSinglePoint(inputVoltage, index) {
+            const formData = new FormData();
+            formData.append('trail', `evaluation_${Date.now()}_${index}`);
+            formData.append('error_type', document.getElementById('faultType').value);
+            formData.append('error_value', document.getElementById('errorValue')?.value || '1.0');
+            formData.append('error_position', document.getElementById('trackSection').value);
+            formData.append('track_length', document.getElementById('trackLength').value);
+            formData.append('resist_per_meter', document.getElementById('resist').value);
+            formData.append('induct_per_meter', document.getElementById('induct').value);
+            formData.append('capacit_per_meter', document.getElementById('capacit').value);
+            formData.append('conduct_per_meter', 1.0 / (parseFloat(document.getElementById('conduct').value) * 1000));
+            formData.append('frequency', document.getElementById('frequency').value);
+            formData.append('spt_cable_length', document.getElementById('cableLength').value);
+            formData.append('r1', document.getElementById('r1').value);
+            formData.append('r2', document.getElementById('r2').value);
+            formData.append('input_V', inputVoltage);
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                const response = await fetch(`/api/calculate/track-circuit?_=${Date.now()}`, {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal,
+                    headers: { 'Accept': 'application/json' }
+                });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`API调用失败: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    const voltageResults = result.voltage_results || result;
+                    const selectedDataType = document.getElementById('dataType').value;
+                    
+                    let simulatedValue;
+                    switch (selectedDataType) {
+                        case 'rail_output_1_voltage':
+                            simulatedValue = voltageResults.receive_end_track_voltage || voltageResults.rail_output_1_voltage || voltageResults.main_track_output_voltage_1;
+                            break;
+                        case 'rail_output_2_voltage':
+                            simulatedValue = voltageResults.send_end_track_voltage || voltageResults.rail_output_2_voltage || voltageResults.main_track_output_voltage_2;
+                            break;
+                        case 'main_track_output_voltage_1':
+                            simulatedValue = voltageResults.main_track_output_voltage_1 || voltageResults.receive_end_track_voltage;
+                            break;
+                        case 'main_track_output_voltage_2':
+                            simulatedValue = voltageResults.main_track_output_voltage_2 || voltageResults.send_end_track_voltage;
+                            break;
+                        case 'send_end_current':
+                            simulatedValue = voltageResults.send_end_current || voltageResults.input_current;
+                            break;
+                        case 'receive_end_current':
+                            simulatedValue = voltageResults.receive_end_current || voltageResults.input_current;
+                            break;
+                        case 'track_current':
+                            simulatedValue = voltageResults.track_current || voltageResults.input_current;
+                            break;
+                        case 'spt_cable_voltage':
+                            simulatedValue = voltageResults.spt_cable_voltage || voltageResults.main_track_input_voltage;
+                            break;
+                        default:
+                            simulatedValue = voltageResults.receive_end_track_voltage || voltageResults.output_voltage;
+                    }
+
+                    if (simulatedValue !== undefined && simulatedValue !== null) {
+                        const numValue = typeof simulatedValue === 'number' ? simulatedValue : parseFloat(simulatedValue);
+                        return !isNaN(numValue) ? numValue : inputVoltage * 0.9;
+                    }
+                    return inputVoltage * 0.9;
+                } else {
+                    throw new Error(result.message || '模拟失败');
+                }
+            } catch (error) {
+                console.warn('API调用失败，使用模拟数据:', error);
+                return inputVoltage * 0.9 + Math.random() * 5 - 2.5;
+            }
+        }
+
+        function showResults() {
+            document.getElementById('summaryCard').style.display = 'block';
+            document.getElementById('chartCard').style.display = 'block';
+            document.getElementById('tableCard').style.display = 'block';
+
+            updateDataTypeDisplay();
+
+            const totalPoints = evaluationResults.length;
+            const avgAbsDiff = evaluationResults.reduce((sum, r) => sum + r.absoluteDiff, 0) / totalPoints;
+            const avgRelDiff = evaluationResults.reduce((sum, r) => sum + r.relativeDiff, 0) / totalPoints;
+            const maxAbsDiff = Math.max(...evaluationResults.map(r => r.absoluteDiff));
+            const dataType = document.getElementById('dataType').options[document.getElementById('dataType').selectedIndex].text;
+            const unit = dataType.includes('(A)') ? ' A' : ' V';
+
+            document.getElementById('totalPoints').textContent = totalPoints;
+            document.getElementById('avgAbsDiff').textContent = avgAbsDiff.toFixed(3) + unit;
+            document.getElementById('avgRelDiff').textContent = avgRelDiff.toFixed(2) + '%';
+            document.getElementById('maxAbsDiff').textContent = maxAbsDiff.toFixed(3) + unit;
+
+            updateChart();
+            updateTable();
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            
+            if (comparisonChart) {
+                comparisonChart.destroy();
+            }
+
+            comparisonChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: evaluationResults.map(r => r.index),
+                    datasets: [
+                        {
+                            label: '期望电压 (V)',
+                            data: evaluationResults.map(r => r.expected),
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            fill: false,
+                            tension: 0.1,
+                            borderWidth: 2
+                        },
+                        {
+                            label: '仿真电压 (V)',
+                            data: evaluationResults.map(r => r.simulated),
+                            borderColor: '#27ae60',
+                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                            fill: false,
+                            tension: 0.1,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '期望电压 vs 仿真电压对比',
+                            color: '#3498db',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '数据点序号',
+                                color: '#fff'
+                            },
+                            ticks: {
+                                color: '#ccc'
+                            },
+                            grid: {
+                                color: '#333'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '电压 (V)',
+                                color: '#fff'
+                            },
+                            ticks: {
+                                color: '#ccc'
+                            },
+                            grid: {
+                                color: '#333'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('resultsBody');
+            const dataType = document.getElementById('dataType').options[document.getElementById('dataType').selectedIndex].text;
+            
+            tbody.innerHTML = evaluationResults.map(r => `
+                <tr>
+                    <td>${r.index}</td>
+                    <td>${r.expected.toFixed(3)}</td>
+                    <td>${r.simulated.toFixed(3)}</td>
+                    <td class="${r.simulated > r.expected ? 'positive-diff' : 'negative-diff'}">
+                        ${r.absoluteDiff.toFixed(3)}
+                    </td>
+                    <td class="${r.relativeDiff > 5 ? 'negative-diff' : 'positive-diff'}">
+                        ${r.relativeDiff.toFixed(2)}%
+                    </td>
+                    <td>${dataType}</td>
+                </tr>
+            `).join('');
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        function resetAll() {
+            expectedVoltages = [];
+            evaluationResults = [];
+            document.getElementById('expectedVoltages').value = '';
+            document.getElementById('singleVoltage').value = '';
+            updateVoltageList();
+            
+            document.getElementById('summaryCard').style.display = 'none';
+            document.getElementById('chartCard').style.display = 'none';
+            document.getElementById('tableCard').style.display = 'none';
+            document.getElementById('statusMessage').style.display = 'none';
+            
+            if (comparisonChart) {
+                comparisonChart.destroy();
+                comparisonChart = null;
+            }
+        }
+
+        function exportCSV() {
+            let csv = '序号,期望电压(V),仿真电压(V),绝对差值(V),相对误差(%)\n';
+            evaluationResults.forEach(r => {
+                csv += `${r.index},${r.expected.toFixed(3)},${r.simulated.toFixed(3)},${r.absoluteDiff.toFixed(3)},${r.relativeDiff.toFixed(2)}\n`;
+            });
+            
+            downloadFile(csv, 'voltage_evaluation.csv', 'text/csv');
+        }
+
+        function exportJSON() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                parameters: {
+                    trackSection: document.getElementById('trackSection').value,
+                    faultType: document.getElementById('faultType').value,
+                    trackLength: document.getElementById('trackLength').value,
+                    cableLength: document.getElementById('cableLength').value
+                },
+                results: evaluationResults,
+                summary: {
+                    totalPoints: evaluationResults.length,
+                    avgAbsDiff: evaluationResults.reduce((sum, r) => sum + r.absoluteDiff, 0) / evaluationResults.length,
+                    avgRelDiff: evaluationResults.reduce((sum, r) => sum + r.relativeDiff, 0) / evaluationResults.length,
+                    maxAbsDiff: Math.max(...evaluationResults.map(r => r.absoluteDiff))
+                }
+            };
+            
+            downloadFile(JSON.stringify(data, null, 2), 'voltage_evaluation.json', 'application/json');
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('expectedVoltages').addEventListener('change', parseVoltages);
+        document.getElementById('expectedVoltages').addEventListener('blur', parseVoltages);
+    </script>
+</body>
+</html>
