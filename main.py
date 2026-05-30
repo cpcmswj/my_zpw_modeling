@@ -1412,7 +1412,20 @@ async def register_api(
             print(f"头像已保存: {avatar_path}")
 
         print("添加新用户到存储")
-        user_store.add_user(username, hashed_password, avatar_path)
+        try:
+            success = user_store.add_user(username, hashed_password, avatar_path)
+            if not success:
+                print(f"用户名已存在: {username}")
+                return JSONResponse(
+                    {"status": "error", "message": "该用户名已被占用，请更换用户名", "error_code": "username_taken"},
+                    status_code=400
+                )
+        except RuntimeError as db_error:
+            print(f"数据库错误: {db_error}")
+            return JSONResponse(
+                {"status": "error", "message": f"数据库连接失败，注册信息未能保存: {str(db_error)}", "error_code": "database_error"},
+                status_code=500
+            )
 
         print(f"用户注册成功: {username}")
         return JSONResponse({

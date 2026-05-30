@@ -194,15 +194,20 @@ class NeonDatabase:
             
         返回：
             bool: 添加成功返回True，失败返回False
+            
+        异常：
+            当数据库连接不可用时抛出 RuntimeError
         """
         if not self._use_neon or not self._connection_pool:
-            return False
+            print("[Neon] 数据库连接不可用，无法添加用户")
+            raise RuntimeError("数据库连接不可用，请检查 DATABASE_URL 环境变量配置")
         
         conn = None
         try:
             conn = self._get_connection()
             if not conn:
-                return False
+                print("[Neon] 无法获取数据库连接")
+                raise RuntimeError("无法获取数据库连接")
             
             with conn.cursor() as cur:
                 cur.execute("""
@@ -211,12 +216,20 @@ class NeonDatabase:
                     ON CONFLICT (username) DO NOTHING
                 """, (username, hashed_password, avatar_path))
                 conn.commit()
-                return cur.rowcount > 0
+                
+                if cur.rowcount > 0:
+                    print(f"[Neon] 用户 {username} 成功添加到数据库")
+                    return True
+                else:
+                    print(f"[Neon] 用户 {username} 已存在，未插入")
+                    return False
+        except RuntimeError:
+            raise
         except Exception as e:
             print(f"[Neon] 添加用户失败: {e}")
             if conn:
                 conn.rollback()
-            return False
+            raise RuntimeError(f"添加用户失败: {e}")
         finally:
             self._release_connection(conn)
     
@@ -474,7 +487,14 @@ class SimpleUserStore:
             return self._users.get(username)
 
     def add_user(self, username, hashed_password, avatar_path=None):
-        """添加新用户"""
+        """添加新用户
+        
+        返回：
+            bool: 添加成功返回True
+            
+        异常：
+            当数据库连接失败时抛出 RuntimeError
+        """
         if self._use_neon:
             return self._neon_db.add_user(username, hashed_password, avatar_path)
         
@@ -487,6 +507,7 @@ class SimpleUserStore:
                 "avatar_path": avatar_path
             }
             self._save_to_edge_config()
+            print(f"[Local] 用户 {username} 已添加到本地存储")
             return True
 
     def user_exists(self, username):
