@@ -93,7 +93,9 @@ class NeonDatabase:
         
         连接优先级：
         1. NEON_DATABASE_URL 环境变量
-        2. 分别设置的 NEON_HOST, NEON_USER, NEON_PASSWORD 等变量
+        2. POSTGRES_URL 环境变量（Vercel Postgres）
+        3. DATABASE_URL 环境变量（其他 Postgres 服务）
+        4. 分别设置的 NEON_HOST, NEON_USER, NEON_PASSWORD 等变量
         
         如果没有配置 Neon，将不初始化连接池（使用回退存储）
         """
@@ -107,10 +109,16 @@ class NeonDatabase:
                 self._initialized = True
                 return
             
-            # 检查是否配置了 Neon
-            neon_url = os.environ.get("NEON_DATABASE_URL")
+            # 检查是否配置了 Neon 或其他 Postgres 数据库
+            # 支持多种环境变量名称
+            neon_url = (
+                os.environ.get("NEON_DATABASE_URL") or 
+                os.environ.get("POSTGRES_URL") or 
+                os.environ.get("DATABASE_URL")
+            )
             
             if neon_url:
+                print(f"[DB] 检测到数据库连接 URL: {neon_url[:50]}...")
                 try:
                     config = self._parse_connection_string(neon_url)
                     self._connection_pool = psycopg2.pool.SimpleConnectionPool(

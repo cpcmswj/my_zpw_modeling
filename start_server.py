@@ -51,9 +51,12 @@ define_pages = {
 
 def set_environment_variables():
     """设置环境变量，包括Neon数据库连接"""
-    # 设置Neon数据库连接URL
-    os.environ['NEON_DATABASE_URL'] = NEON_DATABASE_URL
-    print(f"✅ 设置NEON_DATABASE_URL: {NEON_DATABASE_URL[:50]}...")
+    # 设置数据库连接URL（支持多种环境变量名称）
+    if not os.environ.get("NEON_DATABASE_URL"):
+        os.environ['NEON_DATABASE_URL'] = NEON_DATABASE_URL
+        print(f"✅ 设置NEON_DATABASE_URL: {NEON_DATABASE_URL[:50]}...")
+    else:
+        print(f"✅ NEON_DATABASE_URL 已配置")
     
     # 可以添加其他环境变量
     # os.environ['OTHER_VAR'] = 'value'
