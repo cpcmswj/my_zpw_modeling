@@ -57,6 +57,9 @@ def set_environment_variables():
     
     # 可以添加其他环境变量
     # os.environ['OTHER_VAR'] = 'value'
+    
+    # 返回完整的环境变量字典
+    return os.environ.copy()
 
 def is_port_in_use(port):
     """检查端口是否被占用"""
@@ -117,7 +120,7 @@ def start_server():
     print("正在启动FastAPI服务器...")
     
     # 设置环境变量（包括Neon数据库）
-    set_environment_variables()
+    env = set_environment_variables()
     
     # 默认端口
     port = 8000
@@ -163,7 +166,8 @@ def start_server():
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
+            env=env
         )
         
         # 等待服务器启动
