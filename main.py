@@ -1235,6 +1235,22 @@ async def calculate_track_circuit_api(
     r2: int = Form(1),  # 衰耗盘端子2，默认1
     input_V: float = Form(130.0)  # 输入电压，默认130V
 ):
+    print(f"[API] 收到计算轨道电路请求 - 参数:")
+    print(f"[API]   区段名称: {trail}")
+    print(f"[API]   故障类型: {error_type}")
+    print(f"[API]   故障值: {error_value}")
+    print(f"[API]   故障位置: {error_position}")
+    print(f"[API]   轨道长度: {track_length}")
+    print(f"[API]   电阻/米: {resist_per_meter}")
+    print(f"[API]   电感/米: {induct_per_meter}")
+    print(f"[API]   电容/米: {capacit_per_meter}")
+    print(f"[API]   电导/米: {conduct_per_meter}")
+    print(f"[API]   频率: {frequency}")
+    print(f"[API]   SPT电缆长度: {spt_cable_length}")
+    print(f"[API]   R1端子: {r1}")
+    print(f"[API]   R2端子: {r2}")
+    print(f"[API]   输入电压: {input_V}")
+    
     try:
         # 创建Error_Of_Trail实例
         error_instance = Error_Of_Trail(
@@ -1313,6 +1329,12 @@ async def calculate_track_circuit_api(
             "Z_tuner": result.get("Z_tuner", 0.0)
         }
         
+        print(f"[API] 轨道电路计算成功 - 结果:")
+        print(f"[API]   送端轨面电压: {result.get('voltage_results', {}).get('send_end_track_voltage', 'N/A')}")
+        print(f"[API]   受端轨面电压: {result.get('voltage_results', {}).get('receive_end_track_voltage', 'N/A')}")
+        print(f"[API]   输入阻抗: {result.get('input_impedance', 'N/A')}")
+        print(f"[API]   输入电流: {result.get('input_current', 'N/A')}")
+        
         return JSONResponse(response)
     except Exception as e:
         import traceback
@@ -1331,22 +1353,22 @@ async def login_api(
     password: str = Form(...)
 ):
     try:
-        print(f"接收到登录请求: username={username}")
+        print(f"[API] 收到登录请求 - 用户名: {username}")
 
         user_data = user_store.get_user(username)
 
         if not user_data:
-            print(f"用户不存在: {username}")
+            print(f"[API] 用户不存在: {username}")
             return JSONResponse(
                 {"status": "error", "message": "用户名不存在", "error_code": "username_not_found"},
                 status_code=401
             )
 
         password_match = pwd_context.verify(password, user_data["hashed_password"])
-        print(f"密码匹配: {password_match}")
+        print(f"[API] 密码匹配: {password_match}")
 
         if password_match:
-            print("登录成功！")
+            print(f"[API] 登录成功 - 用户: {username}")
             avatar_path = user_data.get("avatar_path")
             return JSONResponse({
                 "status": "success",
@@ -1377,29 +1399,29 @@ async def register_api(
     avatar: Optional[UploadFile] = File(None)
 ):
     try:
-        print(f"接收到注册请求: username={username}")
+        print(f"[API] 收到注册请求 - 用户名: {username}")
 
         if user_store.user_exists(username):
-            print(f"用户名已存在: {username}")
+            print(f"[API] 用户名已存在: {username}")
             return JSONResponse(
                 {"status": "error", "message": "该用户名已被占用，请更换用户名", "error_code": "username_taken"},
                 status_code=400
             )
 
         if len(password) < 6:
-            print(f"密码过短: {len(password)}位")
+            print(f"[API] 密码过短: {len(password)}位")
             return JSONResponse(
                 {"status": "error", "message": "密码长度不足，请设置至少6位的密码", "error_code": "password_too_short"},
                 status_code=400
             )
 
-        print("对密码进行哈希处理")
+        print("[API] 对密码进行哈希处理")
         hashed_password = pwd_context.hash(password)
-        print(f"哈希后的密码: {hashed_password}")
+        print(f"[API] 密码哈希完成")
 
         avatar_path = None
         if avatar:
-            print(f"接收到头像文件: {avatar.filename}")
+            print(f"[API] 接收到头像文件: {avatar.filename}")
             # 确保uploads目录存在
             os.makedirs("uploads", exist_ok=True)
             # 生成唯一文件名
@@ -1409,25 +1431,25 @@ async def register_api(
             # 保存头像文件
             with open(avatar_path, "wb") as f:
                 f.write(await avatar.read())
-            print(f"头像已保存: {avatar_path}")
+            print(f"[API] 头像已保存: {avatar_path}")
 
-        print("添加新用户到存储")
+        print("[API] 添加新用户到存储")
         try:
             success = user_store.add_user(username, hashed_password, avatar_path)
             if not success:
-                print(f"用户名已存在: {username}")
+                print(f"[API] 用户名已存在: {username}")
                 return JSONResponse(
                     {"status": "error", "message": "该用户名已被占用，请更换用户名", "error_code": "username_taken"},
                     status_code=400
                 )
         except RuntimeError as db_error:
-            print(f"数据库错误: {db_error}")
+            print(f"[API] 数据库错误: {db_error}")
             return JSONResponse(
                 {"status": "error", "message": f"数据库连接失败，注册信息未能保存: {str(db_error)}", "error_code": "database_error"},
                 status_code=500
             )
 
-        print(f"用户注册成功: {username}")
+        print(f"[API] 用户注册成功 - 用户名: {username}")
         return JSONResponse({
             "status": "success",
             "message": "注册成功",
@@ -1436,7 +1458,7 @@ async def register_api(
             }
         })
     except Exception as e:
-        print(f"注册错误: {e}")
+        print(f"[API] 注册错误: {e}")
         import traceback
         traceback.print_exc()
         return JSONResponse(
