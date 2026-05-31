@@ -32,14 +32,8 @@
         h1 {
             color: #3498db;
             text-align: center;
-            margin-bottom: 10px;
-            font-size: 24px;
-        }
-        .subtitle {
-            color: #ccc;
-            text-align: center;
             margin-bottom: 30px;
-            font-size: 14px;
+            font-size: 24px;
         }
         .form-group {
             margin-bottom: 20px;
@@ -171,8 +165,6 @@
 <body>
     <div class="container">
         <h1>用户注册</h1>
-        <p class="subtitle">铁路轨道电路故障模拟系统</p>
-        
         <form id="registerForm" onsubmit="event.preventDefault(); register()">
             <div class="avatar-upload">
                 <div class="avatar-preview" id="avatarPreview">
@@ -187,7 +179,7 @@
             </div>
             <div class="form-group">
                 <label for="password">密码:</label>
-                <input type="password" id="password" name="password" required placeholder="请输入密码（至少6位）">
+                <input type="password" id="password" name="password" required placeholder="请输入密码（至少4位）">
             </div>
             <div class="form-group">
                 <label for="confirmPassword">确认密码:</label>
@@ -233,9 +225,9 @@
             }
             
             // 验证密码
-            if (password.length < 6) {
+            if (password.length < 4) {
                 messageDiv.className = 'message error';
-                messageDiv.textContent = '密码长度不足，请设置至少6位的密码';
+                messageDiv.textContent = '密码长度不足，请设置至少4位的密码';
                 return;
             }
             

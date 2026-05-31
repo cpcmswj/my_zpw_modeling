@@ -1475,10 +1475,10 @@ async def register_api(
                 status_code=400
             )
 
-        if len(password) < 6:
+        if len(password) < 4:
             print(f"[API] 密码过短: {len(password)}位")
             return JSONResponse(
-                {"status": "error", "message": "密码长度不足，请设置至少6位的密码", "error_code": "password_too_short"},
+                {"status": "error", "message": "密码长度不足，请设置至少4位的密码", "error_code": "password_too_short"},
                 status_code=400
             )
 
