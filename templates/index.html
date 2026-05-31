@@ -1733,7 +1733,12 @@
                 document.getElementById('userName').textContent = currentUser.username;
                 
                 const avatarImg = document.getElementById('userAvatar');
-                if (currentUser.avatar_path) {
+                if (currentUser.has_avatar_blob) {
+                    // 使用BLOB存储的头像
+                    avatarImg.src = `/api/avatar/${currentUser.username}`;
+                    avatarImg.style.display = 'block';
+                } else if (currentUser.avatar_path) {
+                    // 使用路径存储的头像
                     avatarImg.src = `/${currentUser.avatar_path}`;
                     avatarImg.style.display = 'block';
                 } else {

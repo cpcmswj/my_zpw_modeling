@@ -1401,12 +1401,14 @@ async def login_api(
         if password_match:
             print(f"[API] 登录成功 - 用户: {username}")
             avatar_path = user_data.get("avatar_path")
+            has_avatar_blob = user_data.get("avatar_blob") is not None
             return JSONResponse({
                 "status": "success",
                 "message": "登录成功",
                 "user": {
                     "username": username,
-                    "avatar_path": avatar_path
+                    "avatar_path": avatar_path,
+                    "has_avatar_blob": has_avatar_blob
                 }
             })
         else:
@@ -1421,6 +1423,40 @@ async def login_api(
             {"status": "error", "message": "登录验证失败"},
             status_code=500
         )
+
+# 获取用户头像API
+@app.get("/api/avatar/{username}")
+async def get_user_avatar(username: str):
+    """获取用户头像（从BLOB存储）"""
+    try:
+        print(f"[API] 请求用户头像: {username}")
+        user = user_store.get_user(username)
+        if not user:
+            print(f"[API] 用户不存在: {username}")
+            return JSONResponse({"status": "error", "message": "用户不存在"}, status_code=404)
+        
+        # 优先使用BLOB存储的头像
+        if user.get("avatar_blob"):
+            print(f"[API] 返回BLOB存储的头像")
+            from fastapi.responses import Response
+            return Response(
+                content=user["avatar_blob"],
+                media_type=user.get("avatar_mime_type", "image/jpeg")
+            )
+        
+        # 如果没有BLOB，尝试返回路径
+        if user.get("avatar_path"):
+            print(f"[API] 返回路径存储的头像: {user['avatar_path']}")
+            from fastapi.responses import FileResponse
+            if os.path.exists(user["avatar_path"]):
+                return FileResponse(user["avatar_path"])
+        
+        print(f"[API] 无头像数据")
+        return JSONResponse({"status": "error", "message": "无头像数据"}, status_code=404)
+    except Exception as e:
+        print(f"[API] 获取头像失败: {e}")
+        return JSONResponse({"status": "error", "message": f"获取头像失败: {str(e)}"}, status_code=500)
+
 
 # 用户注册API端点
 @app.post("/api/register")
@@ -1451,22 +1487,20 @@ async def register_api(
         print(f"[API] 密码哈希完成")
 
         avatar_path = None
+        avatar_blob = None
+        avatar_mime_type = None
         if avatar:
             print(f"[API] 接收到头像文件: {avatar.filename}")
-            # 确保uploads目录存在
-            os.makedirs("uploads", exist_ok=True)
-            # 生成唯一文件名
-            avatar_filename = f"{username}_{uuid.uuid4().hex[:8]}{os.path.splitext(avatar.filename)[1]}"
-            avatar_path = f"uploads/{avatar_filename}"
+            # 读取二进制数据
+            avatar_data = await avatar.read()
+            avatar_blob = avatar_data
+            avatar_mime_type = avatar.content_type or "image/jpeg"
             
-            # 保存头像文件
-            with open(avatar_path, "wb") as f:
-                f.write(await avatar.read())
-            print(f"[API] 头像已保存: {avatar_path}")
+            print(f"[API] 头像已读取为二进制数据 (大小: {len(avatar_blob)} 字节, 类型: {avatar_mime_type})")
 
         print("[API] 添加新用户到存储")
         try:
-            success = user_store.add_user(username, hashed_password, avatar_path)
+            success = user_store.add_user(username, hashed_password, avatar_path, avatar_blob, avatar_mime_type)
             if not success:
                 print(f"[API] 用户名已存在: {username}")
                 return JSONResponse(

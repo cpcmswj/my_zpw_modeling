@@ -65,9 +65,18 @@ class NeonDatabase:
                         username VARCHAR(50) UNIQUE NOT NULL,
                         hashed_password VARCHAR(255) NOT NULL,
                         avatar_path VARCHAR(255),
+                        avatar_blob BYTEA,
+                        avatar_mime_type VARCHAR(100),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
+                # 检查并添加新列（为了兼容已存在的表）
+                try:
+                    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_blob BYTEA")
+                    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime_type VARCHAR(100)")
+                    conn.commit()
+                except:
+                    conn.rollback()
                 conn.commit()
                 print("[Neon] 用户表初始化完成")
         except Exception as e:
@@ -164,7 +173,7 @@ class NeonDatabase:
             
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT username, hashed_password, avatar_path 
+                    SELECT username, hashed_password, avatar_path, avatar_blob, avatar_mime_type
                     FROM users 
                     WHERE username = %s
                 """, (username,))
@@ -174,7 +183,9 @@ class NeonDatabase:
                     return {
                         'username': row[0],
                         'hashed_password': row[1],
-                        'avatar_path': row[2]
+                        'avatar_path': row[2],
+                        'avatar_blob': row[3],
+                        'avatar_mime_type': row[4]
                     }
                 return None
         except Exception as e:
@@ -183,7 +194,7 @@ class NeonDatabase:
         finally:
             self._release_connection(conn)
     
-    def add_user(self, username, hashed_password, avatar_path=None):
+    def add_user(self, username, hashed_password, avatar_path=None, avatar_blob=None, avatar_mime_type=None):
         """
         添加新用户
         
@@ -191,6 +202,8 @@ class NeonDatabase:
             username (str): 用户名
             hashed_password (str): 哈希后的密码
             avatar_path (str, optional): 头像路径
+            avatar_blob (bytes, optional): 头像二进制数据
+            avatar_mime_type (str, optional): 头像MIME类型
             
         返回：
             bool: 添加成功返回True，失败返回False
@@ -211,10 +224,10 @@ class NeonDatabase:
             
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO users (username, hashed_password, avatar_path)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO users (username, hashed_password, avatar_path, avatar_blob, avatar_mime_type)
+                    VALUES (%s, %s, %s, %s, %s)
                     ON CONFLICT (username) DO NOTHING
-                """, (username, hashed_password, avatar_path))
+                """, (username, hashed_password, avatar_path, avatar_blob, avatar_mime_type))
                 conn.commit()
                 
                 if cur.rowcount > 0:
@@ -486,7 +499,7 @@ class SimpleUserStore:
         with self._lock:
             return self._users.get(username)
 
-    def add_user(self, username, hashed_password, avatar_path=None):
+    def add_user(self, username, hashed_password, avatar_path=None, avatar_blob=None, avatar_mime_type=None):
         """添加新用户
         
         返回：
@@ -496,7 +509,7 @@ class SimpleUserStore:
             当数据库连接失败时抛出 RuntimeError
         """
         if self._use_neon:
-            return self._neon_db.add_user(username, hashed_password, avatar_path)
+            return self._neon_db.add_user(username, hashed_password, avatar_path, avatar_blob, avatar_mime_type)
         
         with self._lock:
             if username in self._users:
@@ -504,7 +517,9 @@ class SimpleUserStore:
             self._users[username] = {
                 "username": username,
                 "hashed_password": hashed_password,
-                "avatar_path": avatar_path
+                "avatar_path": avatar_path,
+                "avatar_blob": avatar_blob,
+                "avatar_mime_type": avatar_mime_type
             }
             self._save_to_edge_config()
             print(f"[Local] 用户 {username} 已添加到本地存储")
