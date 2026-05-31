@@ -782,6 +782,159 @@
             background-color: #219653;
         }
 
+        .eval-chart-toggle-btn {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 2500;
+            display: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .eval-chart-toggle-btn:hover { background-color: #8e44ad; }
+        .eval-table-toggle-btn {
+            position: fixed;
+            bottom: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 2500;
+            display: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .eval-table-toggle-btn:hover { background-color: #d35400; }
+
+        .eval-chart-floating-window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 800px;
+            height: 500px;
+            background-color: #1e1e1e;
+            border: 3px solid #9b59b6;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+            z-index: 4000;
+            display: flex;
+            flex-direction: column;
+        }
+        .eval-chart-floating-window.active {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .eval-table-floating-window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 900px;
+            height: 600px;
+            background-color: #1e1e1e;
+            border: 3px solid #e67e22;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+            z-index: 4000;
+            display: flex;
+            flex-direction: column;
+        }
+        .eval-table-floating-window.active {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .eval-window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #2a2a2a;
+            border-bottom: 1px solid #3498db;
+            border-radius: 8px 8px 0 0;
+        }
+        .eval-window-header h3 {
+            margin: 0;
+            color: #3498db;
+            font-size: 18px;
+        }
+        .close-eval-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .close-eval-btn:hover {
+            color: #e74c3c;
+        }
+        .eval-window-content {
+            flex: 1;
+            overflow: hidden;
+            padding: 20px;
+        }
+        .eval-charts-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .eval-chart-item {
+            flex: 1;
+            min-height: 120px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .eval-chart-item h4 {
+            color: #3498db;
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .eval-table-container {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .eval-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .eval-table th {
+            background-color: #2a2a2a;
+            color: #3498db;
+            padding: 10px 8px;
+            border: 1px solid #3498db;
+            text-align: center;
+        }
+        .eval-table td {
+            padding: 8px;
+            border: 1px solid #3498db;
+            text-align: center;
+            color: #ccc;
+        }
+        .eval-table tr:nth-child(even) {
+            background-color: #252525;
+        }
+        .eval-table tr:hover {
+            background-color: #333;
+        }
+
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -1071,6 +1224,26 @@
                     <p>请设置参数并点击"开始时序数据生成"按钮</p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="eval-chart-floating-window" id="evalChartFloatingWindow">
+        <div class="eval-window-header">
+            <h3>性能评估图表</h3>
+            <button class="close-eval-btn" onclick="closeEvalChartWindow()">&times;</button>
+        </div>
+        <div class="eval-window-content">
+            <div class="eval-charts-container" id="evalChartsContainer"></div>
+        </div>
+    </div>
+
+    <div class="eval-table-floating-window" id="evalTableFloatingWindow">
+        <div class="eval-window-header">
+            <h3>性能评估表格</h3>
+            <button class="close-eval-btn" onclick="closeEvalTableWindow()">&times;</button>
+        </div>
+        <div class="eval-window-content">
+            <div class="eval-table-container" id="evalTableContainer"></div>
         </div>
     </div>
 
@@ -1425,149 +1598,226 @@
             document.getElementById('performanceEvalModal').classList.remove('active');
         }
 
-        function renderPerformanceEvaluation() {
-            const content = document.getElementById('performanceEvalContent');
-            const charts = document.getElementById('performanceEvalCharts');
+        let evalChartInstances = [];
+
+        function renderEvalCharts() {
+            const container = document.getElementById('evalChartsContainer');
 
             if (evaluationData.length === 0) {
-                content.innerHTML = '<p>暂无性能评估数据</p>';
-                charts.innerHTML = '';
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">暂无评估数据</p>';
                 return;
             }
 
-            const normalCount = normalResults.length;
-            const faultCount = faultResults.length;
+            evalChartInstances.forEach(chart => chart.destroy());
+            evalChartInstances = [];
 
-            let summaryHTML = `<p style="margin-bottom: 15px;"><strong>数据统计:</strong></p>`;
-            summaryHTML += `<ul style="margin-bottom: 15px; list-style-type: none; padding-left: 0;">`;
-            summaryHTML += `<li style="margin-bottom: 8px;">无故障数据数量: <strong style="color: #27ae60;">${normalCount}</strong></li>`;
-            summaryHTML += `<li style="margin-bottom: 8px;">故障数据数量: <strong style="color: #e74c3c;">${faultCount}</strong></li>`;
-            summaryHTML += `<li style="margin-bottom: 8px;">评估项目数量: <strong style="color: #3498db;">${evaluationData.length}</strong></li>`;
-            summaryHTML += `</ul>`;
-
-            content.innerHTML = summaryHTML;
-
-            drawTimeSeriesEvaluationCharts();
-        }
-
-        function drawTimeSeriesEvaluationCharts() {
-            const chartsContainer = document.getElementById('performanceEvalCharts');
-
-            if (evaluationData.length === 0) {
-                chartsContainer.innerHTML = '<p>暂无图表数据</p>';
-                return;
-            }
-
-            chartsContainer.innerHTML = '<canvas id="performanceEvalChart" width="1100" height="500"></canvas>';
-
-            const ctx = document.getElementById('performanceEvalChart').getContext('2d');
+            container.innerHTML = `
+                <div class="eval-chart-item">
+                    <h4>送端轨面电压对比</h4>
+                    <canvas id="evalSendEndChart"></canvas>
+                </div>
+                <div class="eval-chart-item">
+                    <h4>受端轨面电压对比</h4>
+                    <canvas id="evalReceiveEndChart"></canvas>
+                </div>
+                <div class="eval-chart-item">
+                    <h4>输入阻抗对比</h4>
+                    <canvas id="evalImpedanceChart"></canvas>
+                </div>
+            `;
 
             const labels = evaluationData.map((_, index) => `评估${index + 1}`);
-            const datasets = [];
 
-            const voltageData = evaluationData.map(d => d.voltage);
-            const sendEndData = evaluationData.map(d => d.send_end_voltage_diff);
-            const receiveEndData = evaluationData.map(d => d.receive_end_voltage_diff);
-            const mainTrackData = evaluationData.map(d => d.main_track_voltage_diff);
-
-            datasets.push({
-                label: '输入电压 (V)',
-                data: voltageData,
-                borderColor: 'rgba(52, 152, 219, 1)',
-                backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                borderWidth: 2,
-                tension: 0.3,
-                fill: false,
-                yAxisID: 'y'
-            });
-
-            datasets.push({
-                label: '送端轨面电压偏差 (%)',
-                data: sendEndData,
-                borderColor: 'rgba(46, 204, 113, 1)',
-                backgroundColor: 'rgba(46, 204, 113, 0.2)',
-                borderWidth: 2,
-                tension: 0.3,
-                fill: false,
-                yAxisID: 'y1'
-            });
-
-            datasets.push({
-                label: '受端轨面电压偏差 (%)',
-                data: receiveEndData,
-                borderColor: 'rgba(241, 196, 15, 1)',
-                backgroundColor: 'rgba(241, 196, 15, 0.2)',
-                borderWidth: 2,
-                tension: 0.3,
-                fill: false,
-                yAxisID: 'y1'
-            });
-
-            datasets.push({
-                label: '主轨入电压偏差 (%)',
-                data: mainTrackData,
-                borderColor: 'rgba(155, 89, 182, 1)',
-                backgroundColor: 'rgba(155, 89, 182, 0.2)',
-                borderWidth: 2,
-                tension: 0.3,
-                fill: false,
-                yAxisID: 'y1'
-            });
-
-            new Chart(ctx, {
+            const sendEndCtx = document.getElementById('evalSendEndChart').getContext('2d');
+            evalChartInstances.push(new Chart(sendEndCtx, {
                 type: 'line',
-                data: { labels, datasets },
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '无故障送端电压 (V)',
+                            data: evaluationData.map(d => d.normal_send_end),
+                            borderColor: 'rgba(39, 174, 96, 1)',
+                            backgroundColor: 'rgba(39, 174, 96, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false
+                        },
+                        {
+                            label: '故障送端电压 (V)',
+                            data: evaluationData.map(d => d.fault_send_end),
+                            borderColor: 'rgba(231, 76, 60, 1)',
+                            backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false
+                        },
+                        {
+                            label: '偏差 (%)',
+                            data: evaluationData.map(d => d.send_end_voltage_diff),
+                            borderColor: 'rgba(155, 89, 182, 1)',
+                            backgroundColor: 'rgba(155, 89, 182, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        title: {
-                            display: true,
-                            text: '时序数据性能评估对比图',
-                            color: '#3498db',
-                            font: { size: 16 }
-                        },
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: { color: '#fff' }
-                        }
+                        legend: { display: true, position: 'top', labels: { color: '#fff', font: { size: 10 } } }
                     },
                     scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: '评估序号',
-                                color: '#999'
-                            },
-                            ticks: { color: '#ccc' },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        },
-                        y: {
-                            type: 'linear',
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: '电压 (V)',
-                                color: '#999'
-                            },
-                            ticks: { color: '#ccc' },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        },
-                        y1: {
-                            type: 'linear',
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: '电压偏差 (%)',
-                                color: '#999'
-                            },
-                            ticks: { color: '#ccc' },
-                            grid: { drawOnChartArea: false }
-                        }
+                        x: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                        y: { position: 'left', ticks: { color: '#ccc' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                        y1: { position: 'right', ticks: { color: '#ccc' }, grid: { drawOnChartArea: false } }
                     }
                 }
+            }));
+
+            const receiveEndCtx = document.getElementById('evalReceiveEndChart').getContext('2d');
+            evalChartInstances.push(new Chart(receiveEndCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '无故障受端电压 (V)',
+                            data: evaluationData.map(d => d.normal_receive_end),
+                            borderColor: 'rgba(39, 174, 96, 1)',
+                            backgroundColor: 'rgba(39, 174, 96, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false
+                        },
+                        {
+                            label: '故障受端电压 (V)',
+                            data: evaluationData.map(d => d.fault_receive_end),
+                            borderColor: 'rgba(231, 76, 60, 1)',
+                            backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false
+                        },
+                        {
+                            label: '偏差 (%)',
+                            data: evaluationData.map(d => d.receive_end_voltage_diff),
+                            borderColor: 'rgba(155, 89, 182, 1)',
+                            backgroundColor: 'rgba(155, 89, 182, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top', labels: { color: '#fff', font: { size: 10 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                        y: { position: 'left', ticks: { color: '#ccc' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                        y1: { position: 'right', ticks: { color: '#ccc' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            }));
+
+            const impedanceCtx = document.getElementById('evalImpedanceChart').getContext('2d');
+            const normalImpedance = normalResults.map(r => r.input_impedance || 0);
+            const faultImpedance = faultResults.map(r => r.input_impedance || 0);
+            evalChartInstances.push(new Chart(impedanceCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '无故障输入阻抗 (Ω)',
+                            data: normalImpedance.slice(0, evaluationData.length),
+                            borderColor: 'rgba(39, 174, 96, 1)',
+                            backgroundColor: 'rgba(39, 174, 96, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false
+                        },
+                        {
+                            label: '故障输入阻抗 (Ω)',
+                            data: faultImpedance.slice(0, evaluationData.length),
+                            borderColor: 'rgba(231, 76, 60, 1)',
+                            backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top', labels: { color: '#fff', font: { size: 10 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                        y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+                    }
+                }
+            }));
+        }
+
+        function renderEvalTable() {
+            const container = document.getElementById('evalTableContainer');
+
+            if (evaluationData.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">暂无评估数据</p>';
+                return;
+            }
+
+            let tableHTML = `<table class="eval-table">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>输入电压(V)</th>
+                        <th>无故障送端(V)</th>
+                        <th>故障送端(V)</th>
+                        <th>送端偏差(%)</th>
+                        <th>无故障受端(V)</th>
+                        <th>故障受端(V)</th>
+                        <th>受端偏差(%)</th>
+                        <th>无故障主轨(V)</th>
+                        <th>故障主轨(V)</th>
+                        <th>主轨偏差(%)</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            evaluationData.forEach((data, index) => {
+                const sendDiffClass = data.send_end_voltage_diff >= 0 ? 'positive-diff' : 'negative-diff';
+                const receiveDiffClass = data.receive_end_voltage_diff >= 0 ? 'positive-diff' : 'negative-diff';
+                const mainDiffClass = data.main_track_voltage_diff >= 0 ? 'positive-diff' : 'negative-diff';
+
+                tableHTML += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${data.voltage.toFixed(2)}</td>
+                    <td>${data.normal_send_end.toFixed(2)}</td>
+                    <td>${data.fault_send_end.toFixed(2)}</td>
+                    <td class="${sendDiffClass}">${data.send_end_voltage_diff.toFixed(2)}</td>
+                    <td>${data.normal_receive_end.toFixed(2)}</td>
+                    <td>${data.fault_receive_end.toFixed(2)}</td>
+                    <td class="${receiveDiffClass}">${data.receive_end_voltage_diff.toFixed(2)}</td>
+                    <td>${data.normal_main_track.toFixed(2)}</td>
+                    <td>${data.fault_main_track.toFixed(2)}</td>
+                    <td class="${mainDiffClass}">${data.main_track_voltage_diff.toFixed(2)}</td>
+                </tr>`;
             });
+
+            tableHTML += `</tbody></table>`;
+            container.innerHTML = tableHTML;
         }
 
         function runPerformanceEvaluationForTimeSeries() {
@@ -1614,8 +1864,9 @@
         }
 
         function displayTimeSeriesEvaluationResult() {
-            renderPerformanceEvaluation();
-            openPerformanceEvalModal();
+            document.getElementById('toggleEvalChartBtn').style.display = 'block';
+            document.getElementById('toggleEvalTableBtn').style.display = 'block';
+            showStatusMessage('性能评估数据已生成，可点击悬浮按钮查看结果', 'success');
         }
 
         function getVoltageRange(level) {
@@ -2156,7 +2407,6 @@
             const chartWindow = document.getElementById('chartFloatingWindow');
             chartWindow.classList.toggle('active');
             if (chartWindow.classList.contains('active')) {
-                // 确保只使用内存中的 simulationResults，不读取CSV文件
                 if (simulationResults.length === 0) {
                     showStatusMessage('没有可用的模拟数据，请先生成数据！', 'error');
                     chartWindow.classList.remove('active');
@@ -2164,6 +2414,40 @@
                 }
                 updateChart();
             }
+        }
+
+        function toggleEvalChartWindow() {
+            const evalChartWindow = document.getElementById('evalChartFloatingWindow');
+            evalChartWindow.classList.toggle('active');
+            if (evalChartWindow.classList.contains('active')) {
+                if (evaluationData.length === 0) {
+                    showStatusMessage('没有可用的评估数据！', 'error');
+                    evalChartWindow.classList.remove('active');
+                    return;
+                }
+                renderEvalCharts();
+            }
+        }
+
+        function toggleEvalTableWindow() {
+            const evalTableWindow = document.getElementById('evalTableFloatingWindow');
+            evalTableWindow.classList.toggle('active');
+            if (evalTableWindow.classList.contains('active')) {
+                if (evaluationData.length === 0) {
+                    showStatusMessage('没有可用的评估数据！', 'error');
+                    evalTableWindow.classList.remove('active');
+                    return;
+                }
+                renderEvalTable();
+            }
+        }
+
+        function closeEvalChartWindow() {
+            document.getElementById('evalChartFloatingWindow').classList.remove('active');
+        }
+
+        function closeEvalTableWindow() {
+            document.getElementById('evalTableFloatingWindow').classList.remove('active');
         }
 
         let dataChart = null;
@@ -2419,6 +2703,8 @@
 
     <button class="toggle-bottom-btn" id="toggleBottomBtn" onclick="toggleBottomWindow()">查看生成结果</button>
     <button class="chart-toggle-btn" id="toggleChartBtn" onclick="toggleChartWindow()">查看数据图表</button>
+    <button class="eval-chart-toggle-btn" id="toggleEvalChartBtn" onclick="toggleEvalChartWindow()" style="display:none;">查看评估图表</button>
+    <button class="eval-table-toggle-btn" id="toggleEvalTableBtn" onclick="toggleEvalTableWindow()" style="display:none;">查看评估表格</button>
 
     <div class="chart-floating-window" id="chartFloatingWindow">
         <div class="chart-window-header">
