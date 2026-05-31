@@ -1,118 +1,70 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800" width="100%" height="100%">
-    <!-- 背景 -->
-    <rect width="1000" height="800" fill="#ffffff" />
-
-    <!-- 顶部水平线 (上方横线) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900" width="100%" height="100%">
+    <rect width="1000" height="900" fill="#ffffff" />
     <line x1="50" y1="140" x2="950" y2="140" stroke="#000000" stroke-width="4" />
-
-    <!-- 底部水平线 (下方横线) -->
     <line x1="50" y1="440" x2="950" y2="440" stroke="#000000" stroke-width="4" />
-
-    <!-- SVA线圈 -->
     <rect x="180" y="160" width="60" height="250" fill="none" stroke="#000000" stroke-width="4" />
     <text x="210" y="210" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">SVA</text>
     <text x="210" y="245" font-family="sans-serif" font-size="20" fill="#000000" text-anchor="middle">线圈</text>
-    
-    <!-- SVA 垂直线 -->
     <line x1="210" y1="140" x2="210" y2="160" stroke="#000000" stroke-width="4" />
     <line x1="210" y1="410" x2="210" y2="440" stroke="#000000" stroke-width="4" />
-
-    <!-- ===== 补偿电容 1 (左) - 优化间距 ===== -->
     <line x1="580" y1="140" x2="620" y2="140" stroke="#000000" stroke-width="4" />
     <line x1="600" y1="140" x2="600" y2="240" stroke="#000000" stroke-width="4" />
     <line x1="580" y1="240" x2="620" y2="240" stroke="#000000" stroke-width="4" />
     <line x1="580" y1="260" x2="620" y2="260" stroke="#000000" stroke-width="4" />
     <line x1="600" y1="260" x2="600" y2="440" stroke="#000000" stroke-width="4" />
     <text x="640" y="230" font-family="sans-serif" font-size="28" fill="#000000">补偿电容</text>
-
-    <!-- 左侧补偿电容上方竖线处的红色叉号 -->
-    <line x1="585" y1="160" x2="615" y2="220" stroke="red" stroke-width="6" />
-    <line x1="615" y1="160" x2="585" y2="220" stroke="red" stroke-width="6" />
-
-    <!-- ===== 补偿电容 2 (右) - 优化间距 ===== -->
     <line x1="680" y1="140" x2="720" y2="140" stroke="#000000" stroke-width="4" />
     <line x1="700" y1="140" x2="700" y2="240" stroke="#000000" stroke-width="4" />
     <line x1="680" y1="240" x2="720" y2="240" stroke="#000000" stroke-width="4" />
     <line x1="680" y1="260" x2="720" y2="260" stroke="#000000" stroke-width="4" />
     <line x1="700" y1="260" x2="700" y2="440" stroke="#000000" stroke-width="4" />
-
-    <!-- 右侧补偿电容上方竖线处的红色叉号 -->
-    <line x1="685" y1="150" x2="715" y2="230" stroke="red" stroke-width="6" />
-    <line x1="715" y1="150" x2="685" y2="230" stroke="red" stroke-width="6" />
-
-    <!-- ================= 左侧组：调谐单元 & 接收端 ================= -->
-    <!-- 调谐单元连接线 (左线连下方，右线连上方) -->
-    <line x1="100" y1="440" x2="100" y2="470" stroke="#000000" stroke-width="4" /> 
-    <line x1="160" y1="140" x2="160" y2="470" stroke="#000000" stroke-width="4" /> 
     
-    <!-- 调谐单元 -->
+    <line x1="100" y1="440" x2="100" y2="470" stroke="#000000" stroke-width="4" />
+    <line x1="160" y1="140" x2="160" y2="470" stroke="#000000" stroke-width="4" />
     <rect x="70" y="470" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
     <text x="130" y="515" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">调谐单元</text>
-
-    <!-- 双竖线 (调谐单元 -> SPT电缆) -->
     <line x1="120" y1="540" x2="120" y2="560" stroke="#000000" stroke-width="4" />
     <line x1="140" y1="540" x2="140" y2="560" stroke="#000000" stroke-width="4" />
-
-    <!-- SPT电缆 -->
     <rect x="70" y="560" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
     <text x="130" y="603" font-family="sans-serif" font-size="22" fill="#000000" text-anchor="middle">SPT电缆</text>
-
-    <!-- 双竖线 (SPT电缆 -> 接收端) -->
     <line x1="120" y1="630" x2="120" y2="650" stroke="#000000" stroke-width="4" />
     <line x1="140" y1="630" x2="140" y2="650" stroke="#000000" stroke-width="4" />
-
-    <!-- 接收端 -->
     <rect x="70" y="650" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
-    <text x="130" y="695" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">接收端</text>
+    <text x="130" y="695" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">衰耗盘</text>
+    <line x1="120" y1="720" x2="120" y2="740" stroke="#000000" stroke-width="4" />
+    <line x1="140" y1="720" x2="140" y2="740" stroke="#000000" stroke-width="4" />
+    <rect x="70" y="740" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
+    <text x="130" y="785" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">接收端</text>
+    <line x1="75" y1="600" x2="185" y2="785" stroke="red" stroke-width="6" />
+    <line x1="185" y1="600" x2="75" y2="785" stroke="red" stroke-width="6" />
 
-    <!-- ================= 中间组：调谐单元 & 发送端 ================= -->
-    <!-- 调谐单元连接线 (左线连下方，右线连上方) -->
-    <line x1="340" y1="440" x2="340" y2="470" stroke="#000000" stroke-width="4" /> 
-    <line x1="400" y1="140" x2="400" y2="470" stroke="#000000" stroke-width="4" /> 
-
-    <!-- 调谐单元 -->
+    <line x1="340" y1="440" x2="340" y2="470" stroke="#000000" stroke-width="4" />
+    <line x1="400" y1="140" x2="400" y2="470" stroke="#000000" stroke-width="4" />
     <rect x="310" y="470" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
     <text x="370" y="515" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">调谐单元</text>
-
-    <!-- 双竖线 (调谐单元 -> SPT电缆) -->
     <line x1="360" y1="540" x2="360" y2="560" stroke="#000000" stroke-width="4" />
     <line x1="380" y1="540" x2="380" y2="560" stroke="#000000" stroke-width="4" />
-
-    <!-- SPT电缆 -->
     <rect x="310" y="560" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
     <text x="370" y="603" font-family="sans-serif" font-size="22" fill="#000000" text-anchor="middle">SPT电缆</text>
-
-    <!-- 双竖线 (SPT电缆 -> 发送端) -->
     <line x1="360" y1="630" x2="360" y2="650" stroke="#000000" stroke-width="4" />
     <line x1="380" y1="630" x2="380" y2="650" stroke="#000000" stroke-width="4" />
-
-    <!-- 发送端 -->
     <rect x="310" y="650" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
     <text x="370" y="695" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">发送端</text>
 
-    <!-- ================= 右侧组：调谐单元 & 接收端 ================= -->
-    <!-- 调谐单元连接线 (左线连下方，右线连上方) -->
-    <line x1="790" y1="440" x2="790" y2="470" stroke="#000000" stroke-width="4" /> 
-    <line x1="850" y1="140" x2="850" y2="470" stroke="#000000" stroke-width="4" /> 
-
-    <!-- 调谐单元 -->
+    <line x1="790" y1="440" x2="790" y2="470" stroke="#000000" stroke-width="4" />
+    <line x1="850" y1="140" x2="850" y2="470" stroke="#000000" stroke-width="4" />
     <rect x="760" y="470" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
     <text x="820" y="515" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">调谐单元</text>
-
-    <!-- 双竖线 (调谐单元 -> SPT电缆) -->
     <line x1="810" y1="540" x2="810" y2="560" stroke="#000000" stroke-width="4" />
     <line x1="830" y1="540" x2="830" y2="560" stroke="#000000" stroke-width="4" />
-
-    <!-- SPT电缆 -->
     <rect x="760" y="560" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
     <text x="820" y="603" font-family="sans-serif" font-size="22" fill="#000000" text-anchor="middle">SPT电缆</text>
-
-    <!-- 双竖线 (SPT电缆 -> 接收端) -->
     <line x1="810" y1="630" x2="810" y2="650" stroke="#000000" stroke-width="4" />
     <line x1="830" y1="630" x2="830" y2="650" stroke="#000000" stroke-width="4" />
-
-    <!-- 接收端 -->
     <rect x="760" y="650" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
-    <text x="820" y="695" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">接收端</text>
-
+    <text x="820" y="695" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">衰耗盘</text>
+    <line x1="810" y1="720" x2="810" y2="740" stroke="#000000" stroke-width="4" />
+    <line x1="830" y1="720" x2="830" y2="740" stroke="#000000" stroke-width="4" />
+    <rect x="760" y="740" width="120" height="70" fill="none" stroke="#000000" stroke-width="4" />
+    <text x="820" y="785" font-family="sans-serif" font-size="24" fill="#000000" text-anchor="middle">接收端</text>
 </svg>
