@@ -689,7 +689,7 @@ async def read_image_viewer_direct():
             </div>
             <div class="image-display">
                 <h3>当前图片</h3>
-                <img id="displayImage" src="/static/images/错误展示0.png" alt="错误展示0 - 无故障" style="max-width: 100%; height: auto;">
+                <img id="displayImage" src="/static/images/故障展示0.svg" alt="故障展示0 - 无故障" style="max-width: 100%; height: auto;">
                 <p id="imageDescription">错误展示0 - 无故障</p>
             </div>
         </div>
@@ -754,36 +754,44 @@ async def read_image_viewer_direct():
         // 图片数据
         const images = {
             "0": {
-                src: "/static/images/错误展示0.png",
-                description: "错误展示0 - 无故障"
+                src: "/static/images/故障展示0.svg",
+                description: "故障展示0 - 无故障"
             },
             "1": {
-                src: "/static/images/错误展示1.png",
-                description: "错误展示1 - 接收端调谐单元1断路"
+                src: "/static/images/故障展示1.svg",
+                description: "故障展示1 - 接收端调谐单元1断路"
             },
             "2": {
-                src: "/static/images/错误展示2.png",
-                description: "错误展示2 - 发送端调谐单元1断路"
+                src: "/static/images/故障展示2.svg",
+                description: "故障展示2 - 发送端调谐单元1断路"
             },
             "3": {
-                src: "/static/images/错误展示3.png",
-                description: "错误展示3 - 接收端空心线圈断路"
+                src: "/static/images/故障展示3.svg",
+                description: "故障展示3 - 接收端空心线圈断路"
             },
             "4": {
-                src: "/static/images/错误展示4.png",
-                description: "错误展示4 - 接收端空芯线圈短路"
+                src: "/static/images/故障展示4.svg",
+                description: "故障展示4 - 接收端空芯线圈短路"
             },
             "5": {
-                src: "/static/images/错误展示5.png",
-                description: "错误展示5 - 接收端调谐单元2断路"
+                src: "/static/images/故障展示5.svg",
+                description: "故障展示5 - 接收端调谐单元2断路"
             },
             "6": {
-                src: "/static/images/错误展示6.png",
-                description: "错误展示6 - 补偿电容3断路"
+                src: "/static/images/故障展示6.svg",
+                description: "故障展示6 - 补偿电容3断路"
             },
             "7": {
-                src: "/static/images/错误展示7.png",
-                description: "错误展示7 - 补偿电容3短路"
+                src: "/static/images/故障展示7.svg",
+                description: "故障展示7 - 补偿电容3短路"
+            },
+            "8": {
+                src: "/static/images/故障展示8.svg",
+                description: "故障展示8 - 发送端SPT电缆断路"
+            },
+            "9": {
+                src: "/static/images/故障展示9.svg",
+                description: "故障展示9 - 接收端SPT电缆断路"
             }
         };
 
