@@ -837,6 +837,16 @@
         .modal .modal-btn:hover {
             background-color: #2980b9;
         }
+
+        .positive-diff {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .negative-diff {
+            color: #e74c3c;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -880,7 +890,7 @@
         </div>
         <div class="form-group">
             <label for="faultType">故障类型:</label>
-            <select id="faultType" name="faultType">
+            <select id="faultType" name="faultType" onchange="onFaultTypeChange()">
                 <option value="0">无故障</option>
                 <option value="1">接收端调谐单元1断路</option>
                 <option value="2">发送端调谐单元1断路</option>
@@ -974,6 +984,10 @@
             <label for="useRandomVoltage">随机电压:</label>
             <input type="checkbox" id="useRandomVoltage" name="useRandomVoltage">
         </div>
+        <div class="form-group">
+            <label for="enablePerformanceEvaluation">性能评估:</label>
+            <input type="checkbox" id="enablePerformanceEvaluation" name="enablePerformanceEvaluation" disabled>
+        </div>
         <button class="save-btn" onclick="saveParameters()">保存参数</button>
     </div>
 
@@ -984,6 +998,16 @@
                 <h3>参数未设置</h3>
                 <p id="modalMessage">请先设置轨道区段和故障类型</p>
                 <button class="modal-btn" onclick="closeModal()">确定</button>
+            </div>
+        </div>
+
+        <!-- 性能评估结果弹窗 -->
+        <div class="modal-overlay" id="performanceEvalModal">
+            <div class="modal" style="max-width: 90%; width: 1200px; max-height: 90vh; overflow-y: auto;">
+                <h3 style="color: #27ae60; margin-top: 0; margin-bottom: 15px; font-size: 20px;">性能评估结果</h3>
+                <div id="performanceEvalContent" style="color: #ccc; font-size: 14px; margin-bottom: 20px;"></div>
+                <div id="performanceEvalCharts" style="margin-bottom: 20px;"></div>
+                <button class="modal-btn" onclick="closePerformanceEvalModal()">关闭</button>
             </div>
         </div>
         
@@ -1108,6 +1132,10 @@
         let totalSimulationCount = 0;
         let abortControllers = [];
         let currentSessionId = null;
+        let normalResults = [];
+        let faultResults = [];
+        let evaluationData = [];
+        let isPerformanceEvaluationMode = false;
 
         function checkLoginStatus() {
             const savedUser = localStorage.getItem('user');
@@ -1255,6 +1283,18 @@
             }
         }
 
+        function onFaultTypeChange() {
+            const faultType = document.getElementById('faultType').value;
+            const performanceEvalCheckbox = document.getElementById('enablePerformanceEvaluation');
+
+            if (faultType === '0') {
+                performanceEvalCheckbox.disabled = true;
+                performanceEvalCheckbox.checked = false;
+            } else {
+                performanceEvalCheckbox.disabled = false;
+            }
+        }
+
         function saveSelection() {
             const section = document.getElementById('trackSection').value;
             const faultType = document.getElementById('faultType').value;
@@ -1375,6 +1415,207 @@
 
         function closeModal() {
             document.getElementById('errorModal').classList.remove('active');
+        }
+
+        function openPerformanceEvalModal() {
+            document.getElementById('performanceEvalModal').classList.add('active');
+        }
+
+        function closePerformanceEvalModal() {
+            document.getElementById('performanceEvalModal').classList.remove('active');
+        }
+
+        function renderPerformanceEvaluation() {
+            const content = document.getElementById('performanceEvalContent');
+            const charts = document.getElementById('performanceEvalCharts');
+
+            if (evaluationData.length === 0) {
+                content.innerHTML = '<p>暂无性能评估数据</p>';
+                charts.innerHTML = '';
+                return;
+            }
+
+            const normalCount = normalResults.length;
+            const faultCount = faultResults.length;
+
+            let summaryHTML = `<p style="margin-bottom: 15px;"><strong>数据统计:</strong></p>`;
+            summaryHTML += `<ul style="margin-bottom: 15px; list-style-type: none; padding-left: 0;">`;
+            summaryHTML += `<li style="margin-bottom: 8px;">无故障数据数量: <strong style="color: #27ae60;">${normalCount}</strong></li>`;
+            summaryHTML += `<li style="margin-bottom: 8px;">故障数据数量: <strong style="color: #e74c3c;">${faultCount}</strong></li>`;
+            summaryHTML += `<li style="margin-bottom: 8px;">评估项目数量: <strong style="color: #3498db;">${evaluationData.length}</strong></li>`;
+            summaryHTML += `</ul>`;
+
+            content.innerHTML = summaryHTML;
+
+            drawTimeSeriesEvaluationCharts();
+        }
+
+        function drawTimeSeriesEvaluationCharts() {
+            const chartsContainer = document.getElementById('performanceEvalCharts');
+
+            if (evaluationData.length === 0) {
+                chartsContainer.innerHTML = '<p>暂无图表数据</p>';
+                return;
+            }
+
+            chartsContainer.innerHTML = '<canvas id="performanceEvalChart" width="1100" height="500"></canvas>';
+
+            const ctx = document.getElementById('performanceEvalChart').getContext('2d');
+
+            const labels = evaluationData.map((_, index) => `评估${index + 1}`);
+            const datasets = [];
+
+            const voltageData = evaluationData.map(d => d.voltage);
+            const sendEndData = evaluationData.map(d => d.send_end_voltage_diff);
+            const receiveEndData = evaluationData.map(d => d.receive_end_voltage_diff);
+            const mainTrackData = evaluationData.map(d => d.main_track_voltage_diff);
+
+            datasets.push({
+                label: '输入电压 (V)',
+                data: voltageData,
+                borderColor: 'rgba(52, 152, 219, 1)',
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: false,
+                yAxisID: 'y'
+            });
+
+            datasets.push({
+                label: '送端轨面电压偏差 (%)',
+                data: sendEndData,
+                borderColor: 'rgba(46, 204, 113, 1)',
+                backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: false,
+                yAxisID: 'y1'
+            });
+
+            datasets.push({
+                label: '受端轨面电压偏差 (%)',
+                data: receiveEndData,
+                borderColor: 'rgba(241, 196, 15, 1)',
+                backgroundColor: 'rgba(241, 196, 15, 0.2)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: false,
+                yAxisID: 'y1'
+            });
+
+            datasets.push({
+                label: '主轨入电压偏差 (%)',
+                data: mainTrackData,
+                borderColor: 'rgba(155, 89, 182, 1)',
+                backgroundColor: 'rgba(155, 89, 182, 0.2)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: false,
+                yAxisID: 'y1'
+            });
+
+            new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '时序数据性能评估对比图',
+                            color: '#3498db',
+                            font: { size: 16 }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '评估序号',
+                                color: '#999'
+                            },
+                            ticks: { color: '#ccc' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: '电压 (V)',
+                                color: '#999'
+                            },
+                            ticks: { color: '#ccc' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: '电压偏差 (%)',
+                                color: '#999'
+                            },
+                            ticks: { color: '#ccc' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function runPerformanceEvaluationForTimeSeries() {
+            normalResults = simulationResults.filter(result => result.error_type === 0);
+            faultResults = simulationResults.filter(result => result.error_type !== 0);
+
+            if (normalResults.length === 0 || faultResults.length === 0) {
+                showStatusMessage('性能评估需要同时包含无故障和故障数据！', 'error');
+                return;
+            }
+
+            evaluationData = [];
+
+            const maxLength = Math.max(normalResults.length, faultResults.length);
+            for (let i = 0; i < maxLength; i++) {
+                const normal = normalResults[i % normalResults.length];
+                const fault = faultResults[i % faultResults.length];
+
+                const sendEndDiff = normal.send_end_track_voltage !== 0
+                    ? ((fault.send_end_track_voltage - normal.send_end_track_voltage) / normal.send_end_track_voltage * 100).toFixed(2)
+                    : 0;
+                const receiveEndDiff = normal.receive_end_track_voltage !== 0
+                    ? ((fault.receive_end_track_voltage - normal.receive_end_track_voltage) / normal.receive_end_track_voltage * 100).toFixed(2)
+                    : 0;
+                const mainTrackDiff = normal.main_track_input_voltage !== 0
+                    ? ((fault.main_track_input_voltage - normal.main_track_input_voltage) / normal.main_track_input_voltage * 100).toFixed(2)
+                    : 0;
+
+                evaluationData.push({
+                    voltage: fault.voltage,
+                    normal_send_end: normal.send_end_track_voltage,
+                    fault_send_end: fault.send_end_track_voltage,
+                    send_end_voltage_diff: parseFloat(sendEndDiff),
+                    normal_receive_end: normal.receive_end_track_voltage,
+                    fault_receive_end: fault.receive_end_track_voltage,
+                    receive_end_voltage_diff: parseFloat(receiveEndDiff),
+                    normal_main_track: normal.main_track_input_voltage,
+                    fault_main_track: fault.main_track_input_voltage,
+                    main_track_voltage_diff: parseFloat(mainTrackDiff)
+                });
+            }
+
+            displayTimeSeriesEvaluationResult();
+        }
+
+        function displayTimeSeriesEvaluationResult() {
+            renderPerformanceEvaluation();
+            openPerformanceEvalModal();
         }
 
         function getVoltageRange(level) {
@@ -1602,6 +1843,13 @@
                 showToggleButton();
                 showChartToggleButton();
                 updateSimulationResult();
+
+                // 如果启用了性能评估模式，自动运行性能评估
+                if (isPerformanceEvaluationMode) {
+                    setTimeout(() => {
+                        runPerformanceEvaluationForTimeSeries();
+                    }, 500);
+                }
             } else {
                 addResultItem('error', '时序数据生成完成，但未生成任何有效数据。');
             }
@@ -1630,6 +1878,10 @@
                 showModal('请先选择故障类型！');
                 return;
             }
+
+            // 检查是否启用了性能评估模式
+            const enablePerformanceEvaluation = document.getElementById('enablePerformanceEvaluation').checked;
+            isPerformanceEvaluationMode = enablePerformanceEvaluation;
 
             const sectionId = currentSelection.trackSection;
             const selectedErrorType = parseInt(currentSelection.faultType);

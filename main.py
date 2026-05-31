@@ -1851,118 +1851,82 @@ async def clear_session(session_id: str):
         status_code=404
     )
 
-# CSV文件存储系统
-import csv
+# 内存存储系统
 import os
 from datetime import datetime
 
-CSV_FILE_PATH = os.path.join("static", "time_series_data.csv")
+# 全局内存存储列表
+time_series_data_storage = []
+print("[INFO] 时间序列数据内存存储已初始化")
 
-# 清除CSV文件（初始化）
+# 清除存储（初始化）
 @app.post("/api/time-series/clear-csv")
 async def clear_csv_file():
     try:
-        # 如果文件存在则删除
-        if os.path.exists(CSV_FILE_PATH):
-            os.remove(CSV_FILE_PATH)
-        return JSONResponse({"status": "success", "message": "CSV文件已清除"})
+        global time_series_data_storage
+        print(f"[INFO] 清除内存存储 - 当前数据条数: {len(time_series_data_storage)}")
+        time_series_data_storage = []
+        print("[INFO] 内存存储已清空")
+        return JSONResponse({"status": "success", "message": "内存存储已清除"})
     except Exception as e:
+        print(f"[ERROR] 清除内存存储失败: {e}")
+        import traceback
+        traceback.print_exc()
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
-# 保存单条数据到CSV
+# 保存单条数据到内存
 @app.post("/api/time-series/save-to-csv")
 async def save_to_csv(data: dict = Body(...)):
     try:
-        file_exists = os.path.exists(CSV_FILE_PATH)
-        file_empty = not file_exists or os.path.getsize(CSV_FILE_PATH) == 0
-
-        with open(CSV_FILE_PATH, 'a', newline='', encoding='utf-8-sig') as csvfile:
-            fieldnames = ['voltage', 'section_id', 'error_type', 'track_length',
-                          'send_end_track_voltage', 'receive_end_track_voltage',
-                          'main_track_input_voltage', 'main_track_output_voltage_1',
-                          'input_impedance', 'input_current', 'timestamp']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-            # 如果文件不存在或为空，写入表头
-            if file_empty:
-                writer.writeheader()
-
-            # 写入数据行
-            writer.writerow({
-                'voltage': data.get('voltage', 0),
-                'section_id': data.get('section_id', ''),
-                'error_type': data.get('error_type', 0),
-                'track_length': data.get('track_length', 0),
-                'send_end_track_voltage': data.get('send_end_track_voltage', 0),
-                'receive_end_track_voltage': data.get('receive_end_track_voltage', 0),
-                'main_track_input_voltage': data.get('main_track_input_voltage', 0),
-                'main_track_output_voltage_1': data.get('main_track_output_voltage_1', 0),
-                'input_impedance': data.get('input_impedance', 0),
-                'input_current': data.get('input_current', 0),
-                'timestamp': data.get('timestamp', datetime.now().isoformat())
-            })
-
+        global time_series_data_storage
+        record = {
+            'voltage': data.get('voltage', 0),
+            'section_id': data.get('section_id', ''),
+            'error_type': data.get('error_type', 0),
+            'track_length': data.get('track_length', 0),
+            'send_end_track_voltage': data.get('send_end_track_voltage', 0),
+            'receive_end_track_voltage': data.get('receive_end_track_voltage', 0),
+            'main_track_input_voltage': data.get('main_track_input_voltage', 0),
+            'main_track_output_voltage_1': data.get('main_track_output_voltage_1', 0),
+            'input_impedance': data.get('input_impedance', 0),
+            'input_current': data.get('input_current', 0),
+            'timestamp': data.get('timestamp', datetime.now().isoformat())
+        }
+        print(f"[INFO] 保存数据到内存 - 电压: {record['voltage']}, 区段: {record['section_id']}, 故障类型: {record['error_type']}")
+        time_series_data_storage.append(record)
+        print(f"[INFO] 数据保存成功 - 当前总条数: {len(time_series_data_storage)}")
         return JSONResponse({"status": "success"})
     except Exception as e:
+        print(f"[ERROR] 保存数据失败: {e}")
         import traceback
         traceback.print_exc()
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
-# 从CSV读取所有数据
+# 从内存读取所有数据
 @app.get("/api/time-series/read-from-csv")
 async def read_from_csv():
     try:
-        if not os.path.exists(CSV_FILE_PATH):
-            return JSONResponse({"status": "success", "results": [], "count": 0})
-
-        results = []
-        with open(CSV_FILE_PATH, 'r', encoding='utf-8-sig') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                # 转换数值类型
-                try:
-                    results.append({
-                        'voltage': float(row['voltage']),
-                        'section_id': row['section_id'],
-                        'error_type': int(row['error_type']),
-                        'track_length': float(row['track_length']),
-                        'send_end_track_voltage': float(row['send_end_track_voltage']),
-                        'receive_end_track_voltage': float(row['receive_end_track_voltage']),
-                        'main_track_input_voltage': float(row['main_track_input_voltage']),
-                        'main_track_output_voltage_1': float(row['main_track_output_voltage_1']),
-                        'input_impedance': float(row['input_impedance']),
-                        'input_current': float(row['input_current']),
-                        'timestamp': row['timestamp']
-                    })
-                except (ValueError, KeyError) as e:
-                    # 跳过无效行
-                    continue
-
-        return JSONResponse({"status": "success", "results": results, "count": len(results)})
+        global time_series_data_storage
+        print(f"[INFO] 从内存读取数据 - 当前数据条数: {len(time_series_data_storage)}")
+        return JSONResponse({"status": "success", "results": time_series_data_storage, "count": len(time_series_data_storage)})
     except Exception as e:
+        print(f"[ERROR] 读取数据失败: {e}")
         import traceback
         traceback.print_exc()
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
-# 获取CSV文件状态
+# 获取存储状态
 @app.get("/api/time-series/csv-status")
 async def get_csv_status():
     try:
-        if not os.path.exists(CSV_FILE_PATH):
-            return JSONResponse({
-                "status": "success",
-                "exists": False,
-                "row_count": 0
-            })
-
-        with open(CSV_FILE_PATH, 'r', encoding='utf-8-sig') as csvfile:
-            reader = csv.reader(csvfile)
-            row_count = sum(1 for row in reader) - 1  # 减去表头
-
+        global time_series_data_storage
+        row_count = len(time_series_data_storage)
+        print(f"[INFO] 获取存储状态 - 数据条数: {row_count}")
         return JSONResponse({
             "status": "success",
-            "exists": True,
-            "row_count": max(0, row_count)
+            "exists": row_count > 0,
+            "row_count": row_count
         })
     except Exception as e:
+        print(f"[ERROR] 获取存储状态失败: {e}")
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
