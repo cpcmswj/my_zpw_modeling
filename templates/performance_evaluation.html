@@ -543,6 +543,25 @@
                 const frequency = parseInt(document.getElementById('frequency').value);
                 const dataType = document.getElementById('dataType').value;
 
+                // 记录用户选择的参数
+                await fetch('/api/log-selection', {
+                    method: 'POST',
+                    body: new URLSearchParams({
+                        section_id: sectionId,
+                        section_name: sectionId,
+                        fault_type: faultType,
+                        fault_type_name: document.getElementById('faultType').options[document.getElementById('faultType').selectedIndex].text,
+                        fault_value: faultValue,
+                        track_length: document.getElementById('trackLength').value,
+                        cable_length: document.getElementById('cableLength').value,
+                        frequency: frequency,
+                        voltage_range: document.getElementById('voltageLevel').options[document.getElementById('voltageLevel').selectedIndex].text,
+                        voltage_count: voltageValues.length,
+                        data_type: dataType,
+                        evaluation_type: 'performance'
+                    })
+                });
+
                 const totalSteps = voltageValues.length * 2;
                 let currentStep = 0;
 

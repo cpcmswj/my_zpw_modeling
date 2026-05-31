@@ -1634,6 +1634,15 @@
             const sectionId = currentSelection.trackSection;
             const selectedErrorType = parseInt(currentSelection.faultType);
             const { trackLength, resistance, inductance, capacitance, leakageResistance, cableLength, errorValue, r1, r2 } = trackParameters;
+            
+            let frequency;
+            if (sectionId === "69G" || sectionId === "X1LQG" || sectionId === "IG1") {
+                frequency = 1700;
+            } else if (sectionId === "57G" || sectionId === "3DG") {
+                frequency = 2300;
+            } else {
+                frequency = 1700;
+            }
 
             const voltageValues = generateVoltageValues();
             const halfLength = Math.ceil(voltageValues.length / 2);
@@ -1643,6 +1652,29 @@
             if (totalSimulationCount <= 0) {
                 alert('无效的电压设置');
                 return;
+            }
+
+            // 记录用户选择的参数
+            try {
+                await fetch('/api/log-selection', {
+                    method: 'POST',
+                    body: new URLSearchParams({
+                        section_id: sectionId,
+                        section_name: sectionId,
+                        fault_type: selectedErrorType,
+                        fault_type_name: currentSelection.faultTypeName || currentSelection.faultType,
+                        fault_value: errorValue,
+                        track_length: trackLength,
+                        cable_length: cableLength,
+                        frequency: frequency || 1700,
+                        voltage_range: `时序数据生成 - ${voltageValues.length}个数据点`,
+                        voltage_count: voltageValues.length,
+                        data_type: 'time_series',
+                        evaluation_type: 'time_series'
+                    })
+                });
+            } catch (error) {
+                console.error('记录参数失败:', error);
             }
 
             simulationResults = [];
@@ -1664,14 +1696,6 @@
             document.getElementById('progressText').textContent = '准备开始...';
 
             try {
-                let frequency;
-                if (sectionId === "69G" || sectionId === "X1LQG" || sectionId === "IG1") {
-                    frequency = 1700;
-                } else if (sectionId === "57G" || sectionId === "3DG") {
-                    frequency = 2300;
-                } else {
-                    frequency = 1700;
-                }
 
                 // 先生成无故障数据
                 document.getElementById('progressText').textContent = '正在生成无故障数据...';

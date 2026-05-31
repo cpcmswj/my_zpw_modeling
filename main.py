@@ -1346,6 +1346,37 @@ async def calculate_track_circuit_api(
             status_code=400
         )
 
+@app.post("/api/log-selection")
+async def log_selection_api(
+    section_id: str = Form(...),
+    section_name: str = Form(...),
+    fault_type: int = Form(...),
+    fault_type_name: str = Form(...),
+    fault_value: float = Form(...),
+    track_length: float = Form(...),
+    cable_length: float = Form(...),
+    frequency: float = Form(...),
+    voltage_range: str = Form(...),
+    voltage_count: int = Form(...),
+    data_type: str = Form(...),
+    evaluation_type: str = Form(default="performance")
+):
+    print(f"[API] 记录参数选择:")
+    print(f"  - section_id: {section_id}")
+    print(f"  - section_name: {section_name}")
+    print(f"  - fault_type: {fault_type}")
+    print(f"  - fault_type_name: {fault_type_name}")
+    print(f"  - fault_value: {fault_value}")
+    print(f"  - track_length: {track_length}")
+    print(f"  - cable_length: {cable_length}")
+    print(f"  - frequency: {frequency}")
+    print(f"  - voltage_range: {voltage_range}")
+    print(f"  - voltage_count: {voltage_count}")
+    print(f"  - data_type: {data_type}")
+    print(f"  - evaluation_type: {evaluation_type}")
+    
+    return JSONResponse({"status": "success", "message": "参数选择已记录"})
+
 # 登录验证API端点
 @app.post("/api/login")
 async def login_api(
