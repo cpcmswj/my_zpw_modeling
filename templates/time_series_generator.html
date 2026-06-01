@@ -1920,11 +1920,18 @@
             document.getElementById('resultContent').innerHTML = '<p>请设置参数并点击"开始时序数据生成"按钮</p>';
             document.getElementById('downloadButtons').style.display = 'none';
             simulationResults = [];
+            normalResults = [];
+            faultResults = [];
+            evaluationData = [];
             document.getElementById('resultStats').textContent = '0 / 0';
             closeBottomWindow();
             closeChartWindow();
+            closeEvalChartWindow();
+            closeEvalTableWindow();
             document.getElementById('toggleBottomBtn').style.display = 'none';
             document.getElementById('toggleChartBtn').style.display = 'none';
+            document.getElementById('toggleEvalChartBtn').style.display = 'none';
+            document.getElementById('toggleEvalTableBtn').style.display = 'none';
         }
 
         function addResultItem(type, message) {
